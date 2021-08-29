@@ -6,7 +6,7 @@ from collections import deque
 import asyncio
 import inspect
 from .message import Message
-from .channel import Channel, channel_factory
+from .channel import TextChannel, channel_factory
 from .user import User
 from . import utils
 import copy
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     )
     from .http import HttpClient
     from .channel import TextChannel
+    from . import abc
 
 
 class ConnectionState:
@@ -42,7 +43,7 @@ class ConnectionState:
         self.max_messages: Optional[int] = options.get("max_messages", 1000)
         self.loop: asyncio.AbstractEventLoop = loop
         self.servers: Dict[str, Server] = {}
-        self.channels: Dict[str, Channel] = {}
+        self.channels: Dict[str, abc.Messageable] = {}
         self.users: Dict[str, User] = {}
         self.user: Optional[User] = None
 
@@ -198,7 +199,7 @@ class ConnectionState:
         self.users[user.id] = user
         return user
 
-    def add_channel(self, payload: ChannelPayload) -> Channel:
+    def add_channel(self, payload: ChannelPayload) -> abc.Messageable:
         cls = channel_factory(payload)
         server = self.get_server(payload["server"])
         channel = cls(state=self, data=payload, server=server)

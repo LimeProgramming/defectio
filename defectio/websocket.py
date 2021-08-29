@@ -5,6 +5,7 @@ import logging
 import asyncio
 
 from aiohttp.http_websocket import WSMessage
+import aiohttp
 
 from .message import Message
 
@@ -18,6 +19,11 @@ if TYPE_CHECKING:
     from .client import Client
 
 logger = logging.getLogger("revolt")
+
+
+class RevoltClientWebSocketResponse(aiohttp.ClientWebSocketResponse):
+    async def close(self, *, code: int = 4000, message: bytes = b"") -> bool:
+        return await super().close(code=code, message=message)
 
 
 class WebsocketHandler:

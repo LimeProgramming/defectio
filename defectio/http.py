@@ -1,8 +1,9 @@
 from __future__ import annotations
+from .websocket import RevoltClientWebSocketResponse
 
 import sys
 
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union
 from . import __version__
 import ulid
 import logging
@@ -20,7 +21,7 @@ class HttpClient:
         session: aiohttp.ClientSession,
         api_url: str,
     ):
-        self.session = session if session is not None else aiohttp.ClientSession()
+        self._session = session if session is not None else aiohttp.ClientSession()
         self.token: Optional[str] = None
         # self.api_info = api_info
         self.api_url = api_url
@@ -30,8 +31,30 @@ class HttpClient:
         )
         self.is_bot = True
 
+    def recreate(self) -> None:
+        if self._session.closed:
+            self._session = aiohttp.ClientSession(
+                connector=self.connector,
+                ws_response_class=RevoltClientWebSocketResponse,
+            )
+
+    async def ws_connect(self, url: str, *, compress: int = 0) -> Any:
+        kwargs = {
+            "proxy_auth": self.proxy_auth,
+            "proxy": self.proxy,
+            "max_msg_size": 0,
+            "timeout": 30.0,
+            "autoclose": False,
+            "headers": {
+                "User-Agent": self.user_agent,
+            },
+            "compress": compress,
+        }
+
+        return await self._session.ws_connect(url, **kwargs)
+
     async def request(
-        self, method: str, path: str, *, auth_needed=True, **kwargs
+        self, method: str, path: str, *, auth_needed=True, **kwargs: Any
     ) -> Any:
         url = f"{self.api_url}/{path}"
         headers = kwargs.get("headers", {})
@@ -41,23 +64,28 @@ class HttpClient:
                 headers["x-bot-token"] = self.token
             else:
                 raise Exception("Not authenticated")
-        headers["Content-Type"] = "application/json"
+        if "json" in kwargs:
+            headers["Content-Type"] = "application/json"
+            # kwargs["data"] = utils._to_json(kwargs.pop("json"))
         kwargs["headers"] = headers
+
+        response: Optional[aiohttp.ClientResponse] = None
+        data: Optional[Union[Dict[str, Any], str]] = None
 
         # Generate nonce for post messages
         if method == "POST":
             kwargs["json"] = kwargs.get("json", {})
             kwargs["json"]["nonce"] = ulid.new().str
 
-        async with self.session.request(method, url, **kwargs) as response:
+        async with self._session.request(method, url, **kwargs) as response:
             data = await response.json()
             if 300 > response.status >= 200:
                 logger.debug("%s %s has received %s", method, url, data)
                 return data
 
     async def close(self) -> None:
-        if self.session:
-            await self.session.close()
+        if self._session:
+            await self._session.close()
 
     async def node_info(self):
         path = ""

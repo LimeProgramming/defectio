@@ -2,44 +2,26 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Text, Union, Optional
 from . import abc
+from .mixins import Hashable
+from .message import Message
 
 if TYPE_CHECKING:
     from .payloads import Channel as ChannelPayload
     from .state import ConnectionState
     from .server import Server
 
-
-class Channel:
-    def __init__(self, data: ChannelPayload, state: ConnectionState):
-        self.state = state
-        self.id = data["_id"]
-        self.channel_type = data["channel_type"]
-
-    def __repr__(self) -> str:
-        attrs = [
-            ("id", self.id),
-            ("type", self.channel_type),
-        ]
-        joined = " ".join("%s=%r" % t for t in attrs)
-        return f"<{self.__class__.__name__} {joined}>"
+__all__ = (
+    "TextChannel",
+    "VoiceChannel",
+    "StageChannel",
+    "DMChannel",
+    "CategoryChannel",
+    "StoreChannel",
+    "GroupChannel",
+)
 
 
-class SavedMessageChannel(Channel):
-    def __init__(self, data: ChannelPayload, state: ConnectionState):
-        super().__init__(data, state)
-
-
-class DMChannel(Channel):
-    def __init__(self, data: ChannelPayload, state: ConnectionState):
-        super().__init__(data, state)
-
-
-class GroupDMChannel(Channel):
-    def __init__(self, data: ChannelPayload, state: ConnectionState):
-        super().__init__(data, state)
-
-
-class TextChannel(abc.Messageable):
+class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
     """Represents a Discord guild text channel.
     .. container:: operations
         .. describe:: x == y
@@ -101,7 +83,7 @@ class TextChannel(abc.Messageable):
     def __init__(self, *, state: ConnectionState, server: Server, data):
         self._state: ConnectionState = state
         self.id: str = data["_id"]
-        # self._type: str = data["type"]
+        self._type: str = data["channel_type"]
         self._update(server, data)
 
     def __repr__(self) -> str:
@@ -127,13 +109,69 @@ class TextChannel(abc.Messageable):
     async def _get_channel(self):
         return self
 
+    @property
+    def type(self) -> str:
+        """:class:`str`: The channel's Discord type."""
+        return self._type
 
-class VoiceChannel(Channel):
-    def __init__(self, state: ConnectionState, server: Server, data: ChannelPayload):
+    @property
+    def last_message(self) -> Optional[Message]:
+        """Fetches the last message from this channel in cache.
+        The message might not be valid or point to an existing message.
+        .. admonition:: Reliable Fetching
+            :class: helpful
+            For a slightly more reliable method of fetching the
+            last message, consider using either :meth:`history`
+            or :meth:`fetch_message` with the :attr:`last_message_id`
+            attribute.
+        Returns
+        ---------
+        Optional[:class:`Message`]
+            The last message in this channel or ``None`` if not found.
+        """
+        return (
+            self._state._get_message(self.last_message_id)
+            if self.last_message_id
+            else None
+        )
+
+
+class SavedMessageChannel(abc.Messageable):
+    def __init__(self, data: ChannelPayload, state: ConnectionState):
         super().__init__(data, state)
 
 
-def channel_factory(data: ChannelPayload) -> type[Channel]:
+class DMChannel(abc.Messageable):
+    def __init__(self, data: ChannelPayload, state: ConnectionState):
+        super().__init__(data, state)
+
+
+class GroupDMChannel(abc.Messageable):
+    def __init__(self, data: ChannelPayload, state: ConnectionState):
+        super().__init__(data, state)
+
+
+class VoiceChannel(abc.Messageable):
+    def __init__(self, *, state: ConnectionState, server: Server, data):
+        self._state: ConnectionState = state
+        self.id: str = data["_id"]
+        self._type: str = data["channel_type"]
+        self._update(server, data)
+
+    def _update(self, server, data) -> None:
+        self.server = server
+        self.name: str = data["name"]
+        self.topic: Optional[str] = data.get("topic")
+        # self.position: int = data["position"]
+        # Does this need coercion into `int`? No idea yet.
+        # self._type: int = data.get("type", self._type)
+        # self.last_message_id: Optional[int] = utils._get_as_snowflake(
+        #     data, "last_message_id"
+        # )
+        # self._fill_overwrites(data)
+
+
+def channel_factory(data: ChannelPayload) -> type[abc.Messageable]:
     # Literal["SavedMessage", "DirectMessage", "Group", "TextChannel", "VoiceChannel"]
     channel_type = data["channel_type"]
     if channel_type == "SavedMessage":

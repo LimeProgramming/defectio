@@ -3,10 +3,11 @@ from __future__ import annotations
 import sys
 import copy
 import asyncio
-from typing import Protocol, runtime_checkable, Optional, TYPE_CHECKING
+from typing import Any, Protocol, runtime_checkable, Optional, TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
     from .state import ConnectionState
+    from .server import Server
 
 
 @runtime_checkable
@@ -40,6 +41,51 @@ class User(Protocol):
         raise NotImplementedError
 
 
+class ServerChannel:
+    __slots__ = ()
+
+    id: int
+    name: str
+    server: Server
+    type: str
+    position: int
+    category_id: Optional[int]
+    _state: ConnectionState
+
+    if TYPE_CHECKING:
+
+        def __init__(
+            self, *, state: ConnectionState, server: Server, data: Dict[str, Any]
+        ):
+            ...
+
+    def __str__(self) -> str:
+        return self.name
+
+    def _update(self, server: Server, data: Dict[str, Any]) -> None:
+        raise NotImplementedError
+
+    async def delete(self, *, reason: Optional[str] = None) -> None:
+        """|coro|
+        Deletes the channel.
+        You must have :attr:`~discord.Permissions.manage_channels` permission to use this.
+        Parameters
+        -----------
+        reason: Optional[:class:`str`]
+            The reason for deleting this channel.
+            Shows up on the audit log.
+        Raises
+        -------
+        ~discord.Forbidden
+            You do not have proper permissions to delete the channel.
+        ~discord.NotFound
+            The channel was not found or was already deleted.
+        ~discord.HTTPException
+            Deleting the channel failed.
+        """
+        await self._state.http.close_channel(self.id)
+
+
 class Messageable(Protocol):
     """An ABC that details the common operations on a model that can send messages.
     The following implement this ABC:
@@ -56,6 +102,7 @@ class Messageable(Protocol):
     """
 
     __slots__ = ()
+    _state: ConnectionState
 
     async def _get_channel(self):
         raise NotImplementedError
@@ -70,7 +117,7 @@ class Messageable(Protocol):
         nonce=None,
         allowed_mentions=None,
         reference=None,
-        mention_author=None
+        mention_author=None,
     ):
         """|coro|
         Sends a message to the destination with the content given.
@@ -135,7 +182,7 @@ class Messageable(Protocol):
         """
 
         channel = await self._get_channel()
-        state: ConnectionState = self._state
+        state = self._state
         content = str(content) if content is not None else None
 
         # if mention_author is not None:
@@ -202,28 +249,6 @@ class Messageable(Protocol):
         # if delete_after is not None:
         #     await ret.delete(delay=delete_after)
         return ret
-
-    async def trigger_typing(self):
-        """|coro|
-        Triggers a *typing* indicator to the destination.
-        *Typing* indicator will go away after 10 seconds, or after a message is sent.
-        """
-
-        channel = await self._get_channel()
-        await self._state.http.send_typing(channel.id)
-
-    def typing(self):
-        """Returns a context manager that allows you to type for an indefinite period of time.
-        This is useful for denoting long computations in your bot.
-        .. note::
-            This is both a regular context manager and an async context manager.
-            This means that both ``with`` and ``async with`` work with this.
-        Example Usage: ::
-            async with channel.typing():
-                # do expensive stuff here
-                await channel.send('done!')
-        """
-        return Typing(self)
 
     async def fetch_message(self, id):
         """|coro|
