@@ -9,7 +9,7 @@ from nox_poetry import Session
 from nox_poetry import session
 
 
-package = "revolt"
+package = "defectio"
 python_versions = ["3.9", "3.8"]
 nox.options.sessions = (
     "pre-commit",

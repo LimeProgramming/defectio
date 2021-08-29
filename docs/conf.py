@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------
 
-project = "revolt.py"
+project = "defectio"
 copyright = "2021-present, Darkflame72"
 author = "Darkflame72"
 
@@ -30,7 +30,7 @@ author = "Darkflame72"
 # The short X.Y version.
 
 version = ""
-with open("../revolt/__init__.py") as f:
+with open("../defectio/__init__.py") as f:
     version = re.search(
         r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE
     ).group(1)
