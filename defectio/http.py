@@ -35,7 +35,7 @@ class HttpClient:
         if self._session.closed:
             self._session = aiohttp.ClientSession(
                 connector=self.connector,
-                ws_response_class=RevoltClientWebSocketResponse,
+                ws_response_class=DefectioClientWebSocketResponse,
             )
 
     async def ws_connect(self, url: str, *, compress: int = 0) -> Any:
