@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional
 from . import __version__
 import ulid
 import logging
@@ -30,7 +30,9 @@ class HttpClient:
         )
         self.is_bot = True
 
-    async def request(self, method: str, path: str, auth_needed=True, **kwargs):
+    async def request(
+        self, method: str, path: str, *, auth_needed=True, **kwargs
+    ) -> Any:
         url = f"{self.api_url}/{path}"
         headers = kwargs.get("headers", {})
         headers["User-Agent"] = self.user_agent
@@ -217,8 +219,450 @@ class HttpClient:
     ## Channel Information ##
     #########################
 
-    ######
+    async def fetch_channel(self, channel_id: str):
+        path = f"channels/{channel_id}"
+        return await self.request("GET", path)
 
-    async def send_message(self, channel_id: str, content: str):
+    async def edit_channel(self, channel_id: str, **kwargs):
+        path = f"channels/{channel_id}"
+        return await self.request("PATCH", path, json=kwargs)
+
+    async def close_channel(self, channel_id: str):
+        path = f"channels/{channel_id}"
+        return await self.request("DELETE", path)
+
+    #####################
+    ## Channel Invites ##
+    #####################
+
+    async def create_channel_invite(self, channel_id: str):
+        path = f"channels/{channel_id}/invites"
+        return await self.request("POST", path)
+
+    #########################
+    ## Channel Permissions ##
+    #########################
+
+    async def set_channel_role_permissions(
+        self, channel_id: str, role_id: str, permissions: int
+    ):
+        path = f"channels/{channel_id}/permissions/{role_id}"
+        return await self.request("PUT", path, json={"permissions": permissions})
+
+    async def set_channel_default_role_permissions(
+        self, channel_id: str, permissions: int
+    ):
+        path = f"channels/{channel_id}/permissions/default"
+        return await self.request("PUT", path, json={"permissions": permissions})
+
+    ###############
+    ## Messaging ##
+    ###############
+
+    async def send_message(
+        self,
+        channel_id: str,
+        content: str,
+        *,
+        attachments: Optional[List[Any]] = None,
+        replies: Optional[Any] = None,
+    ):
         path = f"channels/{channel_id}/messages"
-        return await self.request("POST", path, json={"content": content})
+        json = {"content": content}
+        if attachments:
+            json["attachments"] = attachments
+        if replies:
+            json["replies"] = replies
+        return await self.request("POST", path, json=json)
+
+    async def fetch_messages(
+        self,
+        channel_id: str,
+        *,
+        limit: int = 100,
+        before: Optional[str] = None,
+        after: Optional[str] = None,
+        sort: Literal["Latest", "Oldest"] = "Latest",
+        nearby: Optional[List[str]] = None,
+        include_users: bool = True,
+    ):
+        path = f"channels/{channel_id}/messages"
+        json = {"sort": sort}
+        if limit:
+            json["limit"] = limit
+        if before:
+            json["before"] = before
+        if after:
+            json["after"] = after
+        if nearby:
+            json["nearby"] = nearby
+        if not include_users:
+            json["include_users"] = include_users
+        return await self.request("GET", path, json=json)
+
+    async def fetch_message(self, channel_id: str, message_id: str):
+        path = f"channels/{channel_id}/messages/{message_id}"
+        return await self.request("GET", path)
+
+    async def edit_message(
+        self,
+        channel_id: str,
+        message_id: str,
+        content: str,
+    ):
+        path = f"channels/{channel_id}/messages/{message_id}"
+        return await self.request("PATCH", path, json={"content": content})
+
+    async def delete_message(self, channel_id: str, message_id: str):
+        path = f"channels/{channel_id}/messages/{message_id}"
+        return await self.request("DELETE", path)
+
+    async def poll_message_changes(self, channel_id: str, message_ids: List[str]):
+        path = f"channels/{channel_id}/messages/stale"
+        return await self.request("GET", path, json=message_ids)
+
+    async def search_message(
+        self,
+        channel_id: str,
+        query: str,
+        *,
+        limit: int = 100,
+        before: Optional[str] = None,
+        after: Optional[str] = None,
+        sort: Literal["Latest", "Oldest", "Relevant"] = "Latest",
+        include_users: bool = True,
+    ):
+        path = f"channels/{channel_id}/messages/search"
+        json = {"query": query, "sort": sort, "include_users": include_users}
+        if limit:
+            json["limit"] = limit
+        if before:
+            json["before"] = before
+        if after:
+            json["after"] = after
+        return await self.request("GET", path, json=json)
+
+    async def acknoledge_message(self, channel_id: str, message_id: str):
+        path = f"channels/{channel_id}/ack/{message_id}"
+        return await self.request("PUT", path)
+
+    ############
+    ## Groups ##
+    ############
+
+    async def create_group(
+        self,
+        name: str,
+        *,
+        description: Optional[str] = None,
+        users: Optional[List[str]] = None,
+    ):
+        path = "channels/create"
+        json = {"name": name}
+        if description:
+            json["description"] = description
+        if users:
+            json["users"] = users
+        return await self.request("POST", path, json=json)
+
+    async def fetch_group_members(self, group_id: str):
+        path = f"channels/{group_id}/members"
+        return await self.request("GET", path)
+
+    async def add_group_member(self, group_id: str, user_id: str):
+        path = f"channels/{group_id}/recipients/{user_id}"
+        return await self.request("PUT", path)
+
+    async def remove_group_member(self, group_id: str, user_id: str):
+        path = f"channels/{group_id}/members/recipients/{user_id}"
+        return await self.request("DELETE", path)
+
+    async def join_call(self, channel_id: str):
+        path = f"channels/{channel_id}/join_call"
+        return await self.request("POST", path)
+
+    ########################
+    ## Server Information ##
+    ########################
+
+    async def fetch_server(self, server_id: str):
+        path = f"servers/{server_id}"
+        return await self.request("GET", path)
+
+    async def edit_server(
+        self,
+        server_id: str,
+        *,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        icon: Optional[str] = None,
+        banner: Optional[str] = None,
+        categories: Optional[List[Any]] = None,
+        system_messages: Optional[Any] = None,
+        remove: Optional[Literal["Banner", "Description", "Icon"]] = None,
+    ):
+        path = f"servers/{server_id}"
+        json = {}
+        if name:
+            json["name"] = name
+        if description:
+            json["description"] = description
+        if icon:
+            json["icon"] = icon
+        if banner:
+            json["banner"] = banner
+        if categories:
+            json["categories"] = categories
+        if system_messages:
+            json["system_messages"] = system_messages
+        if remove:
+            json["remove"] = remove
+        return await self.request("PATCH", path, json=json)
+
+    async def remove_server(self, server_id: str):
+        path = f"servers/{server_id}"
+        return await self.request("DELETE", path)
+
+    async def create_server(self, name: str, *, description: Optional[str] = None):
+        path = "servers/create"
+        json = {"name": name}
+        if description:
+            json["description"] = description
+        return await self.request("POST", path, json=json)
+
+    async def create_channel(
+        self,
+        server_id: str,
+        name: str,
+        *,
+        type: Literal["Text", "Voice"] = "Text",
+        description: Optional[str] = None,
+    ):
+        path = f"servers/{server_id}/channels"
+        json = {"name": name, "type": type}
+        if description:
+            json["description"] = description
+        return await self.request("POST", path, json=json)
+
+    async def fetch_invite(self, server_id: str):
+        path = f"invites/{server_id}/invites"
+        return await self.request("GET", path)
+
+    async def mark_channels_read(self, server_id: str):
+        path = f"channels/{server_id}/ack"
+        return await self.request("POST", path)
+
+    ####################
+    ## Server Members ##
+    ####################
+
+    async def fetch_member(self, server_id: str, member_id: str):
+        path = f"servers/{server_id}/members/{member_id}"
+        return await self.request("GET", path)
+
+    async def edit_member(
+        self,
+        server_id: str,
+        member_id: str,
+        *,
+        nickname: Optional[List[str]] = None,
+        roles: Optional[List[str]] = None,
+        avatar: Optional[str] = None,
+        remove: Optional[Literal["Avatar", "Nickname"]] = None,
+    ):
+        path = f"servers/{server_id}/members/{member_id}"
+        json = {}
+        if roles:
+            json["roles"] = roles
+        if nickname:
+            json["nick"] = nickname
+        if avatar:
+            json["avatar"] = avatar
+        if remove:
+            json["remove"] = remove
+        return await self.request("PATCH", path, json=json)
+
+    async def kick_member(self, server_id: str, member_id: str):
+        path = f"servers/{server_id}/members/{member_id}"
+        return await self.request("DELETE", path)
+
+    async def fetch_members(self, server_id: str):
+        path = f"servers/{server_id}/members"
+        return await self.request("GET", path)
+
+    async def ban_member(
+        self, server_id: str, member_id: str, reason: Optional[str] = None
+    ):
+        path = f"servers/{server_id}/ban/{member_id}"
+        json = {"reason": reason}
+        return await self.request("PUT", path, json=json)
+
+    async def unban_member(self, server_id: str, member_id: str):
+        path = f"servers/{server_id}/ban/{member_id}"
+        return await self.request("DELETE", path)
+
+    async def get_bans(self, server_id: str):
+        path = f"servers/{server_id}/bans"
+        return await self.request("GET", path)
+
+    ########################
+    ## Server Permissions ##
+    ########################
+
+    async def set_server_role_permissions(
+        self, server_id: str, role_id: str, *, permissions: int
+    ):
+        path = f"servers/{server_id}/permissions/{role_id}"
+        return await self.request("PUT", path, json={"permissions": 0})
+
+    async def set_server_default_role_permissions(
+        self, server_id: str, permissions: int
+    ):
+        path = f"servers/{server_id}/permissions/default_role"
+        return await self.request("PUT", path, json={"permissions": permissions})
+
+    async def create_role(self, server_id: str, *, name: str):
+        path = f"servers/{server_id}/roles"
+        json = {"name": name}
+        return await self.request("POST", path, json=json)
+
+    async def edit_role(
+        self,
+        server_id: str,
+        role_id: str,
+        *,
+        name: Optional[str] = None,
+        colour: Optional[str] = None,
+        hoist: Optional[bool] = None,
+        rank: Optional[int] = None,
+        remove: Optional[Literal["Colour"]] = None,
+    ):
+        path = f"servers/{server_id}/roles/{role_id}"
+        json = {"name": name}
+        if colour:
+            json["colour"] = colour
+        if hoist:
+            json["hoist"] = hoist
+        if rank:
+            json["rank"] = rank
+        if remove:
+            json["remove"] = remove
+        return await self.request("PATCH", path, json=json)
+
+    async def delete_role(self, server_id: str, role_id: str):
+        path = f"servers/{server_id}/roles/{role_id}"
+        return await self.request("DELETE", path)
+
+    ##########
+    ## Bots ##
+    ##########
+
+    async def create_bot(self, name: str):
+        path = "bots/create"
+        json = {"name": name}
+        return await self.request("POST", path, json=json)
+
+    async def fetch_owned_bots(self):
+        path = "bots/@me"
+        return await self.request("GET", path)
+
+    async def fetch_bot(self, bot_id: str):
+        path = f"bots/{bot_id}"
+        return await self.request("GET", path)
+
+    async def edit_bot(
+        self,
+        bot_id: str,
+        *,
+        name: Optional[str] = None,
+        public: Optional[bool] = None,
+        interactions_url: Optional[str] = None,
+        remove: Optional[Literal["InteractionsURL"]] = None,
+    ):
+        path = f"bots/{bot_id}"
+        json = {}
+        if name:
+            json["name"] = name
+        if public:
+            json["public"] = public
+        if interactions_url:
+            json["interactionsURL"] = interactions_url
+        if remove:
+            json["remove"] = remove
+        return await self.request("PATCH", path, json=json)
+
+    async def delete_bot(self, bot_id: str):
+        path = f"bots/{bot_id}"
+        return await self.request("DELETE", path)
+
+    async def fetch_bot(self, bot_id: str):
+        path = f"bots/{bot_id}/invite"
+        return await self.request("GET", path)
+
+    async def invite_bot(
+        self,
+        bot_id: str,
+        *,
+        server_id: Optional[str] = None,
+        group_id: Optional[str] = None,
+    ):
+        if server_id is None and group_id is None:
+            raise ValueError("Either server_id or group_id must be provided")
+        path = f"bots/{bot_id}/invite"
+        json = {}
+        if server_id:
+            json["server"] = server_id
+        if group_id:
+            json["group"] = group_id
+        return await self.request("POST", path)
+
+    #############
+    ## Invites ##
+    #############
+
+    async def fetch_invite(self, invite_id: str):
+        path = f"invites/{invite_id}"
+        return await self.request("GET", path)
+
+    async def join_invite(self, invite_id: str):
+        path = f"invites/{invite_id}"
+        return await self.request("POST", path)
+
+    async def delete_invite(self, invite_id: str):
+        path = f"invites/{invite_id}"
+        return await self.request("DELETE", path)
+
+    ##########
+    ## Sync ##
+    ##########
+
+    async def fetch_settings(self, keys: List[str]):
+        path = "sync/settings/fetch"
+        json = {"keys": keys}
+        return await self.request("POST", path, json=json)
+
+    async def set_settings(self, settings: Dict[str, Any]):
+        path = "sync/settings/set"
+        return await self.request("POST", path, json=settings)
+
+    async def fetch_unread(self):
+        path = "sync/unreads"
+        return await self.request("GET", path)
+
+    ##############
+    ## Web Push ##
+    ##############
+
+    async def subscribe_web_push(
+        self,
+        endpoint: Any,
+        p256d: Any,
+        auth: Any,
+    ):
+        path = f"push/subscribe"
+        json = {"endpoint": endpoint, "p256d": p256d, "auth": auth}
+        return await self.request("PUT", path, json=json)
+
+    async def unsubscribe_web_push(self, channel_id: str):
+        path = f"push/unsubscribe"
+        return await self.request("POST", path)
