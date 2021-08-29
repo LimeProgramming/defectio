@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from revolt.server import Server
+from .server import Server
 from typing import Dict, List, Deque, Optional, TYPE_CHECKING, Any, Callable, Union
 from collections import deque
 import asyncio

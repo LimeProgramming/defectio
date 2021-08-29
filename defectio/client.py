@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-from revolt.user import User
-from revolt.message import Message
-from revolt.server import Server
+from .user import User
+from .message import Message
+from .server import Server
 import sys
 import traceback
 from .http import HttpClient
