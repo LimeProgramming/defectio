@@ -89,13 +89,14 @@ class Client:
             asyncio.get_event_loop() if loop is None else loop
         )
 
-        # connector: Optional[aiohttp.BaseConnector] = options.pop("connector", None)
+        connector: Optional[aiohttp.BaseConnector] = options.pop("connector", None)
         # proxy: Optional[str] = options.pop("proxy", None)
         # proxy_auth: Optional[aiohttp.BasicAuth] = options.pop("proxy_auth", None)
         # unsync_clock: bool = options.pop("assume_unsync_clock", True)
-        # self.http: HttpClient = HttpClient(
-        #     connector,
-        # )
+        self.http: HttpClient = HttpClient(
+            session=connector,
+            api_url=self.api_url,
+        )
 
         self._handlers: Dict[str, Callable] = {"ready": self._handle_ready}
         self._listeners: Dict[
@@ -121,7 +122,7 @@ class Client:
         return ConnectionState(
             dispatch=self.dispatch,
             handlers=self._handlers,
-            # http=self.http,
+            http=self.http,
             loop=self.loop,
             **options,
         )
@@ -257,6 +258,7 @@ class Client:
         self.websocket = WebsocketHandler(
             self.session, token, api_info["ws"], client=self
         )
+        self.http.token = token
         # self.http = HttpClient(self.session, self.token, self.api_url, self.api_info)
 
         await self.websocket.start()
@@ -297,28 +299,28 @@ class Client:
             try:
                 await self.start(*args, **kwargs)
             finally:
-                # if not self.is_closed():
-                #     await self.close()
+                if not self.is_closed():
+                    await self.close()
                 pass
 
         def stop_loop_on_completion(f):
             loop.stop()
 
-            future = asyncio.ensure_future(runner(), loop=loop)
-            future.add_done_callback(stop_loop_on_completion)
-            try:
-                loop.run_forever()
-            except KeyboardInterrupt:
-                logger.info("Received signal to terminate bot and event loop.")
-            finally:
-                future.remove_done_callback(stop_loop_on_completion)
-                logger.info("Cleaning up tasks.")
+        future = asyncio.ensure_future(runner(), loop=loop)
+        future.add_done_callback(stop_loop_on_completion)
+        try:
+            loop.run_forever()
+        except KeyboardInterrupt:
+            logger.info("Received signal to terminate bot and event loop.")
+        finally:
+            future.remove_done_callback(stop_loop_on_completion)
+            logger.info("Cleaning up tasks.")
 
-            if not future.cancelled():
-                try:
-                    return future.result()
-                except KeyboardInterrupt:
-                    return None
+        if not future.cancelled():
+            try:
+                return future.result()
+            except KeyboardInterrupt:
+                return None
 
     # helpers/getters
 
@@ -507,3 +509,8 @@ class Client:
         setattr(self, coro.__name__, coro)
         logger.debug("%s has successfully been registered as an event", coro.__name__)
         return coro
+
+    @property
+    def user(self) -> Optional[User]:
+        """Optional[:class:`.ClientUser`]: Represents the connected client. ``None`` if not logged in."""
+        return self._connection.user

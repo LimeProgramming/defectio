@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from revolt.server import Server
-from typing import Dict, List, Deque, Optional, TYPE_CHECKING, Any, Callable
+from typing import Dict, List, Deque, Optional, TYPE_CHECKING, Any, Callable, Union
 from collections import deque
 import asyncio
 import inspect
@@ -20,6 +20,8 @@ if TYPE_CHECKING:
         MessageEventPayload,
         ReadyPayload,
     )
+    from .http import HttpClient
+    from .channel import TextChannel
 
 
 class ConnectionState:
@@ -30,16 +32,19 @@ class ConnectionState:
         self,
         dispatch: Callable,
         handlers: Dict[str, Callable],
+        http: HttpClient,
         loop: asyncio.AbstractEventLoop,
         **options: Any,
     ):
         self.handlers: Dict[str, Callable] = handlers
         self.dispatch: Callable = dispatch
+        self.http: HttpClient = http
         self.max_messages: Optional[int] = options.get("max_messages", 1000)
         self.loop: asyncio.AbstractEventLoop = loop
         self.servers: Dict[str, Server] = {}
         self.channels: Dict[str, Channel] = {}
         self.users: Dict[str, User] = {}
+        self.user: Optional[User] = None
 
         self._messages: Optional[List[Message]] = deque(maxlen=self.max_messages)
 
@@ -68,11 +73,13 @@ class ConnectionState:
         self.dispatch("pong")
 
     def parse_ready(self, data: ReadyPayload) -> None:
-        if self._ready_task is not None:
-            self._ready_task.cancel()
+        # if self._ready_task is not None:
+        #     self._ready_task.cancel()
 
         for user in data["users"]:
             self.add_user(user)
+
+        self.user = self.create_user(data=data["users"][0])
 
         for server in data["servers"]:
             self.add_server(server)
@@ -84,6 +91,7 @@ class ConnectionState:
 
     def parse_message(self, data: MessageEventPayload) -> None:
         channel = self.get_channel(data["channel"])
+        print(channel)
         message = Message(channel=channel, data=data, state=self)
         self.dispatch("message", message)
         if self._messages is not None:
@@ -111,7 +119,7 @@ class ConnectionState:
             self._messages.remove(found)
 
     def parse_channelcreate(self, data):
-        self.dispatch("channelcreate")
+        self.dispatch("channel_create")
 
     def parse_channelupdate(self, data):
         # self.add_channel(data)
@@ -168,13 +176,13 @@ class ConnectionState:
     # Getters
 
     def get_user(self, id: str) -> Optional[User]:
-        self.users.get(id)
+        return self.users.get(id)
 
     def get_channel(self, id: str) -> Optional[Channel]:
-        self.channels.get(id)
+        return self.channels.get(id)
 
     def get_server(self, id: str) -> Optional[Server]:
-        self.channels.get(id)
+        return self.channels.get(id)
 
     def _get_message(self, msg_id: str) -> Optional[Message]:
         return (
@@ -186,13 +194,14 @@ class ConnectionState:
     # Setters
 
     def add_user(self, payload: UserPayload) -> User:
-        user = User(payload, self)
+        user = self.create_user(data=payload)
         self.users[user.id] = user
         return user
 
     def add_channel(self, payload: ChannelPayload) -> Channel:
         cls = channel_factory(payload)
-        channel = cls(payload, self)
+        server = self.get_server(payload["server"])
+        channel = cls(state=self, data=payload, server=server)
         self.channels[channel.id] = channel
         return channel
 
@@ -200,3 +209,17 @@ class ConnectionState:
         server = Server(payload, self)
         self.servers[server.id] = server
         return server
+
+    # creaters
+
+    def create_message(
+        self,
+        *,
+        channel: Union[TextChannel],
+        data,
+    ) -> Message:
+        return Message(state=self, channel=channel, data=data)
+
+    def create_user(self, *, data: UserPayload) -> User:
+        user = User(data, self)
+        return user

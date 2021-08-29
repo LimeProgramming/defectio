@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "revolt"
+name = "defectio"
 version = "0.1.0"
 description = ""
 authors = ["Leon Bowie <leon@bowie-co.nz>"]
