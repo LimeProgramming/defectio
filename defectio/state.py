@@ -6,10 +6,12 @@ from collections import deque
 import asyncio
 import inspect
 from .message import Message
+from .member import Member
 from .channel import TextChannel, channel_factory
 from .user import User
 from . import utils
 import copy
+import logging
 from .raw_models import RawMessageDeleteEvent, RawMessageUpdateEvent
 
 if TYPE_CHECKING:
@@ -47,7 +49,10 @@ if TYPE_CHECKING:
         User as UserPayload,
         Server as ServerPayload,
         Channel as ChannelPayload,
+        Member as MemberPayload,
     )
+
+logger = logging.getLogger("defectio")
 
 
 class ConnectionState:
@@ -71,6 +76,7 @@ class ConnectionState:
         self.servers: Dict[str, Server] = {}
         self.channels: Dict[str, abc.Messageable] = {}
         self.users: Dict[str, User] = {}
+        self.members: Dict[str, List[Member]] = {}
         self.user: Optional[User] = None
 
         self._messages: Optional[List[Message]] = deque(maxlen=self.max_messages)
@@ -110,6 +116,10 @@ class ConnectionState:
 
         for channel in data["channels"]:
             self.add_channel(channel)
+
+        for member in data["members"]:
+            self.add_member(member["_id"])
+
         self.dispatch("ready")
         self.dispatch("connect")
 
@@ -143,15 +153,16 @@ class ConnectionState:
             self._messages.remove(found)
 
     def parse_channelcreate(self, data: ChannelCreate):
-        self.dispatch("channel_create", data)
+        channel = self.add_channel(data)
+        self.dispatch("channel_create", channel)
 
     def parse_channelupdate(self, data: ChannelUpdate):
-        # self.add_channel(data)
-        # self.users.get(data["id"]).online = True
         self.dispatch("channel_update", data)
 
     def parse_channeldelete(self, data: ChannelDelete):
-        self.dispatch("channel_delete", data)
+        channel = self.get_channel(data["id"])
+        self.channels.pop(channel.id)
+        self.dispatch("channel_delete", channel)
 
     def parse_channelgroupjoin(self, data: ChannelGroupJoin):
         self.dispatch("channel_group_join", data)
@@ -169,8 +180,16 @@ class ConnectionState:
         self.dispatch("channel_ack", data)
 
     def parse_serverupdate(self, data: ServerUpdate):
-        # self.add_server(data)
-        self.dispatch("server_update", data)
+        server = self.get_server(data["id"])
+        if server is not None:
+            old_server = copy.copy(server)
+            server._update(data)
+            self.dispatch("server_update", old_server, server)
+        else:
+            logger.debug(
+                "SERVER_UPDAtE referencing an unknown server ID: %s. Discarding.",
+                data["id"],
+            )
 
     def parse_serverdelete(self, data: ServerDelete):
         self.dispatch("server_delete", data)
@@ -206,18 +225,24 @@ class ConnectionState:
         return self.channels.get(id)
 
     def get_server(self, id: str) -> Optional[Server]:
-        return self.channels.get(id)
+        return self.servers.get(id)
 
-    def _get_message(self, msg_id: str) -> Optional[Message]:
+    def get_message(self, msg_id: str) -> Optional[Message]:
         return (
             utils.find(lambda m: m.id == msg_id, reversed(self._messages))
             if self._messages
             else None
         )
 
+    def get_members(self, server_id: str) -> Optional[List[Member]]:
+        return self.members.get(server_id)
+
+    def get_member(self, server_id: str, user_id: str) -> Optional[Member]:
+        return self.members.get(server_id, {}).get(user_id)
+
     # Setters
 
-    def add_user(self, payload: UserPayloaad) -> User:
+    def add_user(self, payload: UserPayload) -> User:
         user = self.create_user(data=payload)
         self.users[user.id] = user
         return user
@@ -233,6 +258,14 @@ class ConnectionState:
         server = Server(payload, self)
         self.servers[server.id] = server
         return server
+
+    def add_member(self, payload: MemberPayload) -> Member:
+        server = self.get_server(payload["server"])
+        member = Member(payload["user"], server, self)
+        if server.id not in self.members:
+            self.members[server.id] = {}
+        self.members[server.id][member.id] = member
+        return member
 
     # creaters
 

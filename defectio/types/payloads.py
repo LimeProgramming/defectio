@@ -1,4 +1,4 @@
-from typing import Literal, Tuple, Type, Dict, List, Any, TypedDict
+from typing import Literal, Tuple, Type, Dict, List, Any, TypedDict, Optional
 
 RelationType = Literal[
     "Blocked", "BlockedOther", "Friend", "Incoming", "None", "Outgoing", "User"
@@ -235,7 +235,7 @@ class Server(TypedDict):
     nonce: str
     owner: str
     name: str
-    description: str
+    description: Optional[str]
     channels: List[str]
     categories: List[Category]
     system_message: SystemMessage
