@@ -3,7 +3,7 @@ from .websocket import DefectioClientWebSocketResponse
 
 import sys
 
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union, Coroutine
 from . import __version__
 import ulid
 import logging
@@ -11,6 +11,40 @@ import aiohttp
 
 if TYPE_CHECKING:
     import aiohttp
+    from .types.payloads import (
+        Account,
+        ApiInfo,
+        DMChannel,
+        Login,
+        MutualFriends,
+        Profile,
+        Relationship,
+        RelationshipStatus,
+        Session,
+        Channel,
+        User,
+        ChannelInvite,
+        EditChannel,
+        FetchMessage,
+        Group,
+        JoinCall,
+        Message,
+        MessagePoll,
+        SearchMessage,
+        Server,
+        Bans,
+        Bot,
+        CreateRole,
+        Invite,
+        JoinInvite,
+        Member,
+        PublicBot,
+        ServerMembers,
+        Settings,
+        Unreads,
+    )
+
+    Response = Coroutine[Any, Any, T]
 
 logger = logging.getLogger("defectio")
 
@@ -87,7 +121,7 @@ class HttpClient:
         if self._session:
             await self._session.close()
 
-    async def node_info(self):
+    async def node_info(self) -> Response[ApiInfo]:
         path = ""
         return await self.request("GET", path, auth_needed=False)
 
@@ -118,7 +152,7 @@ class HttpClient:
         kwargs["email"] = email
         return await self.request("POST", path, json=kwargs, auth_needed=False)
 
-    async def login(self, email: str, password: str, **kwargs):
+    async def login(self, email: str, password: str, **kwargs) -> Response[Login]:
         path = "auth/login"
         kwargs["email"] = email
         kwargs["password"] = password
@@ -137,7 +171,7 @@ class HttpClient:
             "POST", path, json={"password": password, "token": token}, auth_needed=False
         )
 
-    async def fetch_account(self):
+    async def get_account(self) -> Response[Account]:
         path = "auth/user"
         return await self.request("GET", path)
 
@@ -161,7 +195,7 @@ class HttpClient:
         path = f"auth/sessions/{session_id}"
         return await self.request("POST", path)
 
-    async def fetch_sessions(self):
+    async def get_sessions(self) -> Response[List[Session]]:
         path = "auth/sessions"
         return await self.request("GET", path)
 
@@ -187,19 +221,19 @@ class HttpClient:
 
     ## Users
 
-    async def fetch_user(self, user_id: str):
+    async def get_user(self, user_id: str) -> Response[User]:
         path = f"users/{user_id}"
         return await self.request("GET", path)
 
-    async def fetch_user_profile(self, user_id: str):
+    async def get_user_profile(self, user_id: str) -> Response[Profile]:
         path = f"users/{user_id}/profile"
         return await self.request("GET", path)
 
-    async def fetch_user_default_avatar(self, user_id: str):
+    async def get_user_default_avatar(self, user_id: str):
         path = f"users/{user_id}/default_avatar"
         return await self.request("GET", path)
 
-    async def fetch_mutual_friends(self, user_id: str):
+    async def get_mutual_friends(self, user_id: str) -> Response[MutualFriends]:
         path = f"users/{user_id}/mutual_friends"
         return await self.request("GET", path)
 
@@ -207,11 +241,11 @@ class HttpClient:
     ## Direct Messaging ##
     ######################
 
-    async def fetch_dms(self):
+    async def get_dms(self) -> Response[List[DMChannel]]:
         path = "users/dms"
         return await self.request("GET", path)
 
-    async def open_dm(self, user_id: str):
+    async def open_dm(self, user_id: str) -> Response[DMChannel]:
         path = f"users/{user_id}/dm"
         return await self.request("POST", path)
 
@@ -219,27 +253,27 @@ class HttpClient:
     ## Relationships ##
     ###################
 
-    async def fetch_relationships(self):
+    async def get_relationships(self) -> Response[List[Relationship]]:
         path = "users/relationships"
         return await self.request("GET", path)
 
-    async def fetch_relationship(self, user_id: str):
+    async def get_relationship(self, user_id: str) -> Response[Relationship]:
         path = f"users/{user_id}/relationships"
         return await self.request("GET", path)
 
-    async def friend_request(self, user_id: str):
+    async def friend_request(self, user_id: str) -> Response[RelationshipStatus]:
         path = f"users/{user_id}/friend"
         return await self.request("PUT", path)
 
-    async def remove_friend(self, user_id: str):
+    async def remove_friend(self, user_id: str) -> Response[RelationshipStatus]:
         path = f"users/{user_id}/friend"
         return await self.request("DELETE", path)
 
-    async def block_user(self, user_id: str):
+    async def block_user(self, user_id: str) -> Response[RelationshipStatus]:
         path = f"users/{user_id}/block"
         return await self.request("PUT", path)
 
-    async def unblock_user(self, user_id: str):
+    async def unblock_user(self, user_id: str) -> Response[RelationshipStatus]:
         path = f"users/{user_id}/block"
         return await self.request("DELETE", path)
 
@@ -247,11 +281,11 @@ class HttpClient:
     ## Channel Information ##
     #########################
 
-    async def fetch_channel(self, channel_id: str):
+    async def get_channel(self, channel_id: str) -> Response[Channel]:
         path = f"channels/{channel_id}"
         return await self.request("GET", path)
 
-    async def edit_channel(self, channel_id: str, **kwargs):
+    async def edit_channel(self, channel_id: str, **kwargs) -> Response[EditChannel]:
         path = f"channels/{channel_id}"
         return await self.request("PATCH", path, json=kwargs)
 
@@ -263,7 +297,7 @@ class HttpClient:
     ## Channel Invites ##
     #####################
 
-    async def create_channel_invite(self, channel_id: str):
+    async def create_channel_invite(self, channel_id: str) -> Response[ChannelInvite]:
         path = f"channels/{channel_id}/invites"
         return await self.request("POST", path)
 
@@ -294,7 +328,7 @@ class HttpClient:
         *,
         attachments: Optional[List[Any]] = None,
         replies: Optional[Any] = None,
-    ):
+    ) -> Response[Message]:
         path = f"channels/{channel_id}/messages"
         json = {"content": content}
         if attachments:
@@ -303,7 +337,7 @@ class HttpClient:
             json["replies"] = replies
         return await self.request("POST", path, json=json)
 
-    async def fetch_messages(
+    async def get_messages(
         self,
         channel_id: str,
         *,
@@ -313,7 +347,7 @@ class HttpClient:
         sort: Literal["Latest", "Oldest"] = "Latest",
         nearby: Optional[List[str]] = None,
         include_users: bool = True,
-    ):
+    ) -> Response[List[FetchMessage]]:
         path = f"channels/{channel_id}/messages"
         json = {"sort": sort}
         if limit:
@@ -328,7 +362,7 @@ class HttpClient:
             json["include_users"] = include_users
         return await self.request("GET", path, json=json)
 
-    async def fetch_message(self, channel_id: str, message_id: str):
+    async def get_message(self, channel_id: str, message_id: str) -> Response[Message]:
         path = f"channels/{channel_id}/messages/{message_id}"
         return await self.request("GET", path)
 
@@ -345,7 +379,9 @@ class HttpClient:
         path = f"channels/{channel_id}/messages/{message_id}"
         return await self.request("DELETE", path)
 
-    async def poll_message_changes(self, channel_id: str, message_ids: List[str]):
+    async def poll_message_changes(
+        self, channel_id: str, message_ids: List[str]
+    ) -> Response[MessagePoll]:
         path = f"channels/{channel_id}/messages/stale"
         return await self.request("GET", path, json=message_ids)
 
@@ -359,7 +395,7 @@ class HttpClient:
         after: Optional[str] = None,
         sort: Literal["Latest", "Oldest", "Relevant"] = "Latest",
         include_users: bool = True,
-    ):
+    ) -> Response[SearchMessage]:
         path = f"channels/{channel_id}/messages/search"
         json = {"query": query, "sort": sort, "include_users": include_users}
         if limit:
@@ -384,7 +420,7 @@ class HttpClient:
         *,
         description: Optional[str] = None,
         users: Optional[List[str]] = None,
-    ):
+    ) -> Response[Group]:
         path = "channels/create"
         json = {"name": name}
         if description:
@@ -393,7 +429,7 @@ class HttpClient:
             json["users"] = users
         return await self.request("POST", path, json=json)
 
-    async def fetch_group_members(self, group_id: str):
+    async def get_group_members(self, group_id: str) -> Response[List[User]]:
         path = f"channels/{group_id}/members"
         return await self.request("GET", path)
 
@@ -405,7 +441,7 @@ class HttpClient:
         path = f"channels/{group_id}/members/recipients/{user_id}"
         return await self.request("DELETE", path)
 
-    async def join_call(self, channel_id: str):
+    async def join_call(self, channel_id: str) -> Response[JoinCall]:
         path = f"channels/{channel_id}/join_call"
         return await self.request("POST", path)
 
@@ -413,7 +449,7 @@ class HttpClient:
     ## Server Information ##
     ########################
 
-    async def fetch_server(self, server_id: str):
+    async def get_server(self, server_id: str) -> Response[Server]:
         path = f"servers/{server_id}"
         return await self.request("GET", path)
 
@@ -451,7 +487,9 @@ class HttpClient:
         path = f"servers/{server_id}"
         return await self.request("DELETE", path)
 
-    async def create_server(self, name: str, *, description: Optional[str] = None):
+    async def create_server(
+        self, name: str, *, description: Optional[str] = None
+    ) -> Response[Server]:
         path = "servers/create"
         json = {"name": name}
         if description:
@@ -465,14 +503,14 @@ class HttpClient:
         *,
         type: Literal["Text", "Voice"] = "Text",
         description: Optional[str] = None,
-    ):
+    ) -> Response[Channel]:
         path = f"servers/{server_id}/channels"
         json = {"name": name, "type": type}
         if description:
             json["description"] = description
         return await self.request("POST", path, json=json)
 
-    async def fetch_invite(self, server_id: str):
+    async def get_invite(self, server_id: str):
         path = f"invites/{server_id}/invites"
         return await self.request("GET", path)
 
@@ -484,7 +522,7 @@ class HttpClient:
     ## Server Members ##
     ####################
 
-    async def fetch_member(self, server_id: str, member_id: str):
+    async def get_member(self, server_id: str, member_id: str) -> Response[Member]:
         path = f"servers/{server_id}/members/{member_id}"
         return await self.request("GET", path)
 
@@ -514,7 +552,7 @@ class HttpClient:
         path = f"servers/{server_id}/members/{member_id}"
         return await self.request("DELETE", path)
 
-    async def fetch_members(self, server_id: str):
+    async def get_members(self, server_id: str) -> Response[ServerMembers]:
         path = f"servers/{server_id}/members"
         return await self.request("GET", path)
 
@@ -529,7 +567,7 @@ class HttpClient:
         path = f"servers/{server_id}/ban/{member_id}"
         return await self.request("DELETE", path)
 
-    async def get_bans(self, server_id: str):
+    async def get_bans(self, server_id: str) -> Response[Bans]:
         path = f"servers/{server_id}/bans"
         return await self.request("GET", path)
 
@@ -549,7 +587,7 @@ class HttpClient:
         path = f"servers/{server_id}/permissions/default_role"
         return await self.request("PUT", path, json={"permissions": permissions})
 
-    async def create_role(self, server_id: str, *, name: str):
+    async def create_role(self, server_id: str, *, name: str) -> Response[CreateRole]:
         path = f"servers/{server_id}/roles"
         json = {"name": name}
         return await self.request("POST", path, json=json)
@@ -585,16 +623,16 @@ class HttpClient:
     ## Bots ##
     ##########
 
-    async def create_bot(self, name: str):
+    async def create_bot(self, name: str) -> Response[Bot]:
         path = "bots/create"
         json = {"name": name}
         return await self.request("POST", path, json=json)
 
-    async def fetch_owned_bots(self):
+    async def get_owned_bots(self) -> Response[List[Bot]]:
         path = "bots/@me"
         return await self.request("GET", path)
 
-    async def fetch_bot(self, bot_id: str):
+    async def get_bot(self, bot_id: str) -> Response[Bot]:
         path = f"bots/{bot_id}"
         return await self.request("GET", path)
 
@@ -623,7 +661,7 @@ class HttpClient:
         path = f"bots/{bot_id}"
         return await self.request("DELETE", path)
 
-    async def fetch_bot(self, bot_id: str):
+    async def get_public_bot(self, bot_id: str) -> Response[PublicBot]:
         path = f"bots/{bot_id}/invite"
         return await self.request("GET", path)
 
@@ -648,11 +686,11 @@ class HttpClient:
     ## Invites ##
     #############
 
-    async def fetch_invite(self, invite_id: str):
+    async def get_invite(self, invite_id: str) -> Response[Invite]:
         path = f"invites/{invite_id}"
         return await self.request("GET", path)
 
-    async def join_invite(self, invite_id: str):
+    async def join_invite(self, invite_id: str) -> Response[JoinInvite]:
         path = f"invites/{invite_id}"
         return await self.request("POST", path)
 
@@ -664,7 +702,7 @@ class HttpClient:
     ## Sync ##
     ##########
 
-    async def fetch_settings(self, keys: List[str]):
+    async def get_settings(self, keys: List[str]) -> Response[Settings]:
         path = "sync/settings/fetch"
         json = {"keys": keys}
         return await self.request("POST", path, json=json)
@@ -673,7 +711,7 @@ class HttpClient:
         path = "sync/settings/set"
         return await self.request("POST", path, json=settings)
 
-    async def fetch_unread(self):
+    async def get_unread(self) -> Response[Unreads]:
         path = "sync/unreads"
         return await self.request("GET", path)
 
