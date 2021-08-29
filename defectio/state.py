@@ -13,17 +13,41 @@ import copy
 from .raw_models import RawMessageDeleteEvent, RawMessageUpdateEvent
 
 if TYPE_CHECKING:
-    from .payloads import (
-        Channel as ChannelPayload,
-        Server as ServerPayload,
-        User as UserPayload,
-        MessageEventPayload,
-        ReadyPayload,
-    )
     from .http import HttpClient
     from .channel import TextChannel
     from . import abc
     from .websocket import WebsocketHandler
+    from defectio.types.websocket import (
+        Authenticated,
+        ChannelAck,
+        ChannelCreate,
+        ChannelDelete,
+        ChannelGroupJoin,
+        ChannelGroupLeave,
+        ChannelStartTyping,
+        ChannelStopTyping,
+        ChannelUpdate,
+        MessageDelete,
+        MessageUpdate,
+        Pong,
+        Ready,
+        ServerDelete,
+        ServerMemberJoin,
+        ServerMemberLeave,
+        ServerMemberUpdate,
+        ServerRoleDelete,
+        ServerRoleUpdate,
+        ServerUpdate,
+        UserRelationship,
+        UserUpdate,
+        Message as MessagePayload,
+    )
+
+    from .types.payloads import (
+        User as UserPayload,
+        Server as ServerPayload,
+        Channel as ChannelPayload,
+    )
 
 
 class ConnectionState:
@@ -66,16 +90,13 @@ class ConnectionState:
 
     # Parsers
 
-    def parse_authenticated(self, data):
-        self.dispatch("authenticated")
+    def parse_authenticated(self, data: Authenticated):
+        self.dispatch("authenticated", data)
 
-    def parse_userupdate(self, data):
-        self.dispatch("user_update")
+    def parse_pong(self, data: Pong):
+        self.dispatch("pong", data)
 
-    def parse_pong(self, data):
-        self.dispatch("pong")
-
-    def parse_ready(self, data: ReadyPayload) -> None:
+    def parse_ready(self, data: Ready) -> None:
         # if self._ready_task is not None:
         #     self._ready_task.cancel()
 
@@ -92,7 +113,7 @@ class ConnectionState:
         self.dispatch("ready")
         self.dispatch("connect")
 
-    def parse_message(self, data: MessageEventPayload) -> None:
+    def parse_message(self, data: MessagePayload) -> None:
         channel = self.get_channel(data["channel"])
         print(channel)
         message = Message(channel=channel, data=data, state=self)
@@ -100,7 +121,7 @@ class ConnectionState:
         if self._messages is not None:
             self._messages.append(message)
 
-    def parse_messageupdate(self, data):
+    def parse_messageupdate(self, data: MessageUpdate):
         raw = RawMessageUpdateEvent(data)
         message = self._get_message(raw.message_id)
         if message is not None:
@@ -112,7 +133,7 @@ class ConnectionState:
         else:
             self.dispatch("raw_message_edit", raw)
 
-    def parse_messagedelete(self, data):
+    def parse_messagedelete(self, data: MessageDelete):
         raw = RawMessageDeleteEvent(data)
         found = self._get_message(data["id"])
         raw.cached_message = found
@@ -121,60 +142,60 @@ class ConnectionState:
             self.dispatch("message_delete", found)
             self._messages.remove(found)
 
-    def parse_channelcreate(self, data):
-        self.dispatch("channel_create")
+    def parse_channelcreate(self, data: ChannelCreate):
+        self.dispatch("channel_create", data)
 
-    def parse_channelupdate(self, data):
+    def parse_channelupdate(self, data: ChannelUpdate):
         # self.add_channel(data)
         # self.users.get(data["id"]).online = True
-        self.dispatch("channel_update")
+        self.dispatch("channel_update", data)
 
-    def parse_channeldelete(self, data):
-        self.dispatch("channel_delete")
+    def parse_channeldelete(self, data: ChannelDelete):
+        self.dispatch("channel_delete", data)
 
-    def parse_channelgroupjoin(self, data):
-        self.dispatch("channel_group_join")
+    def parse_channelgroupjoin(self, data: ChannelGroupJoin):
+        self.dispatch("channel_group_join", data)
 
-    def parse_channelgroupleave(self, data):
-        self.dispatch("channel_group_leave")
+    def parse_channelgroupleave(self, data: ChannelGroupLeave):
+        self.dispatch("channel_group_leave", data)
 
-    def parse_channelstarttyping(self, data):
-        self.dispatch("channel_start_typing")
+    def parse_channelstarttyping(self, data: ChannelStartTyping):
+        self.dispatch("channel_start_typing", data)
 
-    def parse_channelstoptyping(self, data):
-        self.dispatch("channel_stop_typing")
+    def parse_channelstoptyping(self, data: ChannelStopTyping):
+        self.dispatch("channel_stop_typing", data)
 
-    def parse_channelack(self, data):
-        self.dispatch("channel_ack")
+    def parse_channelack(self, data: ChannelAck):
+        self.dispatch("channel_ack", data)
 
-    def parse_serverupdate(self, data):
+    def parse_serverupdate(self, data: ServerUpdate):
         # self.add_server(data)
-        self.dispatch("server_update")
+        self.dispatch("server_update", data)
 
-    def parse_serverdelete(self, data):
-        self.dispatch("server_delete")
+    def parse_serverdelete(self, data: ServerDelete):
+        self.dispatch("server_delete", data)
 
-    def parse_servermemberjoin(self, data):
-        self.dispatch("server_member_join")
+    def parse_servermemberjoin(self, data: ServerMemberJoin):
+        self.dispatch("server_member_join", data)
 
-    def parse_servermemberleave(self, data):
-        self.dispatch("server_member_leave")
+    def parse_servermemberleave(self, data: ServerMemberLeave):
+        self.dispatch("server_member_leave", data)
 
-    def parse_servermemberupdate(self, data):
-        self.dispatch("server_member_update")
+    def parse_servermemberupdate(self, data: ServerMemberUpdate):
+        self.dispatch("server_member_update", data)
 
-    def parse_serverroleupdate(self, data):
-        self.dispatch("server_role_update")
+    def parse_serverroleupdate(self, data: ServerRoleUpdate):
+        self.dispatch("server_role_update", data)
 
-    def parse_serverroledelete(self, data):
-        self.dispatch("server_role_delete")
+    def parse_serverroledelete(self, data: ServerRoleDelete):
+        self.dispatch("server_role_delete", data)
 
-    def parse_userupdate(self, data):
+    def parse_userupdate(self, data: UserUpdate):
         # self.add_user(data)
-        self.dispatch("user_update")
+        self.dispatch("user_update", data)
 
-    def parse_userrelationship(self, data):
-        self.dispatch("user_relationship")
+    def parse_userrelationship(self, data: UserRelationship):
+        self.dispatch("user_relationship", data)
 
     # Getters
 
@@ -196,7 +217,7 @@ class ConnectionState:
 
     # Setters
 
-    def add_user(self, payload: UserPayload) -> User:
+    def add_user(self, payload: UserPayloaad) -> User:
         user = self.create_user(data=payload)
         self.users[user.id] = user
         return user

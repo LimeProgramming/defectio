@@ -33,7 +33,7 @@ class WebsocketHandler:
         token: str,
         ws_url: str,
         client: Client,
-    ):
+    ) -> None:
         self.session = session
         self.token = token
         self.ws_url = ws_url
@@ -41,20 +41,20 @@ class WebsocketHandler:
         self._dispatch: Client.dispatch = client.dispatch
         self._discord_parsers = client._connection.parsers
 
-    async def send_payload(self, payload: Any):
+    async def send_payload(self, payload: Any) -> None:
         await self.websocket.send_str(json.dumps(payload).decode("utf-8"))
 
-    async def heartbeat(self):
+    async def heartbeat(self) -> None:
         while not self.websocket.closed:
             await self.ping()
             await asyncio.sleep(15)
 
-    async def send_authenticate(self):
+    async def send_authenticate(self) -> None:
         payload = {"type": "Authenticate", "token": self.token}
 
         await self.send_payload(payload)
 
-    async def start(self):
+    async def start(self) -> None:
         self.websocket = await self.session.ws_connect(self.ws_url)
 
         await self.send_authenticate()
@@ -65,7 +65,7 @@ class WebsocketHandler:
         async for msg in self.websocket:
             await self.received_message(msg)
 
-    async def received_message(self, msg: WSMessage):
+    async def received_message(self, msg: WSMessage) -> None:
         msg = json.loads(msg.data)
 
         logger.debug("WebSocket Event: %s", msg)
@@ -81,14 +81,14 @@ class WebsocketHandler:
         else:
             func(data)
 
-    async def begin_typing(self, channel: str):
+    async def begin_typing(self, channel: str) -> None:
         payload = {"type": "BeginTyping", "channel": channel}
         await self.send_payload(payload)
 
-    async def stop_typing(self, channel: str):
+    async def stop_typing(self, channel: str) -> None:
         payload = {"type": "StopTyping", "channel": channel}
         await self.send_payload(payload)
 
-    async def ping(self):
+    async def ping(self) -> None:
         payload = {"type": "Ping"}
         await self.send_payload(payload)
