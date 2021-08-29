@@ -18,7 +18,7 @@ async def on_ready():
 
 
 @client.event
-async def on_message(message: revolt.Message):
+async def on_message(message: defectio.Message):
     if message.author == client.user:
         return
     if message.content.startswith("$hello"):
