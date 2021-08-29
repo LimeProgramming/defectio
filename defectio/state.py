@@ -179,7 +179,7 @@ class ConnectionState:
     def get_user(self, id: str) -> Optional[User]:
         return self.users.get(id)
 
-    def get_channel(self, id: str) -> Optional[Channel]:
+    def get_channel(self, id: str) -> Optional[abc.Messageable]:
         return self.channels.get(id)
 
     def get_server(self, id: str) -> Optional[Server]:

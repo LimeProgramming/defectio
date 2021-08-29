@@ -46,7 +46,7 @@ class WebsocketHandler:
 
     async def heartbeat(self):
         while not self.websocket.closed:
-            await self.send_payload({"type": "Ping"})
+            await self.ping()
             await asyncio.sleep(15)
 
     async def send_authenticate(self):
@@ -80,3 +80,15 @@ class WebsocketHandler:
             logger.debug("Unknown event %s.", event)
         else:
             func(data)
+
+    async def begin_typing(self, channel: str):
+        payload = {"type": "BeginTyping", "channel": channel}
+        await self.send_payload(payload)
+
+    async def stop_typing(self, channel: str):
+        payload = {"type": "StopTyping", "channel": channel}
+        await self.send_payload(payload)
+
+    async def ping(self):
+        payload = {"type": "Ping"}
+        await self.send_payload(payload)
