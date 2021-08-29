@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "defectio"
-version = "0.1.0"
+version = "0.1.0a"
 description = ""
 authors = ["Leon Bowie <leon@bowie-co.nz>"]
 license = "LGPLv3-or-later"
