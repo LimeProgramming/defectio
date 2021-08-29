@@ -25,7 +25,7 @@ async def on_message(message: defectio.Message):
         await message.channel.send("Hello!")
 
 
-client.run("_WP6WoVbVk-ESWD1UplfoUUiS6LRZynwtdwwGtIDXlnils4lh2IEMyMF1mWYguNo")
+client.run("")
 ```
 
 ## Contribute
