@@ -129,7 +129,7 @@ class TextChannel(abc.Messageable):
 
 
 class VoiceChannel(Channel):
-    def __init__(self, data: ChannelPayload, state: ConnectionState):
+    def __init__(self, state: ConnectionState, server: Server, data: ChannelPayload):
         super().__init__(data, state)
 
 
