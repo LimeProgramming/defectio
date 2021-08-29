@@ -1,9 +1,25 @@
 [tool.poetry]
 name = "defectio"
 version = "0.1.0a"
-description = ""
+description = "Wrapper for Revolt API"
 authors = ["Leon Bowie <leon@bowie-co.nz>"]
-license = "LGPLv3-or-later"
+license = "MIT"
+documentation = "https://defectio.readthedocs.io"
+homepage = "https://github.com/Darkflame72/defectio"
+readme = "README.md"
+repository = "https://github.com/Darkflame72/defectio"
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Natural Language :: English",
+  "Framework :: AsyncIO",
+  "Operating System :: OS Independent",
+  "Topic :: Games/Entertainment",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Utilities",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
