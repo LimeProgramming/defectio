@@ -23,9 +23,11 @@ if TYPE_CHECKING:
     from .http import HttpClient
     from .channel import TextChannel
     from . import abc
+    from .websocket import WebsocketHandler
 
 
 class ConnectionState:
+    get_websocket: WebsocketHandler
     if TYPE_CHECKING:
         _parsers: Dict[str, Callable[[Dict[str, Any]], None]]
 

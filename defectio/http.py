@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .websocket import RevoltClientWebSocketResponse
+from .websocket import DefectioClientWebSocketResponse
 
 import sys
 
@@ -12,7 +12,7 @@ import aiohttp
 if TYPE_CHECKING:
     import aiohttp
 
-logger = logging.getLogger("revolt")
+logger = logging.getLogger("defectio")
 
 
 class HttpClient:

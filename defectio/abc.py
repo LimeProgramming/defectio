@@ -14,9 +14,9 @@ if TYPE_CHECKING:
 class User(Protocol):
     """An ABC that details the common operations on a Discord user.
     The following implement this ABC:
-    - :class:`~revolt.User`
-    - :class:`~revolt.ClientUser`
-    - :class:`~revolt.Member`
+    - :class:`~defectio.User`
+    - :class:`~defectio.ClientUser`
+    - :class:`~defectio.Member`
     Attributes
     -----------
     name: :class:`str`
@@ -246,6 +246,7 @@ class Messageable(Protocol):
         )
 
         ret = state.create_message(channel=channel, data=data)
+        await self.stop_typing()
         # if delete_after is not None:
         #     await ret.delete(delay=delete_after)
         return ret
@@ -275,3 +276,11 @@ class Messageable(Protocol):
         channel = await self._get_channel()
         data = await self._state.http.get_message(channel.id, id)
         return self._state.create_message(channel=channel, data=data)
+
+    async def start_typing(self):
+        channel = await self._get_channel()
+        await self._state.get_websocket().begin_typing(channel.id)
+
+    async def stop_typing(self):
+        channel = await self._get_channel()
+        await self._state.get_websocket().stop_typing(channel.id)

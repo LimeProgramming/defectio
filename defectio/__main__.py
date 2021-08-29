@@ -15,7 +15,7 @@ def main() -> None:
     py_ver = platform.python_version()
     py_compiler = platform.python_compiler()
 
-    sys.stderr.write(f"revolt.py {version}\n")
+    sys.stderr.write(f"defectio {version}\n")
     sys.stderr.write(f"located at {path}\n")
     sys.stderr.write(f"{py_impl} {py_ver} {py_compiler}\n")
     sys.stderr.write(

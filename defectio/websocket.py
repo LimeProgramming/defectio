@@ -18,10 +18,10 @@ if TYPE_CHECKING:
     import aiohttp
     from .client import Client
 
-logger = logging.getLogger("revolt")
+logger = logging.getLogger("defectio")
 
 
-class RevoltClientWebSocketResponse(aiohttp.ClientWebSocketResponse):
+class DefectioClientWebSocketResponse(aiohttp.ClientWebSocketResponse):
     async def close(self, *, code: int = 4000, message: bytes = b"") -> bool:
         return await super().close(code=code, message=message)
 

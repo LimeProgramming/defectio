@@ -37,7 +37,7 @@ from .http import HttpClient
 
 Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
 
-logger = logging.getLogger("revolt")
+logger = logging.getLogger("defectio")
 
 
 def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
@@ -107,7 +107,7 @@ class Client:
         self._connection: ConnectionState = self._get_state(**options)
         self._closed: bool = False
         self._ready: asyncio.Event = asyncio.Event()
-        self._connection._get_websocket = self._get_websocket
+        self._connection.get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
 
         # TODO remove it
@@ -133,7 +133,7 @@ class Client:
     @property
     def latency(self) -> float:
         """:class:`float`: Measures latency between a HEARTBEAT and a HEARTBEAT_ACK in seconds.
-        This could be referred to as the Revolt WebSocket protocol latency.
+        This could be referred to as the Defectio WebSocket protocol latency.
         """
         ws = self.websocket
         return float("nan") if not ws else ws.latency
@@ -188,7 +188,7 @@ class Client:
     ) -> asyncio.Task:
         wrapped = self._run_event(coro, event_name, *args, **kwargs)
         # Schedules the task
-        return asyncio.create_task(wrapped, name=f"revolt.py: {event_name}")
+        return asyncio.create_task(wrapped, name=f"defectio: {event_name}")
 
     def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
         logger.debug("Dispatching event %s", event)
@@ -365,7 +365,7 @@ class Client:
             The ID to search for.
         Returns
         --------
-        Optional[:class:`~revolt.User`]
+        Optional[:class:`~defectio.User`]
             The user or ``None`` if not found.
         """
         return self._connection.get_user(id)

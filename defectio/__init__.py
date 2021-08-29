@@ -2,14 +2,14 @@
 Revolt API Wrapper
 ~~~~~~~~~~~~~~~~~~~
 
-A basic wrapper for the Revolt API.
+A python wrapper for the Revolt API.
 
 :copyright: (c) 2021-present Darkflame72
 :license: MIT, see LICENSE for more details.
 
 """
 
-__title__ = "revolt"
+__title__ = "defectio"
 __author__ = "Darkflame72"
 __license__ = "MIT"
 __copyright__ = "Copyright 2021-present Darkflame72"
