@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from os import pread
 from .state import ConnectionState
 import logging
 from typing import (
@@ -89,7 +90,7 @@ class Client:
         self.http: DefectioHTTP
         self.session = kwargs.pop("session", None)
 
-        self._handlers: Dict[str, Callable] = {"ready", self._handle_ready}
+        self._handlers: Dict[str, Callable] = {"ready": self._handle_ready}
         self._listeners: Dict[
             str, List[Tuple[asyncio.Future, Callable[..., bool]]]
         ] = {}
@@ -102,6 +103,8 @@ class Client:
         return ConnectionState(
             dispatch=self.dispatch,
             handlers=self._handlers,
+            http=self.get_http,
+            websocket=self.get_websocket,
             loop=self.loop,
             **options,
         )
@@ -250,6 +253,20 @@ class Client:
         """Optional[:class:`.ClientUser`]: Represents the connected client. ``None`` if not logged in."""
         return self._connection.user
 
+    def get_http(self) -> DefectioHTTP:
+        return self.http
+
+    def get_websocket(self) -> DefectioWebsocket:
+        return self.websocket
+
+    #############
+    ## Getters ##
+    #############
+
+    def get_channel(self, channel_id: str):
+        channel = self._connection.get_channel(channel_id)
+        return channel
+
     ######################
     ## State Management ##
     ######################
@@ -283,6 +300,7 @@ class Client:
         self._closed = False
 
     async def login(self, token: str) -> None:
+        self.http.login(token)
         await self.websocket.connect(token)
 
     async def start(self, token: str):

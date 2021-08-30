@@ -1,4 +1,6 @@
 from __future__ import annotations
+from defectio.gateway import DefectioWebsocket
+from defectio.http import DefectioHTTP
 
 from typing import Dict, List, Deque, Optional, TYPE_CHECKING, Any, Callable, Union
 from collections import deque
@@ -54,9 +56,13 @@ class ConnectionState:
         self,
         dispatch: Callable,
         handlers: Dict[str, Callable],
+        http: Callable[..., DefectioHTTP],
+        websocket: Callable[..., DefectioWebsocket],
         loop: asyncio.AbstractEventLoop,
         **options: Any,
     ):
+        self.get_http = http
+        self.get_websocket = websocket
         self.handlers: Dict[str, Callable] = handlers
         self.dispatch: Callable = dispatch
         self.max_messages: Optional[int] = options.get("max_messages", 1000)
@@ -73,6 +79,14 @@ class ConnectionState:
         for attr, func in inspect.getmembers(self):
             if attr.startswith("parse_"):
                 self.parsers[attr[6:]] = func
+
+    @property
+    def http(self) -> DefectioHTTP:
+        return self.get_http()
+
+    @property
+    def websocket(self) -> DefectioWebsocket:
+        return self.get_websocket()
 
     def call_handlers(self, key: str, *args: Any, **kwargs: Any) -> None:
         try:
@@ -108,12 +122,12 @@ class ConnectionState:
         for member in data["members"]:
             self.add_member(member["_id"])
 
+        self.call_handlers("ready")
         self.dispatch("ready")
         self.dispatch("connect")
 
     def parse_message(self, data: MessagePayload) -> None:
         channel = self.get_channel(data["channel"])
-        print(channel)
         message = Message(channel=channel, data=data, state=self)
         self.dispatch("message", message)
         if self._messages is not None:

@@ -87,6 +87,9 @@ class DefectioHTTP:
                 logger.debug("%s %s has received %s", method, url, data)
                 return data
 
+    def login(self, token: str) -> None:
+        self.token = token
+
     async def close(self) -> None:
         if self._session:
             await self._session.close()
@@ -122,7 +125,7 @@ class DefectioHTTP:
         kwargs["email"] = email
         return await self.request("POST", path, json=kwargs, auth_needed=False)
 
-    async def login(self, email: str, password: str, **kwargs) -> Login:
+    async def user_login(self, email: str, password: str, **kwargs) -> Login:
         path = "auth/login"
         kwargs["email"] = email
         kwargs["password"] = password

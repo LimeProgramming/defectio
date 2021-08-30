@@ -246,7 +246,6 @@ class Messageable(Protocol):
         )
 
         ret = state.create_message(channel=channel, data=data)
-        await self.stop_typing()
         # if delete_after is not None:
         #     await ret.delete(delay=delete_after)
         return ret
@@ -279,8 +278,8 @@ class Messageable(Protocol):
 
     async def start_typing(self):
         channel = await self._get_channel()
-        await self._state.get_websocket().begin_typing(channel.id)
+        await self._state.websocket.begin_typing(channel.id)
 
     async def stop_typing(self):
         channel = await self._get_channel()
-        await self._state.get_websocket().stop_typing(channel.id)
+        await self._state.websocket.stop_typing(channel.id)
