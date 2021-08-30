@@ -88,7 +88,6 @@ class DefectioHTTP:
             kwargs["json"]["nonce"] = ulid.new().str
 
         async with self._session.request(method, url, **kwargs) as response:
-            # data = await response.json()
             data = await response.text()
             if data != "":
                 data = json.loads(data)

@@ -10,6 +10,7 @@ from .mixins import Hashable
 if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.payloads import MessagePayload
+    from ..types.websocket import MessageUpdate
     from .channel import TextChannel
     from .user import User
 
@@ -26,7 +27,7 @@ class Message(Hashable):
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
-        return f"<{name} id={self.id} channel={self.channel!r} type={self.type!r} author={self.author!r}"
+        return f"<{name} id={self.id} channel={self.channel!r} author={self.author!r}"
 
     @property
     def server(self) -> str:
@@ -54,3 +55,7 @@ class Message(Hashable):
         message = Message(state=self._state, channel=self.channel, data=data)
 
         return message
+
+    def _update(self, data: MessageUpdate) -> None:
+        if "content" in data["data"]:
+            self.content = data.get("data").get("content")

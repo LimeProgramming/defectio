@@ -142,7 +142,7 @@ class ConnectionState:
 
     def parse_messageupdate(self, data: MessageUpdate):
         raw = RawMessageUpdateEvent(data)
-        message = self._get_message(raw.message_id)
+        message = self.get_message(raw.message_id)
         if message is not None:
             older_message = copy.copy(message)
             raw.cached_message = older_message
