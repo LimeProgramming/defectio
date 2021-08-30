@@ -40,18 +40,13 @@ class DefectioWebsocket:
     async def send_payload(self, payload: Any) -> None:
         await self.websocket.send_str(json.dumps(payload).decode("utf-8"))
 
-    async def heartbeat(self) -> None:
-        while not self.websocket.closed:
-            await self.ping()
-            await asyncio.sleep(15)
-
     async def wait_for_auth(self) -> bool:
-        async for msg in self.websocket:
-            if msg.type == aiohttp.WSMsgType.TEXT:
-                payload = json.loads(msg.data)
-                if payload.get("type") == "Authenticated":
-                    return True
-            return False
+        auth_event = await self.websocket.receive()
+        if auth_event.type == aiohttp.WSMsgType.TEXT:
+            payload = json.loads(auth_event.data)
+            if payload.get("type") == "Authenticated":
+                return True
+        return False
 
     async def send_authenticate(self) -> None:
         payload = {"type": "Authenticate", "token": self.token}
@@ -78,14 +73,13 @@ class DefectioWebsocket:
             },
             "compress": 0,
         }
-        self.websocket = await self.session.ws_connect(self.ws_url, **kwargs)
+        self.websocket = await self.session.ws_connect(
+            self.ws_url, heartbeat=15, **kwargs
+        )
 
         logger.debug("Websocket connected to %s", self.ws_url)
 
         await self.send_authenticate()
-
-        # Keep alive every 15 seconds
-        asyncio.create_task(self.heartbeat())
 
         async for msg in self.websocket:
             await self.received_message(msg)
