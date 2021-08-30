@@ -71,7 +71,6 @@ class DefectioHTTP:
                 raise Exception("Not authenticated")
         if "json" in kwargs:
             headers["Content-Type"] = "application/json"
-            # kwargs["data"] = utils._to_json(kwargs.pop("json"))
         kwargs["headers"] = headers
 
         response: Optional[aiohttp.ClientResponse] = None

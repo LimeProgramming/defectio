@@ -145,7 +145,7 @@ Embed = TypedDict("Embed", {"type": str})
 
 class Message(TypedDict):
     _id: str
-    nonce: str
+    nonce: Optional[str]
     channel: str
     author: str
     content: Content
@@ -232,7 +232,7 @@ class Banner(TypedDict):
 
 class Server(TypedDict):
     _id: str
-    nonce: str
+    nonce: Optional[str]
     owner: str
     name: str
     description: Optional[str]
@@ -249,7 +249,7 @@ class Channel(TypedDict):
     type: ChannelType
     name: str
     description: str
-    nonce: str
+    nonce: Optional[str]
 
 
 class Member(TypedDict):

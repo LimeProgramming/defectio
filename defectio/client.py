@@ -19,6 +19,8 @@ import sys
 import traceback
 from .http import DefectioHTTP
 
+from .models import User
+
 import aiohttp
 
 from .gateway import DefectioWebsocket
@@ -94,7 +96,6 @@ class Client:
 
         self._ready = asyncio.Event()
         self._closed = True
-        self.session = aiohttp.ClientSession()
         self._connection: ConnectionState = self._get_state(**kwargs)
 
     def _get_state(self, **options: Any) -> ConnectionState:
@@ -240,12 +241,21 @@ class Client:
         logger.debug("%s has successfully been registered as an event", coro.__name__)
         return coro
 
+    ################
+    ## Properties ##
+    ################
+
+    @property
+    def user(self) -> Optional[User]:
+        """Optional[:class:`.ClientUser`]: Represents the connected client. ``None`` if not logged in."""
+        return self._connection.user
+
     ######################
     ## State Management ##
     ######################
 
     def is_closed(self):
-        return not self.websocket.open and self.session.closed
+        return self.websocket.closed and self.session.closed
 
     async def close(self) -> None:
         if self._closed:
@@ -255,7 +265,7 @@ class Client:
         if self.websocket is not None:
             await self.websocket.close()
 
-        if self.session:
+        if self.session is not None:
             await self.session.close()
 
     async def create(self) -> None:
