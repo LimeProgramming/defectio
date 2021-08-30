@@ -4,10 +4,23 @@ from typing import TYPE_CHECKING, Dict, List
 from .mixins import Hashable
 
 if TYPE_CHECKING:
-    from ..types.payloads import Server as ServerPayload, Channel
+    from ..types.payloads import Server as ServerPayload, Channel, CategoryPayload
     from ..state import ConnectionState
     from ..types.websocket import ServerUpdate
     from .member import Member
+
+
+class Category(Hashable):
+    def __init__(self, data: CategoryPayload, state: ConnectionState) -> None:
+        self._state = state
+        self.channels = []
+        self._from_data(data)
+
+    def _from_data(self, data: CategoryPayload) -> None:
+        self.id = data.get("id")
+        self.title = data.get("title")
+        for channel in data.get("channels", []):
+            self.channels.append(self._state.get_channel(channel))
 
 
 class Server(Hashable):
@@ -25,12 +38,17 @@ class Server(Hashable):
         self.description = server.get("description")
         self.channel_ids = server.get("channels")
         self.member_ids = server.get("members")
-        self.categories = server.get("categories")
+        for category in server.get("categories", []):
+            self.add_category(category)
         self.roles = server.get("roles")
         self.icon = server.get("icon")
         self.banner = server.get("banner")
         self.default_permissions = server.get("default_permissions")
         self.system_message = server.get("system_message")
+
+    def add_category(self, payload: CategoryPayload) -> None:
+        category = Category(payload, self._state)
+        self.categories.append(category)
 
     def __str__(self) -> str:
         return self.name
