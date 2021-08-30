@@ -42,4 +42,4 @@ These pages go into great detail about everything the API can do.
   :maxdepth: 1
 
   api
-  discord.ext.tasks API Reference <ext/tasks/index.rst>
+  defectio.ext.tasks API Reference <ext/tasks/index.rst>
