@@ -167,8 +167,7 @@ def docs(session: Session) -> None:
     args = session.posargs or ["--open-browser", "docs", "docs/_build"]
     session.install(".")
     session.install(
-        "sphinx",
-        "sphinx-autobuild",
+        "sphinx", "sphinx-autobuild", "sphinxcontrib_trio", "sphinx-rtd-theme"
     )
 
     build_dir = Path("docs", "_build")
