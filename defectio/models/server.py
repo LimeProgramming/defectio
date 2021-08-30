@@ -7,11 +7,39 @@ from typing import TYPE_CHECKING
 from .mixins import Hashable
 
 if TYPE_CHECKING:
-    from ..types.payloads import Server as ServerPayload, CategoryPayload
+    from ..types.payloads import (
+        Server as ServerPayload,
+        CategoryPayload,
+        SystemMessagePayload,
+    )
     from ..state import ConnectionState
     from ..types.websocket import ServerUpdate
     from .member import Member
     from .channel import MessageableChannel
+
+
+class SystemMessages:
+    def __init__(
+        self, data: SystemMessagePayload, server: Server, state: ConnectionState
+    ) -> None:
+        self._state = state
+        self.server = server
+        self.user_joined = state.get_channel(data.get("user_joined"))
+        self.user_left = state.get_channel(data.get("user_left"))
+        self.user_kicked = state.get_channel(data.get("user_kicked"))
+        self.user_banned = state.get_channel(data.get("user_banned"))
+
+    def __repr__(self) -> str:
+        return (
+            f"<SystemMessages server={self.server.id} "
+            f"user_joined={self.user_joined} "
+            f"user_left={self.user_left} "
+            f"user_kicked={self.user_kicked} "
+            f"user_banned={self.user_banned}>"
+        )
+
+    def __str__(self) -> str:
+        return self.__repr__()
 
 
 class Category(Hashable):
@@ -48,7 +76,9 @@ class Server(Hashable):
         self.icon = server.get("icon")
         self.banner = server.get("banner")
         self.default_permissions = server.get("default_permissions")
-        self.system_message = server.get("system_message")
+        self.system_message = SystemMessages(  # weird ordering since servers are loaded before channels so on caching default to None # TODO
+            server.get("system_messages"), self, self._state
+        )
 
     def add_category(self, payload: CategoryPayload) -> None:
         category = Category(payload, self._state)
