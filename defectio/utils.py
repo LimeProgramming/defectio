@@ -16,10 +16,25 @@ from typing import (
     Callable,
     Iterable,
 )
+import datetime
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 _Iter = Union[Iterator[T], AsyncIterator[T]]
+
+
+class _MissingSentinel:
+    def __eq__(self, other):
+        return False
+
+    def __bool__(self):
+        return False
+
+    def __repr__(self):
+        return "..."
+
+
+MISSING: Any = _MissingSentinel()
 
 
 class SequenceProxy(Generic[T_co], collections.abc.Sequence):
@@ -70,3 +85,10 @@ def find(predicate: Callable[[T], Any], seq: Iterable[T]) -> Optional[T]:
         if predicate(element):
             return element
     return None
+
+
+def compute_timedelta(dt: datetime.datetime):
+    if dt.tzinfo is None:
+        dt = dt.astimezone()
+    now = datetime.datetime.now(datetime.timezone.utc)
+    return max((dt - now).total_seconds(), 0)
