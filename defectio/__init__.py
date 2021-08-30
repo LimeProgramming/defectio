@@ -21,7 +21,7 @@ import logging
 from typing import NamedTuple, Literal
 
 from .client import Client
-from .message import Message
+from .models import Message, User, Server, Member
 
 __all__ = (
     "__title__",
@@ -31,6 +31,9 @@ __all__ = (
     "__version__",
     "Client",
     "Message",
+    "User",
+    "Server",
+    "Member",
 )
 
 

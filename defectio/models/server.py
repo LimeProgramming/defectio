@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING, Dict, List
 from .mixins import Hashable
 
 if TYPE_CHECKING:
-    from .types.payloads import Server as ServerPayload, Channel
-    from .state import ConnectionState
-    from .types.websocket import ServerUpdate
+    from ..types.payloads import Server as ServerPayload, Channel
+    from ..state import ConnectionState
+    from ..types.websocket import ServerUpdate
     from .member import Member
 
 

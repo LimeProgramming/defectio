@@ -6,8 +6,8 @@ from .mixins import Hashable
 from .message import Message
 
 if TYPE_CHECKING:
-    from .payloads import Channel as ChannelPayload
-    from .state import ConnectionState
+    from ..types.payloads import Channel as ChannelPayload
+    from ..state import ConnectionState
     from .server import Server
 
 __all__ = (

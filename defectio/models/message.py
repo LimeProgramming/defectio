@@ -7,8 +7,8 @@ from .mixins import Hashable
 
 
 if TYPE_CHECKING:
-    from .state import ConnectionState
-    from .payloads import MessageEventPayload
+    from ..state import ConnectionState
+    from ..types.payloads import MessageEventPayload
     from .abc import Messageable as Channel
 
 

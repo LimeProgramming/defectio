@@ -1,25 +1,19 @@
 from __future__ import annotations
 
-from .server import Server
 from typing import Dict, List, Deque, Optional, TYPE_CHECKING, Any, Callable, Union
 from collections import deque
 import asyncio
 import inspect
-from .message import Message
-from .member import Member
-from .channel import TextChannel, channel_factory
-from .user import User
+from .models import Message, Member, User, Server, TextChannel, channel_factory
 from . import utils
 import copy
 import logging
-from .raw_models import RawMessageDeleteEvent, RawMessageUpdateEvent
+
+from .models.raw_models import RawMessageDeleteEvent, RawMessageUpdateEvent
 
 if TYPE_CHECKING:
-    from .http import HttpClient
-    from .channel import TextChannel
     from . import abc
-    from .websocket import WebsocketHandler
-    from defectio.types.websocket import (
+    from .types.websocket import (
         Authenticated,
         ChannelAck,
         ChannelCreate,
@@ -56,21 +50,15 @@ logger = logging.getLogger("defectio")
 
 
 class ConnectionState:
-    get_websocket: WebsocketHandler
-    if TYPE_CHECKING:
-        _parsers: Dict[str, Callable[[Dict[str, Any]], None]]
-
     def __init__(
         self,
         dispatch: Callable,
         handlers: Dict[str, Callable],
-        http: HttpClient,
         loop: asyncio.AbstractEventLoop,
         **options: Any,
     ):
         self.handlers: Dict[str, Callable] = handlers
         self.dispatch: Callable = dispatch
-        self.http: HttpClient = http
         self.max_messages: Optional[int] = options.get("max_messages", 1000)
         self.loop: asyncio.AbstractEventLoop = loop
         self.servers: Dict[str, Server] = {}
@@ -81,10 +69,10 @@ class ConnectionState:
 
         self._messages: Optional[List[Message]] = deque(maxlen=self.max_messages)
 
-        self.parsers = parsers = {}
+        self.parsers: Dict[str, Callable[[Dict[str, Any]], None]] = {}
         for attr, func in inspect.getmembers(self):
             if attr.startswith("parse_"):
-                parsers[attr[6:]] = func
+                self.parsers[attr[6:]] = func
 
     def call_handlers(self, key: str, *args: Any, **kwargs: Any) -> None:
         try:

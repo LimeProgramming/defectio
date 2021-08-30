@@ -3,15 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal, Optional, Set, List
 
 if TYPE_CHECKING:
-    # from .types.raw_models import (
-    #     MessageDeleteEvent,
-    #     BulkMessageDeleteEvent,
-    #     ReactionActionEvent,
-    #     MessageUpdateEvent,
-    #     ReactionClearEvent,
-    #     ReactionClearEmojiEvent,
-    #     IntegrationDeleteEvent,
-    # )
     from .message import Message
 
 

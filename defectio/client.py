@@ -1,39 +1,33 @@
 from __future__ import annotations
 
 import asyncio
-from .user import User
-from .message import Message
-from .server import Server
-import sys
-import traceback
-from .http import HttpClient
-import aiohttp
+from .state import ConnectionState
+import logging
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
-    Sequence,
+    Dict,
+    Optional,
     TypeVar,
     Coroutine,
-    TYPE_CHECKING,
-    Optional,
-    Dict,
     List,
     Tuple,
 )
-import logging
-
-from .websocket import WebsocketHandler
-from .utils import SequenceProxy
 import signal
-import msgpack
+import sys
+import traceback
+from .http import DefectioHTTP
 
-try:
-    import orjson as json
-except ImportError:
-    import json
+import aiohttp
 
-from .state import ConnectionState
-from .http import HttpClient
+from .gateway import DefectioWebsocket
+from . import __version__
+
+if TYPE_CHECKING:
+    pass
+
+__all__ = ("Client",)
 
 Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
 
@@ -79,88 +73,40 @@ class Client:
     def __init__(
         self,
         *,
-        api_url: str = "https://api.revolt.chat",
+        api_url: Optional[str] = "https://api.revolt.chat",
         loop: Optional[asyncio.AbstractEventLoop] = None,
-        **options: Any,
-    ):
-        self.websocket: WebsocketHandler
-        self.api_url = api_url
+        **kwargs: Any,
+    ) -> None:
+
+        self.api_url: str = api_url
         self.loop: asyncio.AbstractEventLoop = (
             asyncio.get_event_loop() if loop is None else loop
         )
 
-        connector: Optional[aiohttp.BaseConnector] = options.pop("connector", None)
-        # proxy: Optional[str] = options.pop("proxy", None)
-        # proxy_auth: Optional[aiohttp.BasicAuth] = options.pop("proxy_auth", None)
-        # unsync_clock: bool = options.pop("assume_unsync_clock", True)
-        self.http: HttpClient = HttpClient(
-            session=connector,
-            api_url=self.api_url,
-        )
+        self.websocket: DefectioWebsocket
+        self.http: DefectioHTTP
+        self.session = kwargs.pop("session", None)
 
-        self._handlers: Dict[str, Callable] = {"ready": self._handle_ready}
+        self._handlers: Dict[str, Callable] = {"ready", self._handle_ready}
         self._listeners: Dict[
             str, List[Tuple[asyncio.Future, Callable[..., bool]]]
         ] = {}
 
-        self._enable_debug_events: bool = options.pop("enable_debug_events", False)
-        self._connection: ConnectionState = self._get_state(**options)
-        self._closed: bool = False
-        self._ready: asyncio.Event = asyncio.Event()
-        self._connection.get_websocket = self._get_websocket
-        self._connection._get_client = lambda: self
-
-        # TODO remove it
+        self._ready = asyncio.Event()
+        self._closed = True
         self.session = aiohttp.ClientSession()
-
-    # internals
-
-    def _get_websocket(self) -> WebsocketHandler:
-        return self.websocket
+        self._connection: ConnectionState = self._get_state(**kwargs)
 
     def _get_state(self, **options: Any) -> ConnectionState:
         return ConnectionState(
             dispatch=self.dispatch,
             handlers=self._handlers,
-            http=self.http,
             loop=self.loop,
             **options,
         )
 
     def _handle_ready(self) -> None:
         self._ready.set()
-
-    @property
-    def latency(self) -> float:
-        """:class:`float`: Measures latency between a HEARTBEAT and a HEARTBEAT_ACK in seconds.
-        This could be referred to as the Defectio WebSocket protocol latency.
-        """
-        ws = self.websocket
-        return float("nan") if not ws else ws.latency
-
-    # @property
-    # def user(self) -> Optional[ClientUser]:
-    #     """Optional[:class:`.ClientUser`]: Represents the connected client. ``None`` if not logged in."""
-    #     return self._connection.user
-
-    @property
-    def servers(self) -> List[Server]:
-        """List[:class:`.Server`]: The servers that the connected client is a member of."""
-        return self._connection.servers
-
-    # @property
-    # def cached_messages(self) -> Sequence[Message]:
-    #     """Sequence[:class:`.Message`]: Read-only list of messages the connected client has cached."""
-    #     return utils.SequenceProxy(self._connection._messages or [])
-
-    # @property
-    # def private_channels(self) -> List[PrivateChannel]:
-    #     """List[:class:`.abc.PrivateChannel`]: The private channels that the connected client is participating on."""
-    #     return self._connection.private_channels
-
-    def is_ready(self) -> bool:
-        """:class:`bool`: Specifies if the client's internal cache is ready for use."""
-        return self._ready.is_set()
 
     async def _run_event(
         self,
@@ -238,173 +184,6 @@ class Client:
         print(f"Ignoring exception in {event_method}", file=sys.stderr)
         traceback.print_exc()
 
-    # login state management
-
-    async def start(self, token: str) -> None:
-        """|coro|
-
-        A shorthand coroutine for :meth:`login` + :meth:`connect`.
-
-        Raises
-        -------
-        TypeError
-            An unexpected keyword argument was received.
-        """
-
-        async with self.session.get(self.api_url) as resp:
-            api_info = json.loads(await resp.text())
-
-        self.api_info = api_info
-        self.websocket = WebsocketHandler(
-            self.session, token, api_info["ws"], client=self
-        )
-        self.http.token = token
-        # self.http = HttpClient(self.session, self.token, self.api_url, self.api_info)
-
-        await self.websocket.start()
-
-    def run(self, *args: Any, **kwargs: Any) -> None:
-        """A blocking call that abstracts away the event loop
-        initialisation from you.
-
-        If you want more control over the event loop then this
-        function should not be used. Use :meth:`start` coroutine
-        or :meth:`connect` + :meth:`login`.
-
-        Roughly Equivalent to: ::
-
-            try:
-                loop.run_until_complete(start(*args, **kwargs))
-            except KeyboardInterrupt:
-                loop.run_until_complete(close())
-                # cancel all tasks lingering
-            finally:
-                loop.close()
-
-        .. warning::
-
-            This function must be the last function to call due to the fact that it
-            is blocking. That means that registration of events or anything being
-            called after this function call will not execute until it returns.
-        """
-        loop = self.loop
-
-        try:
-            loop.add_signal_handler(signal.SIGINT, lambda: loop.stop())
-            loop.add_signal_handler(signal.SIGTERM, lambda: loop.stop())
-        except NotImplementedError:
-            pass
-
-        async def runner():
-            try:
-                await self.start(*args, **kwargs)
-            finally:
-                if not self.is_closed():
-                    await self.close()
-                pass
-
-        def stop_loop_on_completion(f):
-            loop.stop()
-
-        future = asyncio.ensure_future(runner(), loop=loop)
-        future.add_done_callback(stop_loop_on_completion)
-        try:
-            loop.run_forever()
-        except KeyboardInterrupt:
-            logger.info("Received signal to terminate bot and event loop.")
-        finally:
-            future.remove_done_callback(stop_loop_on_completion)
-            logger.info("Cleaning up tasks.")
-
-        if not future.cancelled():
-            try:
-                return future.result()
-            except KeyboardInterrupt:
-                return None
-
-    # helpers/getters
-
-    @property
-    def users(self) -> List[User]:
-        """List[:class:`~discord.User`]: Returns a list of all the users the bot can see."""
-        return list(self._connection._users.values())
-
-    # def get_channel(
-    #     self, id: int, /
-    # ) -> Optional[Union[GuildChannel, Thread, PrivateChannel]]:
-    #     """Returns a channel or thread with the given ID.
-    #     Parameters
-    #     -----------
-    #     id: :class:`int`
-    #         The ID to search for.
-    #     Returns
-    #     --------
-    #     Optional[Union[:class:`.abc.GuildChannel`, :class:`.Thread`, :class:`.abc.PrivateChannel`]]
-    #         The returned channel or ``None`` if not found.
-    #     """
-    #     return self._connection.get_channel(id)
-
-    def get_server(self, id: str, /) -> Optional[Server]:
-        """Returns a serverr with the given ID.
-        Parameters
-        -----------
-        id: :class:`str`
-            The ID to search for.
-        Returns
-        --------
-        Optional[:class:`.Server`]
-            The guild or ``None`` if not found.
-        """
-        return self._connection._get_server(id)
-
-    def get_user(self, id: str) -> Optional[User]:
-        """Returns a user with the given ID.
-        Parameters
-        -----------
-        id: :class:`str`
-            The ID to search for.
-        Returns
-        --------
-        Optional[:class:`~defectio.User`]
-            The user or ``None`` if not found.
-        """
-        return self._connection.get_user(id)
-
-    # def get_all_channels(self) -> Generator[GuildChannel, None, None]:
-    #     """A generator that retrieves every :class:`.abc.GuildChannel` the client can 'access'.
-    #     This is equivalent to: ::
-    #         for guild in client.guilds:
-    #             for channel in guild.channels:
-    #                 yield channel
-    #     .. note::
-    #         Just because you receive a :class:`.abc.GuildChannel` does not mean that
-    #         you can communicate in said channel. :meth:`.abc.GuildChannel.permissions_for` should
-    #         be used for that.
-    #     Yields
-    #     ------
-    #     :class:`.abc.GuildChannel`
-    #         A channel the client can 'access'.
-    #     """
-
-    #     for guild in self.guilds:
-    #         yield from guild.channels
-
-    # def get_all_members(self) -> Generator[Member, None, None]:
-    #     """Returns a generator with every :class:`.Member` the client can see.
-    #     This is equivalent to: ::
-    #         for guild in client.guilds:
-    #             for member in guild.members:
-    #                 yield member
-    #     Yields
-    #     ------
-    #     :class:`.Member`
-    #         A member the client can see.
-    #     """
-    #     for guild in self.guilds:
-    #         yield from guild.members
-
-    # listeners/waiters
-
     async def wait_until_ready(self) -> None:
         """|coro|
         Waits until the client's internal cache is all ready.
@@ -418,55 +197,6 @@ class Client:
         check: Optional[Callable[..., bool]] = None,
         timeout: Optional[float] = None,
     ) -> Any:
-        """|coro|
-        Waits for a WebSocket event to be dispatched.
-        This could be used to wait for a user to reply to a message,
-        or to react to a message, or to edit a message in a self-contained
-        way.
-        The ``timeout`` parameter is passed onto :func:`asyncio.wait_for`. By default,
-        it does not timeout. Note that this does propagate the
-        :exc:`asyncio.TimeoutError` for you in case of timeout and is provided for
-        ease of use.
-        In case the event returns multiple arguments, a :class:`tuple` containing those
-        arguments is returned instead. Please check the
-        :ref:`documentation <discord-api-events>` for a list of events and their
-        parameters.
-        This function returns the **first event that meets the requirements**.
-        Examples
-        ---------
-        Waiting for a user reply: ::
-            @client.event
-            async def on_message(message):
-                if message.content.startswith('$greet'):
-                    channel = message.channel
-                    await channel.send('Say hello!')
-                    def check(m):
-                        return m.content == 'hello' and m.channel == channel
-                    msg = await client.wait_for('message', check=check)
-                    await channel.send(f'Hello {msg.author}!')
-        Parameters
-        ------------
-        event: :class:`str`
-            The event name, similar to the :ref:`event reference <discord-api-events>`,
-            but without the ``on_`` prefix, to wait for.
-        check: Optional[Callable[..., :class:`bool`]]
-            A predicate to check what to wait for. The arguments must meet the
-            parameters of the event being waited for.
-        timeout: Optional[:class:`float`]
-            The number of seconds to wait before timing out and raising
-            :exc:`asyncio.TimeoutError`.
-        Raises
-        -------
-        asyncio.TimeoutError
-            If a timeout is provided and it was reached.
-        Returns
-        --------
-        Any
-            Returns no arguments, a single argument, or a :class:`tuple` of multiple
-            arguments that mirrors the parameters passed in the
-            :ref:`event reference <discord-api-events>`.
-        """
-
         future = self.loop.create_future()
         if check is None:
 
@@ -510,7 +240,73 @@ class Client:
         logger.debug("%s has successfully been registered as an event", coro.__name__)
         return coro
 
-    @property
-    def user(self) -> Optional[User]:
-        """Optional[:class:`.ClientUser`]: Represents the connected client. ``None`` if not logged in."""
-        return self._connection.user
+    ######################
+    ## State Management ##
+    ######################
+
+    def is_closed(self):
+        return not self.websocket.open and self.session.closed
+
+    async def close(self) -> None:
+        if self._closed:
+            return
+
+        self._closed = True
+        if self.websocket is not None:
+            await self.websocket.close()
+
+        if self.session:
+            await self.session.close()
+
+    async def create(self) -> None:
+        user_agent = "Defectio (https://github.com/Darkflame72/defectio {0}) Python/{1[0]}.{1[1]} aiohttp/{2}".format(
+            __version__, sys.version_info, aiohttp.__version__
+        )
+        self.session = aiohttp.ClientSession()
+        self.http = DefectioHTTP(self.session, self.api_url, user_agent)
+        api_info = await self.http.node_info()
+        self.websocket = DefectioWebsocket(
+            self.session, api_info["ws"], user_agent, self
+        )
+
+    async def connect(self) -> None:
+        self._closed = False
+
+    async def login(self, token: str) -> None:
+        await self.websocket.connect(token)
+
+    async def start(self, token: str):
+        await self.create()
+        await self.login(token)
+        await self.connect()
+
+    def run(self, *args: Any, **kwargs: Any) -> None:
+        loop = self.loop
+
+        try:
+            loop.add_signal_handler(signal.SIGINT, loop.stop)
+            loop.add_signal_handler(signal.SIGTERM, loop.stop)
+        except NotImplementedError:
+            pass
+
+        async def runner() -> None:
+            try:
+                await self.start(*args, **kwargs)
+            finally:
+                if not self.is_closed():
+                    await self.close()
+
+        def stop_loop_on_completion(f):
+            loop.stop()
+
+        future = asyncio.ensure_future(runner(), loop=loop)
+        future.add_done_callback(stop_loop_on_completion)
+
+        try:
+            loop.run_forever()
+        except KeyboardInterrupt:
+            logger.info("Received signal to terminate bot and event loop.")
+        finally:
+            future.remove_done_callback(stop_loop_on_completion)
+            logger.info("Cleaning up tasks.")
+            _cleanup_loop(loop)

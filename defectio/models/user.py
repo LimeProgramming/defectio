@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
+from .mixins import Hashable
 
 if TYPE_CHECKING:
-    from .state import ConnectionState
-    from .payloads import User as UserPayload
+    from ..state import ConnectionState
+    from ..types.payloads import User as UserPayload
 
 
-class User:
+class User(Hashable):
     def __init__(self, data: UserPayload, state: ConnectionState):
         self.state = state
         self.id = data["_id"]
