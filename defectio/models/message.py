@@ -1,9 +1,12 @@
 from __future__ import annotations
-from defectio.models.user import PartialUser
-from .abc import Messageable
-import asyncio
 
-from typing import TYPE_CHECKING, Optional
+import asyncio
+from typing import Optional
+from typing import TYPE_CHECKING
+
+from defectio.models.user import PartialUser
+
+from .abc import Messageable
 from .mixins import Hashable
 
 

@@ -1,31 +1,28 @@
 from __future__ import annotations
 
 import asyncio
-from os import pread
-from .state import ConnectionState
 import logging
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Optional,
-    TypeVar,
-    Coroutine,
-    List,
-    Tuple,
-)
 import signal
 import sys
 import traceback
-from .http import DefectioHTTP
-
-from .models import User
+from os import pread
+from typing import Any
+from typing import Callable
+from typing import Coroutine
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import TYPE_CHECKING
+from typing import TypeVar
 
 import aiohttp
 
-from .gateway import DefectioWebsocket
 from . import __version__
+from .gateway import DefectioWebsocket
+from .http import DefectioHTTP
+from .models import User
+from .state import ConnectionState
 
 if TYPE_CHECKING:
     pass

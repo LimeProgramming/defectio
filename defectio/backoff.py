@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-
-import time
 import random
-from typing import Callable, Generic, Literal, TypeVar, overload, Union
+import time
+from typing import Callable
+from typing import Generic
+from typing import Literal
+from typing import overload
+from typing import TypeVar
+from typing import Union
 
 T = TypeVar("T", bool, Literal[True], Literal[False])
 

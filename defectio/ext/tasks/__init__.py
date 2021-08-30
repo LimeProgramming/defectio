@@ -2,25 +2,22 @@ from __future__ import annotations
 
 import asyncio
 import datetime
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Generic,
-    List,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
-)
-
-import aiohttp
-import defectio
 import inspect
 import sys
 import traceback
-
 from collections.abc import Sequence
+from typing import Any
+from typing import Awaitable
+from typing import Callable
+from typing import Generic
+from typing import List
+from typing import Optional
+from typing import Type
+from typing import TypeVar
+from typing import Union
+
+import aiohttp
+import defectio
 from defectio.backoff import ExponentialBackoff
 from defectio.utils import MISSING
 

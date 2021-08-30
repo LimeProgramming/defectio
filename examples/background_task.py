@@ -1,5 +1,5 @@
-from defectio.ext import tasks
 import defectio
+from defectio.ext import tasks
 
 
 class MyClient(defectio.Client):

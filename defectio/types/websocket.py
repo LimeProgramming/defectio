@@ -1,6 +1,15 @@
-from .payloads import Channel, Member, RelationType, Role, Server, User
+from typing import List
+from typing import Literal
+from typing import Optional
+from typing import TypedDict
+
+from .payloads import Channel
+from .payloads import Member
 from .payloads import Message as MessagePayload
-from typing import Literal, Optional, List, TypedDict
+from .payloads import RelationType
+from .payloads import Role
+from .payloads import Server
+from .payloads import User
 
 
 class Error(TypedDict):

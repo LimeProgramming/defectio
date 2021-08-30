@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, Optional, Set, List
+from typing import List
+from typing import Literal
+from typing import Optional
+from typing import Set
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .message import Message

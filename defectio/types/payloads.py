@@ -1,4 +1,11 @@
-from typing import Literal, Tuple, Type, Dict, List, Any, TypedDict, Optional
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Literal
+from typing import Optional
+from typing import Tuple
+from typing import Type
+from typing import TypedDict
 
 RelationType = Literal[
     "Blocked", "BlockedOther", "Friend", "Incoming", "None", "Outgoing", "User"

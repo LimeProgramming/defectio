@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Text, Union, Optional
+from typing import Optional
+from typing import Text
+from typing import TYPE_CHECKING
+from typing import Union
+
 from . import abc
-from .mixins import Hashable
 from .message import Message
+from .mixins import Hashable
 
 if TYPE_CHECKING:
     from ..types.payloads import ChannelPayload

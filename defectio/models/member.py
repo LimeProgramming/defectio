@@ -1,10 +1,9 @@
 from __future__ import annotations
-from .mixins import Hashable
-
-from . import abc
-
 
 from typing import TYPE_CHECKING
+
+from . import abc
+from .mixins import Hashable
 
 if TYPE_CHECKING:
     from ..state import ConnectionState

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List
+from typing import Dict
+from typing import List
+from typing import TYPE_CHECKING
+
 from .mixins import Hashable
 
 if TYPE_CHECKING:

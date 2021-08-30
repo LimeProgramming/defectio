@@ -1,22 +1,20 @@
 import collections
-from typing import (
-    List,
-    Dict,
-    Any,
-    Union,
-    Optional,
-    Tuple,
-    Generator,
-    Sequence,
-    Iterator,
-    Generic,
-    TypeVar,
-    AsyncIterable,
-    AsyncIterator,
-    Callable,
-    Iterable,
-)
 import datetime
+from typing import Any
+from typing import AsyncIterable
+from typing import AsyncIterator
+from typing import Callable
+from typing import Dict
+from typing import Generator
+from typing import Generic
+from typing import Iterable
+from typing import Iterator
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import TypeVar
+from typing import Union
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)

@@ -1,9 +1,14 @@
 from __future__ import annotations
 
-import sys
-import copy
 import asyncio
-from typing import Any, Protocol, runtime_checkable, Optional, TYPE_CHECKING, Dict
+import copy
+import sys
+from typing import Any
+from typing import Dict
+from typing import Optional
+from typing import Protocol
+from typing import runtime_checkable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .state import ConnectionState

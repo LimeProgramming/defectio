@@ -1,12 +1,22 @@
 from __future__ import annotations
-from defectio.errors import LoginFailure, RevoltServerError
-import sys
 
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union, Coroutine
-from . import __version__
-import ulid
 import logging
+import sys
+from typing import Any
+from typing import Coroutine
+from typing import Dict
+from typing import List
+from typing import Literal
+from typing import Optional
+from typing import TYPE_CHECKING
+from typing import Union
+
 import aiohttp
+import ulid
+from defectio.errors import LoginFailure
+from defectio.errors import RevoltServerError
+
+from . import __version__
 
 try:
     import orjson as json

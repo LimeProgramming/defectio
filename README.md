@@ -29,4 +29,5 @@ client.run("")
 ```
 
 ## Contribute
+
 Join our server [here](https://app.revolt.chat/invite/FfbwgFDk)

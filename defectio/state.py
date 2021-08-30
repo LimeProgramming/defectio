@@ -1,26 +1,33 @@
 from __future__ import annotations
-from defectio.models.member import PartialMember
+
+import asyncio
+import copy
+import inspect
+import logging
+from collections import deque
+from typing import Any
+from typing import Callable
+from typing import Deque
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import TYPE_CHECKING
+from typing import Union
+
 from defectio.gateway import DefectioWebsocket
 from defectio.http import DefectioHTTP
+from defectio.models.member import PartialMember
 
-from typing import Dict, List, Deque, Optional, TYPE_CHECKING, Any, Callable, Union
-from collections import deque
-import asyncio
-import inspect
-from .models import (
-    Message,
-    Member,
-    User,
-    Server,
-    MessageableChannel,
-    channel_factory,
-    VoiceChannel,
-)
 from . import utils
-import copy
-import logging
-
-from .models.raw_models import RawMessageDeleteEvent, RawMessageUpdateEvent
+from .models import channel_factory
+from .models import Member
+from .models import Message
+from .models import MessageableChannel
+from .models import Server
+from .models import User
+from .models import VoiceChannel
+from .models.raw_models import RawMessageDeleteEvent
+from .models.raw_models import RawMessageUpdateEvent
 
 if TYPE_CHECKING:
     from . import abc
