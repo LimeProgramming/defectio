@@ -6,17 +6,14 @@ from .mixins import Hashable
 from .message import Message
 
 if TYPE_CHECKING:
-    from ..types.payloads import Channel as ChannelPayload
+    from ..types.payloads import ChannelPayload
     from ..state import ConnectionState
     from .server import Server
 
 __all__ = (
     "TextChannel",
     "VoiceChannel",
-    "StageChannel",
     "DMChannel",
-    "CategoryChannel",
-    "StoreChannel",
     "GroupChannel",
 )
 
@@ -169,6 +166,9 @@ class VoiceChannel(abc.Messageable):
         #     data, "last_message_id"
         # )
         # self._fill_overwrites(data)
+
+
+MessageableChannel = Union[TextChannel, DMChannel, GroupDMChannel, SavedMessageChannel]
 
 
 def channel_factory(data: ChannelPayload) -> type[abc.Messageable]:

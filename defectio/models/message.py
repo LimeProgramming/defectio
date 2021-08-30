@@ -11,13 +11,13 @@ if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.payloads import MessagePayload
     from ..types.websocket import MessageUpdate
-    from .channel import TextChannel
+    from .channel import MessageableChannel
     from .user import User
 
 
 class Message(Hashable):
     def __init__(
-        self, state: ConnectionState, channel: TextChannel, data: MessagePayload
+        self, state: ConnectionState, channel: MessageableChannel, data: MessagePayload
     ):
         self._state: ConnectionState = state
         self.id = data.get("_id")

@@ -4,16 +4,17 @@ from typing import TYPE_CHECKING, Dict, List
 from .mixins import Hashable
 
 if TYPE_CHECKING:
-    from ..types.payloads import Server as ServerPayload, Channel, CategoryPayload
+    from ..types.payloads import Server as ServerPayload, CategoryPayload
     from ..state import ConnectionState
     from ..types.websocket import ServerUpdate
     from .member import Member
+    from .channel import MessageableChannel
 
 
 class Category(Hashable):
     def __init__(self, data: CategoryPayload, state: ConnectionState) -> None:
         self._state = state
-        self.channels = []
+        self.channels: List[MessageableChannel] = []
         self._from_data(data)
 
     def _from_data(self, data: CategoryPayload) -> None:

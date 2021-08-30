@@ -7,7 +7,15 @@ from typing import Dict, List, Deque, Optional, TYPE_CHECKING, Any, Callable, Un
 from collections import deque
 import asyncio
 import inspect
-from .models import Message, Member, User, Server, TextChannel, channel_factory
+from .models import (
+    Message,
+    Member,
+    User,
+    Server,
+    MessageableChannel,
+    channel_factory,
+    VoiceChannel,
+)
 from . import utils
 import copy
 import logging
@@ -70,7 +78,7 @@ class ConnectionState:
         self.max_messages: Optional[int] = options.get("max_messages", 1000)
         self.loop: asyncio.AbstractEventLoop = loop
         self.servers: Dict[str, Server] = {}
-        self.channels: Dict[str, abc.Messageable] = {}
+        self.channels: Dict[str, MessageableChannel] = {}
         self.users: Dict[str, User] = {}
         self.members: Dict[str, List[Union[Member | PartialMember]]] = {}
         self.user: Optional[User] = None
@@ -240,7 +248,7 @@ class ConnectionState:
     def get_user(self, id: str) -> Optional[User]:
         return self.users.get(id)
 
-    def get_channel(self, id: str) -> Optional[abc.Messageable]:
+    def get_channel(self, id: str) -> Optional[Union[MessageableChannel, VoiceChannel]]:
         return self.channels.get(id)
 
     def get_server(self, id: str) -> Optional[Server]:
@@ -266,7 +274,9 @@ class ConnectionState:
         self.users[user.id] = user
         return user
 
-    def add_channel(self, payload: ChannelPayload) -> abc.Messageable:
+    def add_channel(
+        self, payload: ChannelPayload
+    ) -> Union[MessageableChannel, VoiceChannel]:
         cls = channel_factory(payload)
         server = self.get_server(payload["server"])
         channel = cls(state=self, data=payload, server=server)
@@ -294,7 +304,7 @@ class ConnectionState:
     def create_message(
         self,
         *,
-        channel: Union[TextChannel],
+        channel: MessageableChannel,
         data,
     ) -> Message:
         return Message(state=self, channel=channel, data=data)
