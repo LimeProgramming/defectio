@@ -12,10 +12,27 @@ from .mixins import Hashable
 
 if TYPE_CHECKING:
     from ..state import ConnectionState
-    from ..types.payloads import MessagePayload
+    from ..types.payloads import MessagePayload, AttachmentPayload
     from ..types.websocket import MessageUpdate
     from .channel import MessageableChannel
     from .user import User
+
+
+class File:
+    def __init__(self, state: ConnectionState, data: AttachmentPayload):
+        self._state = state
+        self.id = data.get("_id")
+        self.tag = data.get("tag")
+        self.size = data.get("size")
+        self.filename = data.get("filename")
+        self.content_type = data.get("content_type")
+        self.metadata_type = data.get("metadata").get("type")
+
+    @property
+    def url(self) -> str:
+        base_url = self._state.api_info["features"]["autumn"]["url"]
+
+        return f"{base_url}/{self.tag}/{self.id}"
 
 
 class Message(Hashable):
@@ -27,6 +44,7 @@ class Message(Hashable):
         self.channel = channel
         self.content = data.get("content")
         self.author_id = data.get("author")
+        self.attachments = [File(state, a) for a in data.get("attachments", [])]
 
     def __repr__(self) -> str:
         name = self.__class__.__name__

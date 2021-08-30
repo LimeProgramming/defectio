@@ -153,7 +153,7 @@ class GroupDMChannel(abc.Messageable):
 
 
 class VoiceChannel(abc.Messageable):
-    def __init__(self, *, state: ConnectionState, server: Server, data):
+    def __init__(self, state: ConnectionState, server: Server, data):
         self._state: ConnectionState = state
         self.id: str = data["_id"]
         self._type: str = data["channel_type"]

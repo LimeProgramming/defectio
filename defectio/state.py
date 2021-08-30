@@ -63,6 +63,7 @@ if TYPE_CHECKING:
         ChannelPayload,
         MemberPayload,
         BasicMemberPayload,
+        ApiInfoPayload,
     )
 
 logger = logging.getLogger("defectio")
@@ -91,6 +92,7 @@ class ConnectionState:
         self.user: Optional[User] = None
 
         self._messages: Optional[List[Message]] = deque(maxlen=self.max_messages)
+        self.api_info: Optional[ApiInfoPayload] = None
 
         self.parsers: Dict[str, Callable[[Dict[str, Any]], None]] = {}
         for attr, func in inspect.getmembers(self):
@@ -119,6 +121,9 @@ class ConnectionState:
             pass
         else:
             func(*args, **kwargs)
+
+    def set_api_info(self, api_info: ApiInfoPayload):
+        self.api_info = api_info
 
     # Parsers
 
