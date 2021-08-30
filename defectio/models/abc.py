@@ -11,7 +11,7 @@ from typing import runtime_checkable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .state import ConnectionState
+    from ..state import ConnectionState
     from .server import Server
 
 
@@ -160,8 +160,8 @@ class Messageable(Protocol):
         )
 
         ret = state.create_message(channel=channel, data=data)
-        # if delete_after is not None:
-        #     await ret.delete(delay=delete_after)
+        if delete_after is not None:
+            await ret.delete(delay=delete_after)
         return ret
 
     async def fetch_message(self, id):
