@@ -13,6 +13,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.abspath(".."))
+sys.path.append(os.path.abspath("extensions"))
 
 
 # -- Project information -----------------------------------------------------
@@ -49,7 +50,13 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
+    "sphinxcontrib_trio",
+    "resource_links",
+    "sphinx_rtd_theme",
 ]
+
+autodoc_member_order = "bysource"
+autodoc_typehints = "none"
 
 # External links
 extlinks = {
@@ -69,6 +76,16 @@ rst_prolog = """
 .. _coroutine_link: https://docs.python.org/3/library/asyncio-task.html#coroutine
 """
 
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = "friendly"
+
+resource_links = {
+    "revolt": "https://discord.gg/r3sSKJJ",
+    "issues": "https://github.com/Darkflame72/defectio/issues",
+    "discussions": "https://github.com/Darkflame72/defectio/discussions",
+    "examples": f"https://github.com/Darkflame72/defectio/tree/{branch}/examples",
+}
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -83,7 +100,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

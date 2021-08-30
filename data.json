@@ -1,0 +1,305 @@
+{
+    "type": "Ready",
+    "users": [
+        {
+            "_id": "01FE7TYHNMV1YGRPC6J71CYBPE",
+            "username": "darkflame_testing",
+            "badges": 0,
+            "bot": {
+                "owner": "01FE542RP7Z81GMC9DCAWZZVC4"
+            },
+            "relationship": "User",
+            "online": true
+        }
+    ],
+    "servers": [
+        {
+            "_id": "01FE5V8CMJ9VPBW664CVJS95DE",
+            "nonce": "01FE5V8CDPS8RCWRKZ33T3RHQ3",
+            "owner": "01FE542RP7Z81GMC9DCAWZZVC4",
+            "name": "Testing",
+            "description": "descriptionsfgdfsaf",
+            "channels": [
+                "01FE5V8CMJBW4S9XZ4T2XTY4VH",
+                "01FE93KSQH28K4GVY71YPGJZGW"
+            ],
+            "system_messages": {
+                "user_joined": "01FE5V8CMJBW4S9XZ4T2XTY4VH",
+                "user_left": "01FE5V8CMJBW4S9XZ4T2XTY4VH",
+                "user_kicked": "01FE5V8CMJBW4S9XZ4T2XTY4VH",
+                "user_banned": "01FE5V8CMJBW4S9XZ4T2XTY4VH"
+            },
+            "default_permissions": [
+                20481,
+                243
+            ]
+        },
+        {
+            "_id": "01FE65KCXVVT2MK5RD90H33FRA",
+            "nonce": "01FE65KCQJ57BMSAD7E1CPCKRZ",
+            "owner": "01FE542RP7Z81GMC9DCAWZZVC4",
+            "name": "defectio",
+            "description": "",
+            "channels": [
+                "01FE65KCXVXCEV3JX4KFFR39EQ",
+                "01FE65M31V3VT3GGNP4J74RRN1",
+                "01FE65Q924HDJZAPSBF7SG5FXR",
+                "01FE65QJ6B44GSVCWDPB7TABXH",
+                "01FE65QVZQE00Z3CHKJ6W6AZK9",
+                "01FE65R2KVRT9Q2YVNQ2VKJCHM",
+                "01FE65T25GPC0FW8WE4YHN34VM"
+            ],
+            "categories": [
+                {
+                    "id": "01FE65NNNHDZZVM1FHGCRQKDXH",
+                    "title": "Information",
+                    "channels": [
+                        "01FE65M31V3VT3GGNP4J74RRN1",
+                        "01FE65Q924HDJZAPSBF7SG5FXR",
+                        "01FE65QJ6B44GSVCWDPB7TABXH"
+                    ]
+                },
+                {
+                    "id": "01FE65RB205B6KFP2095K1SH2W",
+                    "title": "bots",
+                    "channels": [
+                        "01FE65T25GPC0FW8WE4YHN34VM"
+                    ]
+                },
+                {
+                    "id": "01FE65RNMYNFF26T84EXKWCP1A",
+                    "title": "general",
+                    "channels": [
+                        "01FE65KCXVXCEV3JX4KFFR39EQ",
+                        "01FE65QVZQE00Z3CHKJ6W6AZK9",
+                        "01FE65R2KVRT9Q2YVNQ2VKJCHM"
+                    ]
+                }
+            ],
+            "system_messages": {
+                "user_joined": "01FE65KCXVXCEV3JX4KFFR39EQ",
+                "user_left": "01FE65KCXVXCEV3JX4KFFR39EQ",
+                "user_kicked": "01FE65KCXVXCEV3JX4KFFR39EQ",
+                "user_banned": "01FE65KCXVXCEV3JX4KFFR39EQ"
+            },
+            "roles": {
+                "01FE65WZ44C61B4K8EQCJ1JRS8": {
+                    "name": "Contributor",
+                    "permissions": [
+                        20481,
+                        243
+                    ],
+                    "colour": "#1ABC9C",
+                    "hoist": true,
+                    "rank": 0
+                },
+                "01FE65W1QZVPN59HH831WV50SB": {
+                    "name": "Moderator",
+                    "permissions": [
+                        61489,
+                        247
+                    ],
+                    "colour": "#F1C40F",
+                    "hoist": true,
+                    "rank": 4
+                },
+                "01FE65X4NSSCP9E7SMS0B5PZJX": {
+                    "name": "Maintainer",
+                    "permissions": [
+                        20481,
+                        243
+                    ],
+                    "colour": "#D468EE",
+                    "hoist": true,
+                    "rank": 1
+                },
+                "01FE65X8SQJZN8CPT80QG9TWCT": {
+                    "name": "Helper",
+                    "permissions": [
+                        20481,
+                        243
+                    ],
+                    "colour": "#E91E63",
+                    "hoist": true,
+                    "rank": 0
+                }
+            },
+            "default_permissions": [
+                20481,
+                243
+            ]
+        },
+        {
+            "_id": "01FE7VBT7ZWVKF0DMF1K3YEVM2",
+            "nonce": "01FE7VBSXFCXKJRZMQM13S1BN7",
+            "owner": "01FE542RP7Z81GMC9DCAWZZVC4",
+            "name": "Leon's friends",
+            "channels": [
+                "01FE7VBT7ZSN82Z1ZVN6X3T4M6",
+                "01FE7W4VE0S7H6CRT2MTMPAZA9",
+                "01FE7W6MEFE9MCAN4ANTJT5Y7B"
+            ],
+            "categories": [
+                {
+                    "id": "01FE7W5XNN2S6R848RZH9P2FVC",
+                    "title": "Important",
+                    "channels": [
+                        "01FE7W6MEFE9MCAN4ANTJT5Y7B"
+                    ]
+                },
+                {
+                    "id": "01FE7W62YQDEQRHC8ZF3RJ2WFA",
+                    "title": "General",
+                    "channels": [
+                        "01FE7VBT7ZSN82Z1ZVN6X3T4M6",
+                        "01FE7W4VE0S7H6CRT2MTMPAZA9"
+                    ]
+                }
+            ],
+            "system_messages": {
+                "user_joined": "01FE7VBT7ZSN82Z1ZVN6X3T4M6",
+                "user_left": "01FE7VBT7ZSN82Z1ZVN6X3T4M6",
+                "user_kicked": "01FE7VBT7ZSN82Z1ZVN6X3T4M6",
+                "user_banned": "01FE7VBT7ZSN82Z1ZVN6X3T4M6"
+            },
+            "roles": {
+                "01FE7W2EA70NQB2ZM5W2M1BPPE": {
+                    "name": "Moderator",
+                    "permissions": [
+                        53279,
+                        243
+                    ],
+                    "colour": "#F1C40F",
+                    "hoist": true,
+                    "rank": 0
+                }
+            },
+            "default_permissions": [
+                20481,
+                243
+            ],
+            "icon": {
+                "_id": "oHnH8xK2YZzOHbRZZAl5edkIabizhZFnY_XPjYD03S",
+                "tag": "icons",
+                "filename": "8503cc442b4338765a6178f29fff7b7f.png",
+                "metadata": {
+                    "type": "Image",
+                    "width": 92,
+                    "height": 94
+                },
+                "content_type": "image/png",
+                "size": 24756
+            }
+        }
+    ],
+    "channels": [
+        {
+            "channel_type": "TextChannel",
+            "_id": "01FE5V8CMJBW4S9XZ4T2XTY4VH",
+            "server": "01FE5V8CMJ9VPBW664CVJS95DE",
+            "nonce": "01FE5V8CDPS8RCWRKZ33T3RHQ3",
+            "name": "general",
+            "last_message": "01FE8YFECY0ZTCMHCDXE6WXXS6"
+        },
+        {
+            "channel_type": "TextChannel",
+            "_id": "01FE65KCXVXCEV3JX4KFFR39EQ",
+            "server": "01FE65KCXVVT2MK5RD90H33FRA",
+            "nonce": "01FE65KCQJ57BMSAD7E1CPCKRZ",
+            "name": "general",
+            "last_message": "01FE8T713TDM7XVX46SKEK83RM"
+        },
+        {
+            "channel_type": "TextChannel",
+            "_id": "01FE65M31V3VT3GGNP4J74RRN1",
+            "server": "01FE65KCXVVT2MK5RD90H33FRA",
+            "nonce": "01FE65M2TTJJ4J7FESMX1FGQM1",
+            "name": "announcements"
+        },
+        {
+            "channel_type": "TextChannel",
+            "_id": "01FE65Q924HDJZAPSBF7SG5FXR",
+            "server": "01FE65KCXVVT2MK5RD90H33FRA",
+            "nonce": "01FE65Q8VDEZA5Z4ZWD88NB9JW",
+            "name": "rules"
+        },
+        {
+            "channel_type": "TextChannel",
+            "_id": "01FE65QJ6B44GSVCWDPB7TABXH",
+            "server": "01FE65KCXVVT2MK5RD90H33FRA",
+            "nonce": "01FE65QHZSCW56RXE7977AMY9R",
+            "name": "updates"
+        },
+        {
+            "channel_type": "TextChannel",
+            "_id": "01FE65QVZQE00Z3CHKJ6W6AZK9",
+            "server": "01FE65KCXVVT2MK5RD90H33FRA",
+            "nonce": "01FE65QVRK06SKWCJJAM9BGP88",
+            "name": "help"
+        },
+        {
+            "channel_type": "TextChannel",
+            "_id": "01FE65R2KVRT9Q2YVNQ2VKJCHM",
+            "server": "01FE65KCXVVT2MK5RD90H33FRA",
+            "nonce": "01FE65R2DEQ2XVEBHTZ14YRNGJ",
+            "name": "lib-dev"
+        },
+        {
+            "channel_type": "TextChannel",
+            "_id": "01FE65T25GPC0FW8WE4YHN34VM",
+            "server": "01FE65KCXVVT2MK5RD90H33FRA",
+            "nonce": "01FE65T1YBB0HXD171B3EAFECX",
+            "name": "testing",
+            "last_message": "01FE8ASW103FJPNY449D1988QZ"
+        },
+        {
+            "channel_type": "TextChannel",
+            "_id": "01FE7VBT7ZSN82Z1ZVN6X3T4M6",
+            "server": "01FE7VBT7ZWVKF0DMF1K3YEVM2",
+            "nonce": "01FE7VBSXFCXKJRZMQM13S1BN7",
+            "name": "general",
+            "last_message": "01FE8AYSY49ZHDBTS7BZN898SJ"
+        },
+        {
+            "channel_type": "VoiceChannel",
+            "_id": "01FE7W4VE0S7H6CRT2MTMPAZA9",
+            "server": "01FE7VBT7ZWVKF0DMF1K3YEVM2",
+            "nonce": "01FE7W4V4XNFQQG404Z0S2SQVS",
+            "name": "Voice"
+        },
+        {
+            "channel_type": "TextChannel",
+            "_id": "01FE7W6MEFE9MCAN4ANTJT5Y7B",
+            "server": "01FE7VBT7ZWVKF0DMF1K3YEVM2",
+            "nonce": "01FE7W6KSGRJ39WV8A4WYWWDZG",
+            "name": "Announcements"
+        },
+        {
+            "channel_type": "TextChannel",
+            "_id": "01FE93KSQH28K4GVY71YPGJZGW",
+            "server": "01FE5V8CMJ9VPBW664CVJS95DE",
+            "nonce": "01FE93KSCJ54H5D434P2NCMVPV",
+            "name": "test"
+        }
+    ],
+    "members": [
+        {
+            "_id": {
+                "server": "01FE5V8CMJ9VPBW664CVJS95DE",
+                "user": "01FE7TYHNMV1YGRPC6J71CYBPE"
+            }
+        },
+        {
+            "_id": {
+                "server": "01FE65KCXVVT2MK5RD90H33FRA",
+                "user": "01FE7TYHNMV1YGRPC6J71CYBPE"
+            }
+        },
+        {
+            "_id": {
+                "server": "01FE7VBT7ZWVKF0DMF1K3YEVM2",
+                "user": "01FE7TYHNMV1YGRPC6J71CYBPE"
+            }
+        }
+    ]
+}
