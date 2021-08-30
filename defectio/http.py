@@ -8,6 +8,11 @@ import ulid
 import logging
 import aiohttp
 
+try:
+    import orjson as json
+except ImportError:
+    import json
+
 if TYPE_CHECKING:
     import aiohttp
     from .types.payloads import (
@@ -83,7 +88,10 @@ class DefectioHTTP:
             kwargs["json"]["nonce"] = ulid.new().str
 
         async with self._session.request(method, url, **kwargs) as response:
-            data = await response.json()
+            # data = await response.json()
+            data = await response.text()
+            if data != "":
+                data = json.loads(data)
             if 300 > response.status >= 200:
                 logger.debug("%s %s has received %s", method, url, data)
                 return data

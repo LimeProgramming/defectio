@@ -154,7 +154,7 @@ class ConnectionState:
 
     def parse_messagedelete(self, data: MessageDelete):
         raw = RawMessageDeleteEvent(data)
-        found = self._get_message(data["id"])
+        found = self.get_message(data["id"])
         raw.cached_message = found
         self.dispatch("raw_message_delete", raw)
         if self._messages is not None and found is not None:

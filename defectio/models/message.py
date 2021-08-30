@@ -1,4 +1,5 @@
 from __future__ import annotations
+from defectio.models.user import PartialUser
 from .abc import Messageable
 import asyncio
 
@@ -8,20 +9,20 @@ from .mixins import Hashable
 
 if TYPE_CHECKING:
     from ..state import ConnectionState
-    from ..types.payloads import MessageEventPayload
+    from ..types.payloads import MessagePayload
     from .channel import TextChannel
     from .user import User
 
 
 class Message(Hashable):
     def __init__(
-        self, state: ConnectionState, channel: TextChannel, data: MessageEventPayload
+        self, state: ConnectionState, channel: TextChannel, data: MessagePayload
     ):
         self._state: ConnectionState = state
-        self.id: str = data["_id"]
-        self.channel: TextChannel = channel
-        self.content: str = data["content"]
-        self.author_id: str = data["author"]
+        self.id = data.get("_id")
+        self.channel = channel
+        self.content = data.get("content")
+        self.author_id = data.get("author")
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
@@ -32,15 +33,8 @@ class Message(Hashable):
         return self.channel.server
 
     @property
-    def author(self) -> User:
-        return self._state.get_user(self.author_id)
-
-    async def get_author(self) -> User:
-        if self.author is None:
-            user = await self._state.http.get_user(self.author_id)
-            await self._state.add_user(user)
-            return user
-        return self.author
+    def author(self) -> PartialUser:
+        return self._state.get_user(self.author_id) or PartialUser(self.author_id)
 
     async def delete(self, *, delay: Optional[float] = None) -> None:
         if delay is not None:

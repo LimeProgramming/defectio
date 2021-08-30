@@ -8,7 +8,21 @@ if TYPE_CHECKING:
     from ..types.payloads import User as UserPayload
 
 
-class User(Hashable):
+class PartialUser(Hashable):
+    def __init__(
+        self,
+        id: str,
+    ) -> None:
+        self.id = id
+
+    def __repr__(self) -> str:
+        return f"<PartialUser id={self.id!r}>"
+
+    def __str__(self) -> str:
+        return self.id
+
+
+class User(PartialUser):
     def __init__(self, data: UserPayload, state: ConnectionState):
         self.state = state
         self.id = data["_id"]
@@ -27,3 +41,9 @@ class User(Hashable):
         self.badges = data.get("badges", 0)
         self.online = data.get("online", False)
         self.flags = data.get("flags", 0)
+
+    def __repr__(self) -> str:
+        return f"<User id={self.id!r} name={self.name!r}>"
+
+    def __str__(self) -> str:
+        return self.name
