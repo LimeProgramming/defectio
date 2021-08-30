@@ -80,7 +80,7 @@ rst_prolog = """
 pygments_style = "friendly"
 
 resource_links = {
-    "revolt": "https://discord.gg/r3sSKJJ",
+    "revolt": "https://app.revolt.chat/invite/FfbwgFDk",
     "issues": "https://github.com/Darkflame72/defectio/issues",
     "discussions": "https://github.com/Darkflame72/defectio/discussions",
     "examples": f"https://github.com/Darkflame72/defectio/tree/{branch}/examples",
