@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.payloads import MessageEventPayload
     from .channel import TextChannel
+    from .user import User
 
 
 class Message(Hashable):
@@ -20,7 +21,7 @@ class Message(Hashable):
         self.id: str = data["_id"]
         self.channel: TextChannel = channel
         self.content: str = data["content"]
-        self.author: str = data["author"]
+        self.author_id: str = data["author"]
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
@@ -29,6 +30,17 @@ class Message(Hashable):
     @property
     def server(self) -> str:
         return self.channel.server
+
+    @property
+    def author(self) -> User:
+        return self._state.get_user(self.author_id)
+
+    async def get_author(self) -> User:
+        if self.author is None:
+            user = await self._state.http.get_user(self.author_id)
+            await self._state.add_user(user)
+            return user
+        return self.author
 
     async def delete(self, *, delay: Optional[float] = None) -> None:
         if delay is not None:

@@ -68,8 +68,8 @@ class SequenceProxy(Generic[T_co], collections.abc.Sequence):
 def find(predicate: Callable[[T], Any], seq: Iterable[T]) -> Optional[T]:
     """A helper to return the first element found in the sequence
     that meets the predicate. For example: ::
-        member = discord.utils.find(lambda m: m.name == 'Mighty', channel.guild.members)
-    would find the first :class:`~discord.Member` whose name is 'Mighty' and return it.
+        member = defectio.utils.find(lambda m: m.name == 'Mighty', channel.guild.members)
+    would find the first :class:`~defectio.Member` whose name is 'Mighty' and return it.
     If an entry is not found, then ``None`` is returned.
     This is different from :func:`py:filter` due to the fact it stops the moment it finds
     a valid entry.

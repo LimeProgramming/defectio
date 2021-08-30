@@ -28,7 +28,7 @@ class DefectioWebsocket:
         self.ws_url = ws_url
         self.websocket: aiohttp.ClientWebSocketResponse
         self._dispatch: Client.dispatch = client.dispatch
-        self._discord_parsers = client._connection.parsers
+        self._parsers = client._connection.parsers
         self.user_agent = user_agent
 
         self.token: str
@@ -99,7 +99,7 @@ class DefectioWebsocket:
             self._dispatch("socket_event_type", event)
 
         try:
-            func = self._discord_parsers[event]
+            func = self._parsers[event]
         except KeyError:
             logger.debug("Unknown event %s.", event)
         else:

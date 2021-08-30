@@ -183,7 +183,6 @@ class Client:
         The default error handler provided by the client.
         By default this prints to :data:`sys.stderr` however it could be
         overridden to have a different implementation.
-        Check :func:`~discord.on_error` for more details.
         """
         print(f"Ignoring exception in {event_method}", file=sys.stderr)
         traceback.print_exc()
@@ -223,8 +222,7 @@ class Client:
 
     def event(self, coro: Coro) -> Coro:
         """A decorator that registers an event to listen to.
-        You can find more info about the events on the :ref:`documentation below <discord-api-events>`.
-        The events must be a :ref:`coroutine <coroutine>`, if not, :exc:`TypeError` is raised.
+
         Example
         ---------
         .. code-block:: python3

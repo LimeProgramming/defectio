@@ -55,7 +55,7 @@ extensions = [
 
 # External links
 extlinks = {
-    "issue": ("https://github.com/Rapptz/discord.py/issues/%s", "GH-"),
+    "issue": ("https://github.com/Darkflame72/defectio/issues/%s", "GH-"),
 }
 
 # Links used for cross-referencing stuff in other documentation

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from defectio.errors import LoginFailure, RevoltServerError
 import sys
 
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union, Coroutine
@@ -10,36 +11,36 @@ import aiohttp
 if TYPE_CHECKING:
     import aiohttp
     from .types.payloads import (
-        Account,
-        ApiInfo,
-        DMChannel,
-        Login,
-        MutualFriends,
-        Profile,
-        Relationship,
-        RelationshipStatus,
-        Session,
-        Channel,
-        User,
-        ChannelInvite,
-        EditChannel,
-        FetchMessage,
-        Group,
-        JoinCall,
-        Message,
-        MessagePoll,
-        SearchMessage,
-        Server,
-        Bans,
-        Bot,
-        CreateRole,
-        Invite,
-        JoinInvite,
-        Member,
-        PublicBot,
-        ServerMembers,
-        Settings,
-        Unreads,
+        AccountPayload,
+        ApiInfoPayload,
+        DMChannelPayload,
+        LoginPayload,
+        MutualFriendsPayload,
+        ProfilePayload,
+        RelationshipPayload,
+        RelationshipStatusPayload,
+        SessionPayload,
+        ChannelPayload,
+        UserPayload,
+        ChannelInvitePayload,
+        EditChannelPayload,
+        FetchMessagePayload,
+        GroupPayload,
+        JoinCallPayload,
+        MessagePayload,
+        MessagePollPayload,
+        SearchMessagePayload,
+        ServerPayload,
+        BansPayload,
+        BotPayload,
+        CreateRolePayload,
+        InvitePayload,
+        JoinInvitePayload,
+        MemberPayload,
+        PublicBotPayload,
+        ServerMembersPayload,
+        SettingsPayload,
+        UnreadsPayload,
     )
 
 logger = logging.getLogger("defectio")
@@ -68,7 +69,7 @@ class DefectioHTTP:
             if self.is_bot and self.token is not None:
                 headers["x-bot-token"] = self.token
             else:
-                raise Exception("Not authenticated")
+                raise LoginFailure()
         if "json" in kwargs:
             headers["Content-Type"] = "application/json"
         kwargs["headers"] = headers
@@ -87,6 +88,9 @@ class DefectioHTTP:
                 logger.debug("%s %s has received %s", method, url, data)
                 return data
 
+            if response.status >= 500:
+                raise RevoltServerError(response, data)
+
     def login(self, token: str) -> None:
         self.token = token
 
@@ -94,7 +98,7 @@ class DefectioHTTP:
         if self._session:
             await self._session.close()
 
-    async def node_info(self) -> ApiInfo:
+    async def node_info(self) -> ApiInfoPayload:
         path = ""
         return await self.request("GET", path, auth_needed=False)
 
@@ -125,7 +129,7 @@ class DefectioHTTP:
         kwargs["email"] = email
         return await self.request("POST", path, json=kwargs, auth_needed=False)
 
-    async def user_login(self, email: str, password: str, **kwargs) -> Login:
+    async def user_login(self, email: str, password: str, **kwargs) -> LoginPayload:
         path = "auth/login"
         kwargs["email"] = email
         kwargs["password"] = password
@@ -144,7 +148,7 @@ class DefectioHTTP:
             "POST", path, json={"password": password, "token": token}, auth_needed=False
         )
 
-    async def get_account(self) -> Account:
+    async def get_account(self) -> AccountPayload:
         path = "auth/user"
         return await self.request("GET", path)
 
@@ -168,7 +172,7 @@ class DefectioHTTP:
         path = f"auth/sessions/{session_id}"
         return await self.request("POST", path)
 
-    async def get_sessions(self) -> List[Session]:
+    async def get_sessions(self) -> List[SessionPayload]:
         path = "auth/sessions"
         return await self.request("GET", path)
 
@@ -194,11 +198,11 @@ class DefectioHTTP:
 
     ## Users
 
-    async def get_user(self, user_id: str) -> User:
+    async def get_user(self, user_id: str) -> UserPayload:
         path = f"users/{user_id}"
         return await self.request("GET", path)
 
-    async def get_user_profile(self, user_id: str) -> Profile:
+    async def get_user_profile(self, user_id: str) -> ProfilePayload:
         path = f"users/{user_id}/profile"
         return await self.request("GET", path)
 
@@ -206,7 +210,7 @@ class DefectioHTTP:
         path = f"users/{user_id}/default_avatar"
         return await self.request("GET", path)
 
-    async def get_mutual_friends(self, user_id: str) -> MutualFriends:
+    async def get_mutual_friends(self, user_id: str) -> MutualFriendsPayload:
         path = f"users/{user_id}/mutual_friends"
         return await self.request("GET", path)
 
@@ -214,11 +218,11 @@ class DefectioHTTP:
     ## Direct Messaging ##
     ######################
 
-    async def get_dms(self) -> List[DMChannel]:
+    async def get_dms(self) -> List[DMChannelPayload]:
         path = "users/dms"
         return await self.request("GET", path)
 
-    async def open_dm(self, user_id: str) -> DMChannel:
+    async def open_dm(self, user_id: str) -> DMChannelPayload:
         path = f"users/{user_id}/dm"
         return await self.request("POST", path)
 
@@ -226,27 +230,27 @@ class DefectioHTTP:
     ## Relationships ##
     ###################
 
-    async def get_relationships(self) -> List[Relationship]:
+    async def get_relationships(self) -> List[RelationshipPayload]:
         path = "users/relationships"
         return await self.request("GET", path)
 
-    async def get_relationship(self, user_id: str) -> Relationship:
+    async def get_relationship(self, user_id: str) -> RelationshipPayload:
         path = f"users/{user_id}/relationships"
         return await self.request("GET", path)
 
-    async def friend_request(self, user_id: str) -> RelationshipStatus:
+    async def friend_request(self, user_id: str) -> RelationshipStatusPayload:
         path = f"users/{user_id}/friend"
         return await self.request("PUT", path)
 
-    async def remove_friend(self, user_id: str) -> RelationshipStatus:
+    async def remove_friend(self, user_id: str) -> RelationshipStatusPayload:
         path = f"users/{user_id}/friend"
         return await self.request("DELETE", path)
 
-    async def block_user(self, user_id: str) -> RelationshipStatus:
+    async def block_user(self, user_id: str) -> RelationshipStatusPayload:
         path = f"users/{user_id}/block"
         return await self.request("PUT", path)
 
-    async def unblock_user(self, user_id: str) -> RelationshipStatus:
+    async def unblock_user(self, user_id: str) -> RelationshipStatusPayload:
         path = f"users/{user_id}/block"
         return await self.request("DELETE", path)
 
@@ -254,11 +258,11 @@ class DefectioHTTP:
     ## Channel Information ##
     #########################
 
-    async def get_channel(self, channel_id: str) -> Channel:
+    async def get_channel(self, channel_id: str) -> ChannelPayload:
         path = f"channels/{channel_id}"
         return await self.request("GET", path)
 
-    async def edit_channel(self, channel_id: str, **kwargs) -> EditChannel:
+    async def edit_channel(self, channel_id: str, **kwargs) -> EditChannelPayload:
         path = f"channels/{channel_id}"
         return await self.request("PATCH", path, json=kwargs)
 
@@ -270,7 +274,7 @@ class DefectioHTTP:
     ## Channel Invites ##
     #####################
 
-    async def create_channel_invite(self, channel_id: str) -> ChannelInvite:
+    async def create_channel_invite(self, channel_id: str) -> ChannelInvitePayload:
         path = f"channels/{channel_id}/invites"
         return await self.request("POST", path)
 
@@ -335,7 +339,7 @@ class DefectioHTTP:
             json["include_users"] = include_users
         return await self.request("GET", path, json=json)
 
-    async def get_message(self, channel_id: str, message_id: str) -> Message:
+    async def get_message(self, channel_id: str, message_id: str) -> MessagePayload:
         path = f"channels/{channel_id}/messages/{message_id}"
         return await self.request("GET", path)
 
@@ -402,7 +406,7 @@ class DefectioHTTP:
             json["users"] = users
         return await self.request("POST", path, json=json)
 
-    async def get_group_members(self, group_id: str) -> List[User]:
+    async def get_group_members(self, group_id: str) -> List[UserPayload]:
         path = f"channels/{group_id}/members"
         return await self.request("GET", path)
 
@@ -414,7 +418,7 @@ class DefectioHTTP:
         path = f"channels/{group_id}/members/recipients/{user_id}"
         return await self.request("DELETE", path)
 
-    async def join_call(self, channel_id: str) -> JoinCall:
+    async def join_call(self, channel_id: str) -> JoinCallPayload:
         path = f"channels/{channel_id}/join_call"
         return await self.request("POST", path)
 
@@ -422,7 +426,7 @@ class DefectioHTTP:
     ## Server Information ##
     ########################
 
-    async def get_server(self, server_id: str) -> Server:
+    async def get_server(self, server_id: str) -> ServerPayload:
         path = f"servers/{server_id}"
         return await self.request("GET", path)
 
@@ -462,7 +466,7 @@ class DefectioHTTP:
 
     async def create_server(
         self, name: str, *, description: Optional[str] = None
-    ) -> Server:
+    ) -> ServerPayload:
         path = "servers/create"
         json = {"name": name}
         if description:
@@ -476,7 +480,7 @@ class DefectioHTTP:
         *,
         type: Literal["Text", "Voice"] = "Text",
         description: Optional[str] = None,
-    ) -> Channel:
+    ) -> ChannelPayload:
         path = f"servers/{server_id}/channels"
         json = {"name": name, "type": type}
         if description:
@@ -495,7 +499,7 @@ class DefectioHTTP:
     ## Server Members ##
     ####################
 
-    async def get_member(self, server_id: str, member_id: str) -> Member:
+    async def get_member(self, server_id: str, member_id: str) -> MemberPayload:
         path = f"servers/{server_id}/members/{member_id}"
         return await self.request("GET", path)
 
@@ -525,7 +529,7 @@ class DefectioHTTP:
         path = f"servers/{server_id}/members/{member_id}"
         return await self.request("DELETE", path)
 
-    async def get_members(self, server_id: str) -> ServerMembers:
+    async def get_members(self, server_id: str) -> ServerMembersPayload:
         path = f"servers/{server_id}/members"
         return await self.request("GET", path)
 
@@ -540,7 +544,7 @@ class DefectioHTTP:
         path = f"servers/{server_id}/ban/{member_id}"
         return await self.request("DELETE", path)
 
-    async def get_bans(self, server_id: str) -> Bans:
+    async def get_bans(self, server_id: str) -> BansPayload:
         path = f"servers/{server_id}/bans"
         return await self.request("GET", path)
 
@@ -560,7 +564,7 @@ class DefectioHTTP:
         path = f"servers/{server_id}/permissions/default_role"
         return await self.request("PUT", path, json={"permissions": permissions})
 
-    async def create_role(self, server_id: str, *, name: str) -> CreateRole:
+    async def create_role(self, server_id: str, *, name: str) -> CreateRolePayload:
         path = f"servers/{server_id}/roles"
         json = {"name": name}
         return await self.request("POST", path, json=json)
@@ -596,16 +600,16 @@ class DefectioHTTP:
     ## Bots ##
     ##########
 
-    async def create_bot(self, name: str) -> Bot:
+    async def create_bot(self, name: str) -> BotPayload:
         path = "bots/create"
         json = {"name": name}
         return await self.request("POST", path, json=json)
 
-    async def get_owned_bots(self) -> List[Bot]:
+    async def get_owned_bots(self) -> List[BotPayload]:
         path = "bots/@me"
         return await self.request("GET", path)
 
-    async def get_bot(self, bot_id: str) -> Bot:
+    async def get_bot(self, bot_id: str) -> BotPayload:
         path = f"bots/{bot_id}"
         return await self.request("GET", path)
 
@@ -634,7 +638,7 @@ class DefectioHTTP:
         path = f"bots/{bot_id}"
         return await self.request("DELETE", path)
 
-    async def get_public_bot(self, bot_id: str) -> PublicBot:
+    async def get_public_bot(self, bot_id: str) -> PublicBotPayload:
         path = f"bots/{bot_id}/invite"
         return await self.request("GET", path)
 
@@ -659,11 +663,11 @@ class DefectioHTTP:
     ## Invites ##
     #############
 
-    async def get_invite(self, invite_id: str) -> Invite:
+    async def get_invite(self, invite_id: str) -> InvitePayload:
         path = f"invites/{invite_id}"
         return await self.request("GET", path)
 
-    async def join_invite(self, invite_id: str) -> JoinInvite:
+    async def join_invite(self, invite_id: str) -> JoinInvitePayload:
         path = f"invites/{invite_id}"
         return await self.request("POST", path)
 
@@ -675,7 +679,7 @@ class DefectioHTTP:
     ## Sync ##
     ##########
 
-    async def get_settings(self, keys: List[str]) -> Settings:
+    async def get_settings(self, keys: List[str]) -> SettingsPayload:
         path = "sync/settings/fetch"
         json = {"keys": keys}
         return await self.request("POST", path, json=json)
@@ -684,7 +688,7 @@ class DefectioHTTP:
         path = "sync/settings/set"
         return await self.request("POST", path, json=settings)
 
-    async def get_unread(self) -> Unreads:
+    async def get_unread(self) -> UnreadsPayload:
         path = "sync/unreads"
         return await self.request("GET", path)
 
@@ -702,6 +706,6 @@ class DefectioHTTP:
         json = {"endpoint": endpoint, "p256d": p256d, "auth": auth}
         return await self.request("PUT", path, json=json)
 
-    async def unsubscribe_web_push(self, channel_id: str):
+    async def unsubscribe_web_push(self) -> None:
         path = f"push/unsubscribe"
         return await self.request("POST", path)

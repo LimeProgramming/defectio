@@ -8,7 +8,7 @@ ChannelType = Literal[
 ]
 
 
-class ApiInfoFeature(TypedDict):
+class ApiInfoFeaturePayload(TypedDict):
     registration: bool
     captcha: Dict[str, Any]
     email: bool
@@ -18,112 +18,112 @@ class ApiInfoFeature(TypedDict):
     voso: Dict[str, Any]
 
 
-class ApiInfo(TypedDict):
+class ApiInfoPayload(TypedDict):
     revolt: str
-    features: ApiInfoFeature
+    features: ApiInfoFeaturePayload
     ws: str
     app: str
     vapid: str
 
 
-class Login(TypedDict):
+class LoginPayload(TypedDict):
     id: str
     user_id: str
     session_token: str
 
 
-class Session(TypedDict):
+class SessionPayload(TypedDict):
     id: str
     friendly_name: str
 
 
-class Metadata(TypedDict):
+class MetadataPayload(TypedDict):
     type: Literal["File", "Text", "Audio", "Image", "Video"]
 
 
-class Relationship(TypedDict):
+class RelationshipPayload(TypedDict):
     status: RelationType
     _id: str
 
 
-class Status(TypedDict):
+class StatusPayload(TypedDict):
     text: str
     presence: RelationType
 
 
-class UserBotInfo(TypedDict):
+class UserBotInfoPayload(TypedDict):
     owner: str
 
 
-class Attachment(TypedDict):
+class AttachmentPayload(TypedDict):
     _id: str
     tag: Literal["attachments"]
     size: 0
     filename: str
-    metadata: Metadata
+    metadata: MetadataPayload
     content_type: str
 
 
-class User(TypedDict):
+class UserPayload(TypedDict):
     _id: str
     username: str
-    avatar: Attachment
-    relations: List[Relationship]
+    avatar: AttachmentPayload
+    relations: List[RelationshipPayload]
     badges: int
-    status: Status
+    status: StatusPayload
     relationship: RelationType
     online: bool
     flags: int
-    bot: UserBotInfo
+    bot: UserBotInfoPayload
 
 
-class Profile(TypedDict):
+class ProfilePayload(TypedDict):
     content: str
-    background: Attachment
+    background: AttachmentPayload
 
 
 MutualFriends = TypedDict("MutualFriends", {"users": List[str]})
 
 
-class LastMessage(TypedDict):
+class LastMessagePayload(TypedDict):
     _id: str
     author: str
     short: str
 
 
-class DMChannel(TypedDict):
+class DMChannelPayload(TypedDict):
     _id: str
     channel_type: Literal["DirectMessage"]
     active: bool
     recipients: List[str]
-    last_message: LastMessage
+    last_message: LastMessagePayload
 
 
-class RelationshipStatus(TypedDict):
+class RelationshipStatusPayload(TypedDict):
     status: RelationType
 
 
-class Icon(TypedDict):
+class IconPayload(TypedDict):
     _id: str
     tag: str
     size: int
     filename: str
     content_type: str
-    metadata: Metadata
+    metadata: MetadataPayload
 
 
-class Channel(TypedDict):
+class ChannelPayload(TypedDict):
     _id: str
     server: str
     name: str
     description: str
-    icon: Icon
+    icon: IconPayload
     default_permissions: int
     role_permissions: Dict[str, int]
     channel_type: ChannelType
 
 
-class EditChannel(TypedDict):
+class EditChannelPayload(TypedDict):
     name: str
     description: str
     icon: str
@@ -133,7 +133,7 @@ class EditChannel(TypedDict):
 ChannelInvite = TypedDict("ChannelInvite", {"code": str})
 
 
-class Content(TypedDict):
+class ContentPayload(TypedDict):
     type: str
     content: str
 
@@ -143,77 +143,77 @@ Edited = TypedDict("Edited", {"con$datatent": str})
 Embed = TypedDict("Embed", {"type": str})
 
 
-class Message(TypedDict):
+class MessagePayload(TypedDict):
     _id: str
     nonce: Optional[str]
     channel: str
     author: str
-    content: Content
-    attachments: List[Attachment]
+    content: ContentPayload
+    attachments: List[AttachmentPayload]
     edited: Edited
     embeds: List[Embed]
     mentions: List[str]
     replies: List[str]
 
 
-class MemberId(TypedDict):
+class MemberIdPayload(TypedDict):
     server: str
     user: str
 
 
-class BasicMember(TypedDict):
+class BasicMemberPayload(TypedDict):
     _id: str
     nickname: str
 
 
-class FetchMessage(TypedDict):
-    messages: List[Message]
-    users: List[User]
-    members: List[BasicMember]
-    avatar: Attachment
+class FetchMessagePayload(TypedDict):
+    messages: List[MessagePayload]
+    users: List[UserPayload]
+    members: List[BasicMemberPayload]
+    avatar: AttachmentPayload
     roles: List[str]
 
 
-class MessagePoll(TypedDict):
-    changed: List[Message]
+class MessagePollPayload(TypedDict):
+    changed: List[MessagePayload]
     deleted: List[str]
 
 
-class SearchMessage(TypedDict):
-    messages: List[Message]
-    users: List[User]
-    members: List[BasicMember]
+class SearchMessagePayload(TypedDict):
+    messages: List[MessagePayload]
+    users: List[UserPayload]
+    members: List[BasicMemberPayload]
 
 
-class Group(TypedDict):
+class GroupPayload(TypedDict):
     _id: str
     channel_type: Literal["Group"]
     recipients: List[str]
     name: str
     owner: str
     description: str
-    last_message: LastMessage
-    icon: Icon
+    last_message: LastMessagePayload
+    icon: IconPayload
     permissions: int
 
 
 JoinCall = TypedDict("JoinCall", {"token": str})
 
 
-class Category(TypedDict):
+class CategoryPayload(TypedDict):
     id: str
     title: str
     channels: List[str]
 
 
-class SystemMessage(TypedDict):
+class SystemMessagePayload(TypedDict):
     user_joined: str
     user_left: str
     user_kicked: str
     user_banned: str
 
 
-class Role(TypedDict):
+class RolePayload(TypedDict):
     name: str
     colour: str
     hoist: bool
@@ -221,57 +221,57 @@ class Role(TypedDict):
     permissions: List[int]
 
 
-class Banner(TypedDict):
+class BannerPayload(TypedDict):
     _id: str
     tag: Literal["attachments"]
     size: int
     filename: str
     content_type: str
-    metadata: Metadata
+    metadata: MetadataPayload
 
 
-class Server(TypedDict):
+class ServerPayload(TypedDict):
     _id: str
     nonce: Optional[str]
     owner: str
     name: str
     description: Optional[str]
     channels: List[str]
-    categories: List[Category]
-    system_message: SystemMessage
-    roles: Dict[str, Role]
+    categories: List[CategoryPayload]
+    system_message: SystemMessagePayload
+    roles: Dict[str, RolePayload]
     default_permissions: List[int]
-    icon: Icon
-    banner: Banner
+    icon: IconPayload
+    banner: BannerPayload
 
 
-class Channel(TypedDict):
+class ChannelPayload(TypedDict):
     type: ChannelType
     name: str
     description: str
     nonce: Optional[str]
 
 
-class Member(TypedDict):
-    _id: MemberId
+class MemberPayload(TypedDict):
+    _id: MemberIdPayload
     nickname: str
-    avatar: Attachment
+    avatar: AttachmentPayload
     roles: List[str]
 
 
-class ServerMembers(TypedDict):
-    members: List[Member]
-    users: List[User]
+class ServerMembersPayload(TypedDict):
+    members: List[MemberPayload]
+    users: List[UserPayload]
 
 
-class Ban(TypedDict):
-    _id: MemberId
+class BanPayload(TypedDict):
+    _id: MemberIdPayload
     reason: str
 
 
-class Bans(TypedDict):
-    users: List[User]
-    bans: List[Ban]
+class BansPayload(TypedDict):
+    users: List[UserPayload]
+    bans: List[BanPayload]
 
 
 class CreateRole(Type):
@@ -279,7 +279,7 @@ class CreateRole(Type):
     permissions: List[int]
 
 
-class Bot(TypedDict):
+class BotPayload(TypedDict):
     _id: str
     owner: str
     token: str
@@ -287,43 +287,43 @@ class Bot(TypedDict):
     interactiosURL: str
 
 
-class PublicBot(TypedDict):
+class PublicBotPayload(TypedDict):
     _id: str
     username: str
-    avatar: Attachment
+    avatar: AttachmentPayload
     description: str
 
 
-class Invite(TypedDict):
+class InvitePayload(TypedDict):
     type: Literal["Server"]
     server_id: str
     server_name: str
-    server_icon: Attachment
-    server_banner: Banner
+    server_icon: AttachmentPayload
+    server_banner: BannerPayload
     channel_id: str
     channel_name: str
     channel_description: str
-    user_avatar: Attachment
+    user_avatar: AttachmentPayload
     member_count: int
 
 
-class InviteChannel(TypedDict):
+class InviteChannelPayload(TypedDict):
     _id: str
     channel_type: Literal["SavedMessages"]
     user: str
     nonce: str
 
 
-class JoinInvite(TypedDict):
+class JoinInvitePayload(TypedDict):
     type: Literal["Server"]
-    channel: InviteChannel
-    server: Server
+    channel: InviteChannelPayload
+    server: ServerPayload
 
 
 Settings = Dict[str : Tuple[int, str]]
 
 
-class Unreads(TypedDict):
-    _id: MemberId
+class UnreadsPayload(TypedDict):
+    _id: MemberIdPayload
     last_id: str
     mentions: List[str]

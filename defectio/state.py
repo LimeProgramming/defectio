@@ -82,6 +82,13 @@ class ConnectionState:
 
     @property
     def http(self) -> DefectioHTTP:
+        """Get http client.
+
+        Returns
+        -------
+        DefectioHTTP
+            HTTP client.
+        """
         return self.get_http()
 
     @property

@@ -22,7 +22,7 @@ __all__ = (
 
 
 class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
-    """Represents a Discord guild text channel.
+    """Represents a server text channel.
     .. container:: operations
         .. describe:: x == y
             Checks if two channels are equal.
@@ -111,7 +111,7 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
 
     @property
     def type(self) -> str:
-        """:class:`str`: The channel's Discord type."""
+        """:class:`str`: The channel's type."""
         return self._type
 
     @property

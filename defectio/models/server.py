@@ -50,8 +50,22 @@ class Server(Hashable):
 
     @property
     def channels(self):
+        """All channels in the server
+
+        Returns
+        -------
+        [type]
+            List of all channels
+        """
         return [self._state.get_channel(channel_id) for channel_id in self.channel_ids]
 
     @property
     def members(self) -> List[Member]:
+        """All cached members in the server.
+
+        Returns
+        -------
+        List[Member]
+            List of all cached members in the server.
+        """
         return self._state.get_members(self.id)
