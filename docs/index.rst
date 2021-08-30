@@ -33,16 +33,6 @@ If you're having trouble with something, these resources might help.
 - Report bugs in the :resource:`issue tracker <issues>`.
 - Ask in our :resource:`GitHub discussions page <discussions>`.
 
-Extensions
-------------
-
-These extensions help you during development when it comes to common tasks.
-
-.. toctree::
-  :maxdepth: 1
-
-  ext/tasks/index.rst
-
 Manuals
 ---------
 
