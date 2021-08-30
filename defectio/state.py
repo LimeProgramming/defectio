@@ -1,4 +1,5 @@
 from __future__ import annotations
+from defectio.models.member import PartialMember
 from defectio.gateway import DefectioWebsocket
 from defectio.http import DefectioHTTP
 
@@ -42,10 +43,11 @@ if TYPE_CHECKING:
     )
 
     from .types.payloads import (
-        User as UserPayload,
-        Server as ServerPayload,
-        Channel as ChannelPayload,
-        Member as MemberPayload,
+        UserPayload,
+        ServerPayload,
+        ChannelPayload,
+        MemberPayload,
+        BasicMemberPayload,
     )
 
 logger = logging.getLogger("defectio")
@@ -70,7 +72,7 @@ class ConnectionState:
         self.servers: Dict[str, Server] = {}
         self.channels: Dict[str, abc.Messageable] = {}
         self.users: Dict[str, User] = {}
-        self.members: Dict[str, List[Member]] = {}
+        self.members: Dict[str, List[Union[Member | PartialMember]]] = {}
         self.user: Optional[User] = None
 
         self._messages: Optional[List[Message]] = deque(maxlen=self.max_messages)
@@ -112,9 +114,6 @@ class ConnectionState:
         self.dispatch("pong", data)
 
     def parse_ready(self, data: Ready) -> None:
-        # if self._ready_task is not None:
-        #     self._ready_task.cancel()
-
         for user in data["users"]:
             self.add_user(user)
 
@@ -196,21 +195,33 @@ class ConnectionState:
             self.dispatch("server_update", old_server, server)
         else:
             logger.debug(
-                "SERVER_UPDAtE referencing an unknown server ID: %s. Discarding.",
+                "SERVER_UPDATE referencing an unknown server ID: %s. Discarding.",
                 data["id"],
             )
 
     def parse_serverdelete(self, data: ServerDelete):
-        self.dispatch("server_delete", data)
+        server = self.get_server(data["id"])
+        if server is not None:
+            self.servers.pop(server.id)
+        self.dispatch("server_delete", server)
 
     def parse_servermemberjoin(self, data: ServerMemberJoin):
-        self.dispatch("server_member_join", data)
+        member = self.add_member(data)
+        self.dispatch("server_member_join", member)
 
     def parse_servermemberleave(self, data: ServerMemberLeave):
-        self.dispatch("server_member_leave", data)
+        member = self.get_member(data["id"])
+        self.members.get(data.get("id"), {}).pop(data.get("user"))
+        self.dispatch("server_member_leave", member)
 
     def parse_servermemberupdate(self, data: ServerMemberUpdate):
-        self.dispatch("server_member_update", data)
+        member = self.get_member(data["id"])
+        if isinstance(member, Member):
+            old_member = copy.copy(member)
+            member._update(data)
+            self.dispatch("raw_server_member_update", data)
+            self.dispatch("server_member_update", old_member, member)
+        self.dispatch("raw_server_member_update", data)
 
     def parse_serverroleupdate(self, data: ServerRoleUpdate):
         self.dispatch("server_role_update", data)
@@ -219,7 +230,6 @@ class ConnectionState:
         self.dispatch("server_role_delete", data)
 
     def parse_userupdate(self, data: UserUpdate):
-        # self.add_user(data)
         self.dispatch("user_update", data)
 
     def parse_userrelationship(self, data: UserRelationship):
@@ -268,9 +278,12 @@ class ConnectionState:
         self.servers[server.id] = server
         return server
 
-    def add_member(self, payload: MemberPayload) -> Member:
+    def add_member(self, payload: Union[MemberPayload | BasicMemberPayload]) -> Member:
         server = self.get_server(payload["server"])
-        member = Member(payload["user"], server, self)
+        if "user" in payload:
+            member = PartialMember(payload["user"], server, self)
+        else:
+            member = Member(payload, server, self)
         if server.id not in self.members:
             self.members[server.id] = {}
         self.members[server.id][member.id] = member
