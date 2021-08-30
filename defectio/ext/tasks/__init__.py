@@ -59,6 +59,7 @@ class SleepHandle:
 
 class Loop(Generic[LF]):
     """A background task helper that abstracts the loop and reconnection logic for you.
+
     The main interface to create this is through :func:`loop`.
     """
 
@@ -200,7 +201,6 @@ class Loop(Generic[LF]):
     def seconds(self) -> Optional[float]:
         """Optional[:class:`float`]: Read-only value for the number of seconds
         between each iteration. ``None`` if an explicit ``time`` value was passed instead.
-        .. versionadded:: 2.0
         """
         if self._seconds is not MISSING:
             return self._seconds
@@ -209,7 +209,6 @@ class Loop(Generic[LF]):
     def minutes(self) -> Optional[float]:
         """Optional[:class:`float`]: Read-only value for the number of minutes
         between each iteration. ``None`` if an explicit ``time`` value was passed instead.
-        .. versionadded:: 2.0
         """
         if self._minutes is not MISSING:
             return self._minutes
@@ -218,7 +217,6 @@ class Loop(Generic[LF]):
     def hours(self) -> Optional[float]:
         """Optional[:class:`float`]: Read-only value for the number of hours
         between each iteration. ``None`` if an explicit ``time`` value was passed instead.
-        .. versionadded:: 2.0
         """
         if self._hours is not MISSING:
             return self._hours
@@ -227,7 +225,6 @@ class Loop(Generic[LF]):
     def time(self) -> Optional[List[datetime.time]]:
         """Optional[List[:class:`datetime.time`]]: Read-only list for the exact times this loop runs at.
         ``None`` if relative times were passed instead.
-        .. versionadded:: 2.0
         """
         if self._time is not MISSING:
             return self._time.copy()
@@ -239,9 +236,7 @@ class Loop(Generic[LF]):
 
     @property
     def next_iteration(self) -> Optional[datetime.datetime]:
-        """Optional[:class:`datetime.datetime`]: When the next iteration of the loop will occur.
-        .. versionadded:: 1.3
-        """
+        """Optional[:class:`datetime.datetime`]: When the next iteration of the loop will occur."""
         if self._task is MISSING:
             return None
         elif self._task and self._task.done() or self._stop_next_iteration:
@@ -251,7 +246,7 @@ class Loop(Generic[LF]):
     async def __call__(self, *args: Any, **kwargs: Any) -> Any:
         r"""|coro|
         Calls the internal callback that the task holds.
-        .. versionadded:: 1.6
+
         Parameters
         ------------
         \*args
@@ -267,16 +262,19 @@ class Loop(Generic[LF]):
 
     def start(self, *args: Any, **kwargs: Any) -> asyncio.Task[None]:
         r"""Starts the internal task in the event loop.
+
         Parameters
         ------------
         \*args
             The arguments to use.
         \*\*kwargs
             The keyword arguments to use.
+
         Raises
         --------
         RuntimeError
             A task has already been launched and is running.
+
         Returns
         ---------
         :class:`asyncio.Task`
@@ -297,6 +295,7 @@ class Loop(Generic[LF]):
 
     def stop(self) -> None:
         r"""Gracefully stops the task from running.
+
         Unlike :meth:`cancel`\, this allows the task to finish its
         current iteration before gracefully exiting.
         .. note::
@@ -306,7 +305,6 @@ class Loop(Generic[LF]):
             If this is undesirable, either remove the error handling
             before stopping via :meth:`clear_exception_types` or
             use :meth:`cancel` instead.
-        .. versionadded:: 1.2
         """
         if self._task is not MISSING and not self._task.done():
             self._stop_next_iteration = True
@@ -323,9 +321,11 @@ class Loop(Generic[LF]):
 
     def restart(self, *args: Any, **kwargs: Any) -> None:
         r"""A convenience method to restart the internal task.
+
         .. note::
             Due to the way this function works, the task is not
             returned like :meth:`start`.
+
         Parameters
         ------------
         \*args
@@ -346,15 +346,18 @@ class Loop(Generic[LF]):
 
     def add_exception_type(self, *exceptions: Type[BaseException]) -> None:
         r"""Adds exception types to be handled during the reconnect logic.
+
         By default the exception types handled are those handled by
         :meth:`defectio.Client.connect`\, which includes a lot of internet disconnection
         errors.
         This function is useful if you're interacting with a 3rd party library that
         raises its own set of exceptions.
+
         Parameters
         ------------
         \*exceptions: Type[:class:`BaseException`]
             An argument list of exception classes to handle.
+
         Raises
         --------
         TypeError
@@ -371,6 +374,7 @@ class Loop(Generic[LF]):
 
     def clear_exception_types(self) -> None:
         """Removes all exception types that are handled.
+
         .. note::
             This operation obviously cannot be undone!
         """
@@ -378,10 +382,12 @@ class Loop(Generic[LF]):
 
     def remove_exception_type(self, *exceptions: Type[BaseException]) -> bool:
         r"""Removes exception types from being handled during the reconnect logic.
+
         Parameters
         ------------
         \*exceptions: Type[:class:`BaseException`]
             An argument list of exception classes to handle.
+
         Returns
         ---------
         :class:`bool`
@@ -402,15 +408,11 @@ class Loop(Generic[LF]):
         return self._is_being_cancelled
 
     def failed(self) -> bool:
-        """:class:`bool`: Whether the internal task has failed.
-        .. versionadded:: 1.2
-        """
+        """:class:`bool`: Whether the internal task has failed."""
         return self._has_failed
 
     def is_running(self) -> bool:
-        """:class:`bool`: Check if the task is currently running.
-        .. versionadded:: 1.4
-        """
+        """:class:`bool`: Check if the task is currently running."""
         return not bool(self._task.done()) if self._task is not MISSING else False
 
     async def _error(self, *args: Any) -> None:
@@ -425,13 +427,16 @@ class Loop(Generic[LF]):
 
     def before_loop(self, coro: FT) -> FT:
         """A decorator that registers a coroutine to be called before the loop starts running.
+
         This is useful if you want to wait for some bot state before the loop starts,
         such as :meth:`defectio.Client.wait_until_ready`.
         The coroutine must take no arguments (except ``self`` in a class context).
+
         Parameters
         ------------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register before the loop runs.
+
         Raises
         -------
         TypeError
@@ -448,15 +453,18 @@ class Loop(Generic[LF]):
 
     def after_loop(self, coro: FT) -> FT:
         """A decorator that register a coroutine to be called after the loop finished running.
+
         The coroutine must take no arguments (except ``self`` in a class context).
         .. note::
             This coroutine is called even during cancellation. If it is desirable
             to tell apart whether something was cancelled or not, check to see
             whether :meth:`is_being_cancelled` is ``True`` or not.
+
         Parameters
         ------------
         coro: :ref:`coroutine <coroutine>`
             The coroutine to register after the loop finishes.
+
         Raises
         -------
         TypeError
@@ -476,7 +484,6 @@ class Loop(Generic[LF]):
         The coroutine must take only one argument the exception raised (except ``self`` in a class context).
         By default this prints to :data:`sys.stderr` however it could be
         overridden to have a different implementation.
-        .. versionadded:: 1.4
         Parameters
         ------------
         coro: :ref:`coroutine <coroutine>`
@@ -578,7 +585,7 @@ class Loop(Generic[LF]):
         time: Union[datetime.time, Sequence[datetime.time]] = MISSING,
     ) -> None:
         """Changes the interval for the sleep time.
-        .. versionadded:: 1.2
+
         Parameters
         ------------
         seconds: :class:`float`
@@ -591,9 +598,9 @@ class Loop(Generic[LF]):
             The exact times to run this loop at. Either a non-empty list or a single
             value of :class:`datetime.time` should be passed.
             This cannot be used in conjunction with the relative time parameters.
-            .. versionadded:: 2.0
             .. note::
                 Duplicate times will be ignored, and only run once.
+
         Raises
         -------
         ValueError
@@ -645,6 +652,7 @@ def loop(
 ) -> Callable[[LF], Loop[LF]]:
     """A decorator that schedules a task in the background for you with
     optional reconnect logic. The decorator returns a :class:`Loop`.
+
     Parameters
     ------------
     seconds: :class:`float`
@@ -660,7 +668,6 @@ def loop(
         This cannot be used in conjunction with the relative time parameters.
         .. note::
             Duplicate times will be ignored, and only run once.
-        .. versionadded:: 2.0
     count: Optional[:class:`int`]
         The number of loops to do, ``None`` if it should be an
         infinite loop.
@@ -671,6 +678,7 @@ def loop(
     loop: :class:`asyncio.AbstractEventLoop`
         The loop to use to register the task, if not given
         defaults to :func:`asyncio.get_event_loop`.
+
     Raises
     --------
     ValueError
