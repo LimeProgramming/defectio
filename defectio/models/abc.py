@@ -90,9 +90,6 @@ class Messageable(Protocol):
         files=None,
         delete_after=None,
         nonce=None,
-        allowed_mentions=None,
-        reference=None,
-        mention_author=None,
     ):
 
         channel = await self._get_channel()
