@@ -84,12 +84,10 @@ class Message(Hashable):
             await self._state.http.delete_message(self.channel.id, self.id)
 
     async def edit(self, content: str) -> Message:
-        data = await self._state.http.edit_message(
-            self.channel.id, self.id, content=content
-        )
-        message = Message(state=self._state, channel=self.channel, data=data)
+        await self._state.http.edit_message(self.channel.id, self.id, content=content)
+        self.content = content
 
-        return message
+        return self
 
     def _update(self, data: MessageUpdate) -> None:
         if "content" in data["data"]:

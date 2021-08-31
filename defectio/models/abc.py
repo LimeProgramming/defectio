@@ -84,11 +84,11 @@ class Messageable(Protocol):
 
     async def send(
         self,
-        content=None,
+        content: str = None,
         *,
         file=None,
         files=None,
-        delete_after=None,
+        delete_after: int = None,
         nonce=None,
     ):
 
