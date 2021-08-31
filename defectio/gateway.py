@@ -7,10 +7,7 @@ from typing import TYPE_CHECKING
 
 import aiohttp
 
-try:
-    import orjson as json
-except ImportError:
-    import json
+import orjson as json
 
 if TYPE_CHECKING:
     from defectio.client import Client

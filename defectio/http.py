@@ -18,10 +18,7 @@ from defectio.errors import RevoltServerError
 
 from . import __version__
 
-try:
-    import orjson as json
-except ImportError:
-    import json
+import orjson as json
 
 if TYPE_CHECKING:
     import aiohttp
