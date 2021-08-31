@@ -4,7 +4,7 @@ from typing import Optional
 from typing import TYPE_CHECKING
 
 from .mixins import Hashable
-from ..types.payloads import StatusPayload
+from ..types.payloads import RelationshipPayload, StatusPayload
 
 if TYPE_CHECKING:
     from ..state import ConnectionState
@@ -22,6 +22,18 @@ class Status:
 
     def __repr__(self) -> str:
         return f"<Status: {self}>"
+
+
+class Relationship:
+    def __init__(self, relationship: RelationshipPayload):
+        self.other_user_id = relationship.get("_id")
+        self.status = relationship.get("status")
+
+    def __str__(self):
+        return f"{self.other_user_id} ({self.status})"
+
+    def __repr__(self) -> str:
+        return f"<Relationship: {self}>"
 
 
 class PartialUser(Hashable):
@@ -59,12 +71,16 @@ class User(PartialUser):
         self.online = data.get("online", False)
         self.flags = data.get("flags", 0)
         self.status = Status(StatusPayload(data.get("status", {"presense": "Offline"})))
+        self.our_relation = data.get("relationship")
+        for relationship in data.get("relationships", []):
+            self.relationships.append(Relationship(relationship))
 
     def _update(self, data: UserUpdate) -> None:
         self.name = data.get("username", self.name)
         self.online = data.get("online", self.online)
         self.badges = data.get("badges", self.badges)
         self.flags = data.get("flags", self.flags)
+        self.our_relation = data.get("relationship", self.our_relation)
         if "status" in data:
             self.status = Status(StatusPayload(data["status"]))
 
