@@ -5,7 +5,6 @@ import logging
 import signal
 import sys
 import traceback
-from os import pread
 from typing import Any
 from typing import Callable
 from typing import Coroutine
