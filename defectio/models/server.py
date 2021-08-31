@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Optional
 from typing import List
 from typing import TYPE_CHECKING
 
@@ -94,8 +94,9 @@ class Server(Hashable):
         self.description = data.get("description")
         self.channel_ids = data.get("channels")
         self.member_ids = data.get("members")
-        for category in data.get("categories", []):
-            self.add_category(category)
+        self.categories = [
+            Category(payload, self._state) for payload in data.get("categories", [])
+        ]
         self.roles: List[Role] = []
         for key, value in data.get("roles", {}).items():
             self.roles.append(Role(key, value, self._state))
@@ -105,10 +106,6 @@ class Server(Hashable):
         self.system_message = SystemMessages(  # weird ordering since servers are loaded before channels so on caching default to None # TODO
             data.get("system_messages"), self, self._state
         )
-
-    def add_category(self, payload: CategoryPayload) -> None:
-        category = Category(payload, self._state)
-        self.categories.append(category)
 
     def __str__(self) -> str:
         return self.name
@@ -125,6 +122,18 @@ class Server(Hashable):
     def _update(self, payload: ServerUpdate):
         for k, v in payload.items():
             setattr(self, k, v)
+
+    def create_text_channel(
+        self, name: str, *, description: Optional[str] = None
+    ) -> MessageableChannel:
+        channel = self._state.http.create_channel(self.id, name, "Text", description)
+        self._state.add_channel(channel)
+        self.channel_ids.append(channel["_id"])
+
+    def create_voice_channel(self, name: str):
+        channel = self._state.http.create_channel(self.id, name, "Voice")
+        self._state.add_channel(channel)
+        self.channel_ids.append(channel["_id"])
 
     @property
     def channels(self):
