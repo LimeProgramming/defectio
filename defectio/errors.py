@@ -7,9 +7,11 @@ from typing import Optional
 from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
+from defectio.types.websocket import Error
 
 if TYPE_CHECKING:
     from aiohttp import ClientResponse, ClientWebSocketResponse
+    from types.websocket import Error
 
     try:
         from requests import Response
@@ -152,4 +154,12 @@ class LoginFailure(ClientException):
     failure.
     """
 
-    pass
+    def __init__(self, error: Error):
+        self.type = error.get("type")
+        self.reason = error.get("error")
+
+    def __str__(self):
+        return f"{self.type}: {self.reason}"
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}: {self}>"

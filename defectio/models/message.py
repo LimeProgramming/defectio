@@ -8,6 +8,7 @@ from defectio.models.user import PartialUser
 
 from .abc import Messageable
 from .mixins import Hashable
+import io
 
 
 if TYPE_CHECKING:
@@ -18,9 +19,9 @@ if TYPE_CHECKING:
     from .user import User
 
 
-class File:
+class Attachment:
     def __init__(self, state: ConnectionState, data: AttachmentPayload):
-        self._state = state
+        self._state: ConnectionState = state
         self.id = data.get("_id")
         self.tag = data.get("tag")
         self.size = data.get("size")
@@ -35,6 +36,19 @@ class File:
         return f"{base_url}/{self.tag}/{self.id}"
 
 
+class File:
+    def __init__(self, file: io.BytesIO, name: str) -> None:
+        self._file = file
+        self.name = name
+
+    async def from_url(self, url: str) -> Optional[File]:
+        async with self._state.http._session.get(url) as resp:
+            resp.raise_for_status()
+            data = io.BytesIO(await resp.read())
+
+        return File(self._state, data)
+
+
 class Message(Hashable):
     def __init__(
         self, state: ConnectionState, channel: MessageableChannel, data: MessagePayload
@@ -44,7 +58,7 @@ class Message(Hashable):
         self.channel = channel
         self.content = data.get("content")
         self.author_id = data.get("author")
-        self.attachments = [File(state, a) for a in data.get("attachments", [])]
+        self.attachments = [Attachment(state, a) for a in data.get("attachments", [])]
 
     def __repr__(self) -> str:
         name = self.__class__.__name__

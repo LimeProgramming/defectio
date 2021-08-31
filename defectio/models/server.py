@@ -8,12 +8,13 @@ from .mixins import Hashable
 
 if TYPE_CHECKING:
     from ..types.payloads import (
-        Server as ServerPayload,
+        ServerPayload,
         CategoryPayload,
         SystemMessagePayload,
+        RolePayload,
     )
     from ..state import ConnectionState
-    from ..types.websocket import ServerUpdate
+    from ..types.websocket import ServerUpdate, ServerRoleUpdate
     from .member import Member
     from .channel import MessageableChannel
 
@@ -40,6 +41,20 @@ class SystemMessages:
 
     def __str__(self) -> str:
         return self.__repr__()
+
+
+class Role(Hashable):
+    def __init__(self, data: RolePayload, state: ConnectionState) -> None:
+        self._state = state
+        self.id = data.get("id")
+        self.name = data.get("name")
+        self.color = data.get("color")
+        self.hoist = data.get("hoist", False)
+        self.rank = data.get("rank")
+
+    def _update(self, event: ServerRoleUpdate) -> None:
+        if event.get("clear") == "Colour":
+            self.colour = None
 
 
 class Category(Hashable):

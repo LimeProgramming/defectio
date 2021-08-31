@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+from defectio.errors import LoginFailure
 import logging
-from typing import Any
+from typing import Any, Union
 from typing import TYPE_CHECKING
+from .types.websocket import Authenticated, Error
 
 import aiohttp
 
@@ -39,13 +41,16 @@ class DefectioWebsocket:
     async def send_payload(self, payload: Any) -> None:
         await self.websocket.send_str(json.dumps(payload).decode("utf-8"))
 
-    async def wait_for_auth(self) -> bool:
+    async def wait_for_auth(self) -> Union[Error, Authenticated]:
         auth_event = await self.websocket.receive()
+        response: Union[Error, Authenticated]
         if auth_event.type == aiohttp.WSMsgType.TEXT:
             payload = json.loads(auth_event.data)
             if payload.get("type") == "Authenticated":
-                return True
-        return False
+                response = Authenticated(payload)
+            else:
+                response = Error(payload)
+        return response
 
     async def send_authenticate(self) -> None:
         payload = {"type": "Authenticate", "token": self.token}
@@ -53,11 +58,10 @@ class DefectioWebsocket:
         try:
             authenticated = await asyncio.wait_for(self.wait_for_auth(), timeout=10)
         except asyncio.TimeoutError:
-            authenticated = False
-
-        if not authenticated:
+            authenticated = Error({"type": "InternalError", "error": "timeout"})
+        if authenticated["type"] != "Authenticated":
             logger.error("Authentication failed.")
-            raise RuntimeError("Authentication failed.")
+            raise LoginFailure(authenticated)
 
         logger.info("Websocket connected and authenticated.")
 

@@ -250,7 +250,13 @@ class ConnectionState:
         self.dispatch("server_role_delete", data)
 
     def parse_userupdate(self, data: UserUpdate):
-        self.dispatch("user_update", data)
+        user = self.get_user(data["id"])
+        if user is not None:
+            old_user = copy.copy(user)
+            user._update(data)
+            self.dispatch("raw_user_update", data)
+            self.dispatch("user_update", old_user, user)
+        self.dispatch("raw_user_update", data)
 
     def parse_userrelationship(self, data: UserRelationship):
         self.dispatch("user_relationship", data)

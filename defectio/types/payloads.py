@@ -55,7 +55,7 @@ class RelationshipPayload(TypedDict):
 
 class StatusPayload(TypedDict):
     text: str
-    presence: RelationType
+    presence: Literal["Busy", "Idle", "Invisible", "Online", "Offline"]
 
 
 class UserBotInfoPayload(TypedDict):
@@ -65,7 +65,7 @@ class UserBotInfoPayload(TypedDict):
 class AttachmentPayload(TypedDict):
     _id: str
     tag: Literal["attachments"]
-    size: 0
+    size: int
     filename: str
     metadata: MetadataPayload
     content_type: str
@@ -223,8 +223,8 @@ class SystemMessagePayload(TypedDict):
 class RolePayload(TypedDict):
     name: str
     colour: str
-    hoist: bool
-    rank: 0
+    hoist: Optional[bool]
+    rank: int
     permissions: List[int]
 
 
@@ -327,7 +327,7 @@ class JoinInvitePayload(TypedDict):
     server: ServerPayload
 
 
-Settings = Dict[str : Tuple[int, str]]
+Settings = Dict[str, Tuple[int, str]]
 
 
 class UnreadsPayload(TypedDict):

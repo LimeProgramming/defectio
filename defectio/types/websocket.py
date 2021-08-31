@@ -3,17 +3,23 @@ from typing import Literal
 from typing import Optional
 from typing import TypedDict
 
-from .payloads import Channel
-from .payloads import Member
-from .payloads import Message as MessagePayload
+from .payloads import ChannelPayload
+from .payloads import MemberPayload
+from .payloads import MessagePayload
 from .payloads import RelationType
-from .payloads import Role
-from .payloads import Server
-from .payloads import User
+from .payloads import RolePayload
+from .payloads import ServerPayload
+from .payloads import UserPayload
 
 
 class Error(TypedDict):
-    type: str
+    type: Literal[
+        "LabelMe",
+        "InternalError",
+        "InvalidSession",
+        "OnboardingNotFinished",
+        "AlreadyAuthenticated",
+    ]
     error: str
 
 
@@ -28,9 +34,9 @@ class Pong(TypedDict):
 
 class Ready(TypedDict):
     type: Literal["Ready"]
-    users: List[User]
-    servers: List[Server]
-    channels: List[Channel]
+    users: List[UserPayload]
+    servers: List[ServerPayload]
+    channels: List[ChannelPayload]
 
 
 class Message(MessagePayload):
@@ -53,11 +59,11 @@ class MessageDelete(TypedDict):
     channel: str
 
 
-class ChannelCreate(Channel):
+class ChannelCreate(ChannelPayload):
     type: Literal["ChannelCreate"]
 
 
-class PartialChannel(Channel, total=False):
+class PartialChannel(ChannelPayload, total=False):
     pass
 
 
@@ -104,7 +110,7 @@ class ChannelAck(TypedDict):
     message_id: str
 
 
-class PartialServer(Server, total=False):
+class PartialServer(ServerPayload, total=False):
     pass
 
 
@@ -120,7 +126,7 @@ class ServerDelete(TypedDict):
     id: str
 
 
-class PartialServerMember(Member, total=False):
+class PartialServerMember(MemberPayload, total=False):
     pass
 
 
@@ -143,7 +149,7 @@ class ServerMemberLeave(TypedDict):
     user: str
 
 
-class PartialServerRole(Role, total=False):
+class PartialServerRole(RolePayload, total=False):
     pass
 
 
@@ -160,7 +166,7 @@ class ServerRoleDelete(TypedDict):
     role_id: str
 
 
-class PartialUser(User, total=False):
+class PartialUser(UserPayload, total=False):
     pass
 
 
