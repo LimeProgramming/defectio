@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from typing import Optional
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from .mixins import Hashable
 from ..types.payloads import RelationshipPayload, StatusPayload
+from .. import utils
 
 if TYPE_CHECKING:
     from ..state import ConnectionState
@@ -34,6 +35,9 @@ class Relationship:
 
     def __repr__(self) -> str:
         return f"<Relationship: {self}>"
+
+    def _update(self, payload: RelationshipPayload) -> None:
+        self.status = payload.get("status")
 
 
 class PartialUser(Hashable):
@@ -72,6 +76,7 @@ class User(PartialUser):
         self.flags = data.get("flags", 0)
         self.status = Status(StatusPayload(data.get("status", {"presense": "Offline"})))
         self.our_relation = data.get("relationship")
+        self.relationships: List[Relationship] = []
         for relationship in data.get("relationships", []):
             self.relationships.append(Relationship(relationship))
 
@@ -83,6 +88,16 @@ class User(PartialUser):
         self.our_relation = data.get("relationship", self.our_relation)
         if "status" in data:
             self.status = Status(StatusPayload(data["status"]))
+        if "relationships" in data:
+            for relationship in data["relationships"]:
+                rel = utils.find(
+                    lambda r: r.other_user_id == relationship.get("_id"),
+                    self.relationships,
+                )
+                if rel:
+                    rel._update(relationship)
+                else:
+                    self.relationships.append(Relationship(relationship))
 
     def __repr__(self) -> str:
         return f"<User id={self.id!r} name={self.name!r}>"
