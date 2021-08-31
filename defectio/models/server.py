@@ -44,17 +44,26 @@ class SystemMessages:
 
 
 class Role(Hashable):
-    def __init__(self, data: RolePayload, state: ConnectionState) -> None:
+    def __init__(self, id: str, data: RolePayload, state: ConnectionState) -> None:
+        self.id = id
         self._state = state
-        self.id = data.get("id")
         self.name = data.get("name")
-        self.color = data.get("color")
+        self.colour = data.get("colour")
         self.hoist = data.get("hoist", False)
         self.rank = data.get("rank")
 
     def _update(self, event: ServerRoleUpdate) -> None:
         if event.get("clear") == "Colour":
             self.colour = None
+        self.name = event.get("name", self.name)
+        self.hoist = event.get("hoist", self.hoist)
+        self.rank = event.get("rank", self.rank)
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        return f"<Role server={self.server.id} name={self.name}>"
 
 
 class Category(Hashable):
@@ -78,21 +87,23 @@ class Server(Hashable):
         self._state: ConnectionState = state
         self._from_data(data)
 
-    def _from_data(self, server: ServerPayload) -> None:
-        self.id = server.get("_id")
-        self.owner = server.get("owner")
-        self.name = server.get("name")
-        self.description = server.get("description")
-        self.channel_ids = server.get("channels")
-        self.member_ids = server.get("members")
-        for category in server.get("categories", []):
+    def _from_data(self, data: ServerPayload) -> None:
+        self.id = data.get("_id")
+        self.owner = data.get("owner")
+        self.name = data.get("name")
+        self.description = data.get("description")
+        self.channel_ids = data.get("channels")
+        self.member_ids = data.get("members")
+        for category in data.get("categories", []):
             self.add_category(category)
-        self.roles = server.get("roles")
-        self.icon = server.get("icon")
-        self.banner = server.get("banner")
-        self.default_permissions = server.get("default_permissions")
+        self.roles: List[Role] = []
+        for key, value in data.get("roles", {}).items():
+            self.roles.append(Role(key, value, self._state))
+        self.icon = data.get("icon")
+        self.banner = data.get("banner")
+        self.default_permissions = data.get("default_permissions")
         self.system_message = SystemMessages(  # weird ordering since servers are loaded before channels so on caching default to None # TODO
-            server.get("system_messages"), self, self._state
+            data.get("system_messages"), self, self._state
         )
 
     def add_category(self, payload: CategoryPayload) -> None:
