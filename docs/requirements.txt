@@ -1,3 +1,5 @@
 sphinx==4.1.2
-sphinx-rtd-theme==0.5.2
 sphinxcontrib_trio==1.1.2
+furo==2021.8.31
+sphinxext-opengraph==0.4.2
+sphinx-copybutton==0.4.0
