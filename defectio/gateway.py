@@ -13,6 +13,7 @@ import orjson as json
 
 if TYPE_CHECKING:
     from defectio.client import Client
+    from .models import Auth
 
 logger = logging.getLogger("defectio")
 
@@ -32,7 +33,7 @@ class DefectioWebsocket:
         self._parsers = client._connection.parsers
         self.user_agent = user_agent
 
-        self.token: str
+        self.auth: Auth
 
     @property
     def closed(self) -> bool:
@@ -53,7 +54,10 @@ class DefectioWebsocket:
         return response
 
     async def send_authenticate(self) -> None:
-        payload = {"type": "Authenticate", "token": self.token}
+        payload = {
+            "type": "Authenticate",
+            **self.auth.payload,
+        }
         await self.send_payload(payload)
         try:
             authenticated = await asyncio.wait_for(self.wait_for_auth(), timeout=10)
@@ -63,10 +67,8 @@ class DefectioWebsocket:
             logger.error("Authentication failed.")
             raise LoginFailure(authenticated)
 
-        logger.info("Websocket connected and authenticated.")
-
-    async def connect(self, token: str) -> None:
-        self.token = token
+    async def connect(self, auth: Auth) -> None:
+        self.auth = auth
         kwargs = {
             "max_msg_size": 0,
             "timeout": 30.0,
@@ -75,10 +77,9 @@ class DefectioWebsocket:
                 "User-Agent": self.user_agent,
             },
             "compress": 0,
+            "heartbeat": 15.0,
         }
-        self.websocket = await self.session.ws_connect(
-            self.ws_url, heartbeat=15, **kwargs
-        )
+        self.websocket = await self.session.ws_connect(self.ws_url, **kwargs)
 
         logger.debug("Websocket connected to %s", self.ws_url)
 

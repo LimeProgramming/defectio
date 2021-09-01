@@ -16,7 +16,6 @@ ChannelType = Literal[
 
 
 class ApiInfoFeaturePayload(TypedDict):
-    registration: bool
     captcha: Dict[str, Any]
     email: bool
     invite_only: str

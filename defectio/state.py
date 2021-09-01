@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import copy
+from defectio.models.auth import Auth
 import inspect
 import logging
 from collections import deque
@@ -28,6 +29,7 @@ from .models import User
 from .models import VoiceChannel
 from .models.raw_models import RawMessageDeleteEvent
 from .models.raw_models import RawMessageUpdateEvent
+from .models.apiinfo import ApiInfo
 
 if TYPE_CHECKING:
     from . import abc
@@ -76,11 +78,13 @@ class ConnectionState:
         handlers: Dict[str, Callable],
         http: Callable[..., DefectioHTTP],
         websocket: Callable[..., DefectioWebsocket],
+        auth: Auth,
         loop: asyncio.AbstractEventLoop,
         **options: Any,
     ):
         self.get_http = http
         self.get_websocket = websocket
+        self.auth = auth
         self.handlers: Dict[str, Callable] = handlers
         self.dispatch: Callable = dispatch
         self.max_messages: Optional[int] = options.get("max_messages", 1000)
@@ -89,7 +93,7 @@ class ConnectionState:
         self.channels: Dict[str, MessageableChannel] = {}
         self.users: Dict[str, User] = {}
         self.members: Dict[str, List[Union[Member | PartialMember]]] = {}
-        self.user: Optional[User] = None
+        self.user_id: Optional[str] = None
 
         self._messages: Optional[List[Message]] = deque(maxlen=self.max_messages)
         self.api_info: Optional[ApiInfoPayload] = None
@@ -114,6 +118,14 @@ class ConnectionState:
     def websocket(self) -> DefectioWebsocket:
         return self.get_websocket()
 
+    @property
+    def user(self):
+        if self.auth().is_bot:
+            user = self.get_user(self.user_id)
+        else:
+            user = self.get_user(self.auth().user_id)
+        return user
+
     def call_handlers(self, key: str, *args: Any, **kwargs: Any) -> None:
         try:
             func = self.handlers[key]
@@ -123,7 +135,15 @@ class ConnectionState:
             func(*args, **kwargs)
 
     def set_api_info(self, api_info: ApiInfoPayload):
-        self.api_info = api_info
+        self.api_info = ApiInfo(api_info)
+        return self.api_info
+
+    def clear(self) -> None:
+        self.servers.clear()
+        self.channels.clear()
+        self.users.clear()
+        self.members.clear()
+        self._messages.clear()
 
     # Parsers
 
@@ -134,10 +154,13 @@ class ConnectionState:
         self.dispatch("pong", data)
 
     def parse_ready(self, data: Ready) -> None:
+        self.clear()
+
         for user in data["users"]:
             self.add_user(user)
 
-        self.user = self.create_user(data=data["users"][0])
+        if self.auth().is_bot:
+            self.user_id = data["users"][0]["_id"]
 
         for server in data["servers"]:
             self.add_server(server)
@@ -150,7 +173,6 @@ class ConnectionState:
 
         self.call_handlers("ready")
         self.dispatch("ready")
-        self.dispatch("connect")
 
     def parse_message(self, data: MessagePayload) -> None:
         channel = self.get_channel(data["channel"])
@@ -296,8 +318,11 @@ class ConnectionState:
         self, payload: ChannelPayload
     ) -> Union[MessageableChannel, VoiceChannel]:
         cls = channel_factory(payload)
-        server = self.get_server(payload["server"])
-        channel = cls(state=self, data=payload, server=server)
+        server = self.get_server(payload.get("server"))
+        if server is not None:
+            channel = cls(state=self, data=payload, server=server)
+        else:
+            channel = cls(state=self, data=payload)
         self.channels[channel.id] = channel
         return channel
 

@@ -1,9 +1,10 @@
 from __future__ import annotations
+from defectio.models.user import User
 
 from typing import Optional
 from typing import Text
 from typing import TYPE_CHECKING
-from typing import Union
+from typing import Union, List
 
 from . import abc
 from .message import Message
@@ -144,12 +145,34 @@ class SavedMessageChannel(abc.Messageable):
 
 class DMChannel(abc.Messageable):
     def __init__(self, data: ChannelPayload, state: ConnectionState):
-        super().__init__(data, state)
+        self._state = state
+        self.id = data.get("_id")
+        self.active = data.get("active")
+        if "last_message" in data:
+            self.last_message = state.get_message(data.get("last_message").get("_id"))
+        else:
+            self.last_message = None
+        self._recipients = data.get("recipients")
+
+    @property
+    def recipients(self) -> List[User]:
+        return [self._state.get_user(user) for user in self._recipients]
 
 
 class GroupDMChannel(abc.Messageable):
     def __init__(self, data: ChannelPayload, state: ConnectionState):
         super().__init__(data, state)
+        {
+            "channel_type": "DirectMessage",
+            "_id": "01FE7TWZ797ECQF87FNCQKR3XH",
+            "active": True,
+            "recipients": ["01FE542RP7Z81GMC9DCAWZZVC4", "01FE7T9AZNTDCYW0FNRN2XS1NY"],
+            "last_message": {
+                "_id": "01FE7W6S5P3TBFX0R9XRZXAMEF",
+                "author": "01FE542RP7Z81GMC9DCAWZZVC4",
+                "short": "the voice here on the web client is broken currently",
+            },
+        }
 
 
 class VoiceChannel(abc.Messageable):

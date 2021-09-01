@@ -7,3 +7,4 @@ from .member import Member
 from .message import Message
 from .server import Server
 from .user import User
+from .auth import Auth

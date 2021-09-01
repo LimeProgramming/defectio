@@ -15,6 +15,7 @@ import aiohttp
 import ulid
 from defectio.errors import LoginFailure
 from defectio.errors import RevoltServerError
+from .models import Auth
 
 from . import __version__
 
@@ -66,9 +67,8 @@ class DefectioHTTP:
         user_agent: str,
     ):
         self._session = session if session is not None else aiohttp.ClientSession()
-        self.token: Optional[str] = None
+        self.auth: Optional[Auth] = None
         self.api_url = api_url
-        self.is_bot = True
         self.user_agent = user_agent
 
     async def request(
@@ -78,10 +78,9 @@ class DefectioHTTP:
         headers = kwargs.get("headers", {})
         headers["User-Agent"] = self.user_agent
         if auth_needed:
-            if self.is_bot and self.token is not None:
-                headers["x-bot-token"] = self.token
-            else:
-                raise LoginFailure()
+            if not self.auth:
+                raise LoginFailure("Not logged in")
+            headers = {**headers, **self.auth.headers}
         if "json" in kwargs:
             headers["Content-Type"] = "application/json"
         kwargs["headers"] = headers
@@ -102,11 +101,28 @@ class DefectioHTTP:
                 logger.debug("%s %s has received %s", method, url, data)
                 return data
 
+            if 500 > response.status >= 400:
+                raise
+                # raise RevoltServerError(response, data)
+
             if response.status >= 500:
                 raise RevoltServerError(response, data)
 
-    def login(self, token: str) -> None:
-        self.token = token
+    def bot_login(self, token: str) -> Auth:
+        self.auth = Auth(token)
+        self.is_bot = True
+        return self.auth
+
+    async def user_login(self, email: str, password: str) -> Auth:
+        session = await self.login(email, password)
+        self.auth = Auth(session)
+        self.is_bot = False
+        return self.auth
+
+    def session_login(self, session_token: str, user_id: str) -> Auth:
+        auth = Auth({"session_token": session_token, "user_id": user_id})
+        self.auth = auth
+        return auth
 
     async def close(self) -> None:
         if self._session:
@@ -143,10 +159,11 @@ class DefectioHTTP:
         kwargs["email"] = email
         return await self.request("POST", path, json=kwargs, auth_needed=False)
 
-    async def user_login(self, email: str, password: str, **kwargs) -> LoginPayload:
+    async def login(self, email: str, password: str, **kwargs) -> LoginPayload:
         path = "auth/login"
         kwargs["email"] = email
         kwargs["password"] = password
+        kwargs["device_name"] = self.user_agent
         return await self.request(
             "POST", path, json={"email": email, "password": password}, auth_needed=False
         )
@@ -319,7 +336,7 @@ class DefectioHTTP:
         *,
         attachments: Optional[List[Any]] = None,
         replies: Optional[Any] = None,
-    ) -> Message:
+    ) -> MessagePayload:
         path = f"channels/{channel_id}/messages"
         json = {"content": content}
         if attachments:
@@ -338,7 +355,7 @@ class DefectioHTTP:
         sort: Literal["Latest", "Oldest"] = "Latest",
         nearby: Optional[List[str]] = None,
         include_users: bool = True,
-    ) -> List[FetchMessage]:
+    ) -> List[FetchMessagePayload]:
         path = f"channels/{channel_id}/messages"
         json = {"sort": sort}
         if limit:
@@ -372,7 +389,7 @@ class DefectioHTTP:
 
     async def poll_message_changes(
         self, channel_id: str, message_ids: List[str]
-    ) -> MessagePoll:
+    ) -> MessagePayload:
         path = f"channels/{channel_id}/messages/stale"
         return await self.request("GET", path, json=message_ids)
 
@@ -386,7 +403,7 @@ class DefectioHTTP:
         after: Optional[str] = None,
         sort: Literal["Latest", "Oldest", "Relevant"] = "Latest",
         include_users: bool = True,
-    ) -> SearchMessage:
+    ) -> SearchMessagePayload:
         path = f"channels/{channel_id}/messages/search"
         json = {"query": query, "sort": sort, "include_users": include_users}
         if limit:
@@ -411,7 +428,7 @@ class DefectioHTTP:
         *,
         description: Optional[str] = None,
         users: Optional[List[str]] = None,
-    ) -> Group:
+    ) -> GroupPayload:
         path = "channels/create"
         json = {"name": name}
         if description:

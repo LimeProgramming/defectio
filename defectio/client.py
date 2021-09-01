@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from defectio.models.auth import Auth
 import logging
 import signal
 import sys
@@ -82,8 +83,8 @@ class Client:
             asyncio.get_event_loop() if loop is None else loop
         )
 
-        self.websocket: DefectioWebsocket
-        self.http: DefectioHTTP
+        self.websocket: DefectioWebsocket = None
+        self.http: DefectioHTTP = None
         self.session = kwargs.pop("session", None)
 
         self._handlers: Dict[str, Callable] = {"ready": self._handle_ready}
@@ -93,6 +94,7 @@ class Client:
 
         self._ready = asyncio.Event()
         self._closed = True
+        self._auth: Optional[Auth] = None
         self._connection: ConnectionState = self._get_state(**kwargs)
 
     def _get_state(self, **options: Any) -> ConnectionState:
@@ -101,6 +103,7 @@ class Client:
             handlers=self._handlers,
             http=self.get_http,
             websocket=self.get_websocket,
+            auth=self.get_auth,
             loop=self.loop,
             **options,
         )
@@ -221,10 +224,13 @@ class Client:
 
         Example
         ---------
+
         .. code-block:: python3
+
             @client.event
             async def on_ready():
                 print('Ready!')
+
         Raises
         --------
         TypeError
@@ -246,6 +252,10 @@ class Client:
     def user(self) -> Optional[User]:
         """Optional[:class:`.ClientUser`]: Represents the connected client. ``None`` if not logged in."""
         return self._connection.user
+
+    def get_auth(self) -> Auth:
+        """Returns the Auth object used for logging in."""
+        return self._auth
 
     def get_http(self) -> DefectioHTTP:
         return self.http
@@ -286,25 +296,39 @@ class Client:
         self.session = aiohttp.ClientSession()
         self.http = DefectioHTTP(self.session, self.api_url, user_agent)
         api_info = await self.http.node_info()
-        self._connection.set_api_info(api_info)
+        api_info = self._connection.set_api_info(api_info)
         self.websocket = DefectioWebsocket(
-            self.session, api_info["ws"], user_agent, self
+            self.session, api_info.ws_url, user_agent, self
         )
 
     async def connect(self) -> None:
         self._closed = False
 
-    async def login(self, token: str) -> None:
-        self.http.login(token)
-        await self.websocket.connect(token)
+    async def bot_login(self, token: str) -> None:
+        self._auth = self.http.bot_login(token)
+        await self.websocket.connect(self._auth)
 
-    async def start(self, token: str):
+    async def user_login(self, session_token: str, user_id: str) -> None:
+        self._auth = self.http.session_login(session_token, user_id)
+        await self.websocket.connect(self._auth)
+
+    async def start(
+        self,
+        *,
+        token: Optional[str] = None,
+        session_token: Optional[str] = None,
+        user_id: Optional[str] = None,
+    ) -> None:
         await self.create()
-        await self.login(token)
+        if token is not None:
+            await self.bot_login(token)
+        elif session_token is not None and user_id is not None:
+            await self.user_login(session_token, user_id)
         await self.connect()
 
-    def run(self, *args: Any, **kwargs: Any) -> None:
+    def run(self, token: Optional[str] = None, **kwargs: Any) -> None:
         loop = self.loop
+        kwargs["token"] = token
 
         try:
             loop.add_signal_handler(signal.SIGINT, loop.stop)
@@ -314,7 +338,7 @@ class Client:
 
         async def runner() -> None:
             try:
-                await self.start(*args, **kwargs)
+                await self.start(**kwargs)
             finally:
                 if not self.is_closed():
                     await self.close()

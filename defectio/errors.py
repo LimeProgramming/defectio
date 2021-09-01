@@ -154,12 +154,4 @@ class LoginFailure(ClientException):
     failure.
     """
 
-    def __init__(self, error: Error):
-        self.type = error.get("type")
-        self.reason = error.get("error")
-
-    def __str__(self):
-        return f"{self.type}: {self.reason}"
-
-    def __repr__(self):
-        return f"<{self.__class__.__name__}: {self}>"
+    pass
