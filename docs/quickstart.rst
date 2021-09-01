@@ -62,16 +62,16 @@ There's a lot going on here, so let's walk you through it step by step.
 Now that we've made a bot, we have to *run* the bot. Luckily, this is simple since this is just a
 Python script, we can run it directly.
 
+On *unix:
+
+.. code-block:: shell
+
+    $ python3 example_bot.py
+
 On Windows:
 
 .. code-block:: shell
 
     $ py -3 example_bot.py
-
-On other systems:
-
-.. code-block:: shell
-
-    $ python3 example_bot.py
 
 Now you can try playing around with your basic bot.

@@ -152,6 +152,10 @@ def docs_build(session: Session) -> None:
     session.install(".")
     session.install(
         "sphinx",
+        "furo",
+        "sphinxcontrib_trio",
+        "sphinx-copybutton",
+        "sphinxext-opengraph",
     )
 
     build_dir = Path("docs", "_build")
@@ -167,7 +171,12 @@ def docs(session: Session) -> None:
     args = session.posargs or ["--open-browser", "docs", "docs/_build"]
     session.install(".")
     session.install(
-        "sphinx", "sphinx-autobuild", "sphinxcontrib_trio", "sphinx-rtd-theme"
+        "sphinx",
+        "sphinx-autobuild",
+        "sphinxcontrib_trio",
+        "furo",
+        "sphinx-copybutton",
+        "sphinxext-opengraph",
     )
 
     build_dir = Path("docs", "_build")
