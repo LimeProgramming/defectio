@@ -1,27 +1,23 @@
 from __future__ import annotations
 
-import asyncio
-from defectio.models.auth import Auth
-import logging
-import signal
 import sys
-import traceback
-from typing import Any
-from typing import Callable
-from typing import Coroutine
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import TYPE_CHECKING
-from typing import TypeVar
-
+import signal
+import orjson as json
 import aiohttp
+import asyncio
+import logging
+import traceback
+from typing import (
+    Any, Callable, Coroutine, Dict, List,
+    Optional, Tuple, TYPE_CHECKING, TypeVar  
+    )
 
 from . import __version__
+from defectio.models.auth import Auth
 from .gateway import DefectioWebsocket
 from .http import DefectioHTTP
 from .models import User
+
 from .state import ConnectionState
 
 if TYPE_CHECKING:
@@ -74,11 +70,14 @@ class Client:
         self,
         *,
         api_url: Optional[str] = "https://api.revolt.chat",
+        aut_url: Optional[str] = "https://autumn.revolt.chat",
         loop: Optional[asyncio.AbstractEventLoop] = None,
         **kwargs: Any,
     ) -> None:
 
         self.api_url: str = api_url
+        self.api_urls: dict = {'api':api_url, 'aut':aut_url}
+
         self.loop: asyncio.AbstractEventLoop = (
             asyncio.get_event_loop() if loop is None else loop
         )
@@ -294,7 +293,7 @@ class Client:
             __version__, sys.version_info, aiohttp.__version__
         )
         self.session = aiohttp.ClientSession()
-        self.http = DefectioHTTP(self.session, self.api_url, user_agent)
+        self.http = DefectioHTTP(self.session, self.api_urls, user_agent)
         api_info = await self.http.node_info()
         api_info = self._connection.set_api_info(api_info)
         self.websocket = DefectioWebsocket(

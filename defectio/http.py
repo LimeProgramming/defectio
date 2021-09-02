@@ -1,18 +1,21 @@
 from __future__ import annotations
 
-import logging
 import sys
-from typing import Any
-from typing import Coroutine
-from typing import Dict
-from typing import List
-from typing import Literal
-from typing import Optional
-from typing import TYPE_CHECKING
-from typing import Union
-
-import aiohttp
 import ulid
+import aiohttp
+import logging
+
+from typing import (
+    Any, 
+    Coroutine,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    TYPE_CHECKING,
+    Union
+    )
+
 from defectio.errors import LoginFailure
 from defectio.errors import RevoltServerError
 from .models import Auth
@@ -23,6 +26,7 @@ import orjson as json
 
 if TYPE_CHECKING:
     import aiohttp
+    from .models import File
     from .types.payloads import (
         AccountPayload,
         ApiInfoPayload,
@@ -54,6 +58,7 @@ if TYPE_CHECKING:
         ServerMembersPayload,
         SettingsPayload,
         UnreadsPayload,
+        AutumnPayload,
     )
 
 logger = logging.getLogger("defectio")
@@ -63,18 +68,18 @@ class DefectioHTTP:
     def __init__(
         self,
         session: aiohttp.ClientSession,
-        api_url: str,
+        api_urls: dict,
         user_agent: str,
     ):
         self._session = session if session is not None else aiohttp.ClientSession()
         self.auth: Optional[Auth] = None
-        self.api_url = api_url
+        self.api_urls = api_urls
         self.user_agent = user_agent
 
     async def request(
         self, method: str, path: str, *, auth_needed=True, **kwargs: Any
     ) -> Any:
-        url = f"{self.api_url}/{path}"
+        url = f"{self.api_urls['api']}/{path}"
         headers = kwargs.get("headers", {})
         headers["User-Agent"] = self.user_agent
         if auth_needed:
@@ -107,6 +112,36 @@ class DefectioHTTP:
 
             if response.status >= 500:
                 raise RevoltServerError(response, data)
+
+    async def uploadrequest(self, method: str, tag: str, **kwargs: Any) -> Any:
+
+        url = f"{self.api_urls['aut']}/{tag}"
+        headers = kwargs.get("headers", {})
+        headers["User-Agent"] = self.user_agent
+
+        if not self.auth:
+            raise LoginFailure("Not logged in")
+
+        kwargs["headers"] = {**headers, **self.auth.headers}
+
+        response: Optional[aiohttp.ClientResponse] = None
+        data: Optional[Union[Dict[str, Any], str]] = None
+
+        async with self._session.request(method, url, **kwargs) as response:
+            data = await response.text()
+            if data != "":
+                data = json.loads(data)
+            if 300 > response.status >= 200:
+                logger.debug("%s %s has received %s", method, url, data)
+                return data
+
+            if 500 > response.status >= 400:
+                raise
+                # raise RevoltServerError(response, data)
+
+            if response.status >= 500:
+                raise RevoltServerError(response, data)
+
 
     def bot_login(self, token: str) -> Auth:
         self.auth = Auth(token)
@@ -344,6 +379,18 @@ class DefectioHTTP:
         if replies:
             json["replies"] = replies
         return await self.request("POST", path, json=json)
+    
+    async def send_file(
+        self,
+        *,
+        file: File,
+        tag: str
+    ) -> AutumnPayload:
+
+        form = aiohttp.FormData()
+        form.add_field("file", file.fp, filename=file.filename)
+        
+        return await self.uploadrequest("POST", tag, data=form)
 
     async def get_messages(
         self,
