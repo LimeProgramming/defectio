@@ -22,7 +22,6 @@ from typing import NamedTuple, Literal
 
 from .client import Client
 from .models import Message, User, Server, Member, File, Attachment
-from .permissionslime import ServerPermissions, ChannelPermissions
 
 __all__ = (
     "__title__",
