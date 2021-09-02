@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from defectio.models.user import ClientUser
 import logging
 import signal
 import sys
@@ -312,7 +313,7 @@ class Client:
     ################
 
     @property
-    def user(self) -> Optional[User]:
+    def user(self) -> Optional[ClientUser]:
         """Optional[:class:`.ClientUser`]: Represents the connected client. ``None`` if not logged in."""
         return self._connection.user
 

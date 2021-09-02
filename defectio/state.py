@@ -5,26 +5,22 @@ import copy
 import inspect
 import logging
 from collections import deque
-from collections import OrderedDict
 from typing import Any
 from typing import Callable
 from typing import Deque
 from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
 
-from defectio.gateway import DefectioWebsocket
-from defectio.http import DefectioHTTP
-from defectio.models.abc import Messageable
-from defectio.models.auth import Auth
-from defectio.models.channel import DMChannel
-from defectio.models.channel import GroupChannel
-from defectio.models.channel import TextChannel
-from defectio.models.member import PartialMember
-
+from .gateway import DefectioWebsocket
+from .http import DefectioHTTP
+from .models.auth import Auth
+from .models.channel import DMChannel
+from .models.channel import GroupChannel
+from .models.channel import TextChannel
+from .models.member import PartialMember
 from . import utils
 from .models import channel_factory
 from .models import Member
@@ -36,6 +32,8 @@ from .models import VoiceChannel
 from .models.apiinfo import ApiInfo
 from .models.raw_models import RawMessageDeleteEvent
 from .models.raw_models import RawMessageUpdateEvent
+from .models.user import ClientUser
+
 
 if TYPE_CHECKING:
     from . import abc
@@ -130,8 +128,6 @@ class ConnectionState:
         self._users: Dict[str, User] = {}
         self._server_channels: Dict[str, List[Channel]] = {}
         self._members: Dict[str, List[Member]] = {}
-        self._private_channels: OrderedDict[str, PrivateChannel] = OrderedDict()
-        self._private_channels_by_user: Dict[str, DMChannel] = {}
         if self.max_messages is not None:
             self._messages: Optional[Deque[Message]] = deque(maxlen=self.max_messages)
         else:
@@ -182,16 +178,16 @@ class ConnectionState:
     def websocket(self) -> DefectioWebsocket:
         return self.get_websocket()
 
-    @property
-    def user(self) -> User:
-        """Get the user object
+    # @property
+    # def user(self) -> ClientUser:
+    #     """Get the user object
 
-        Returns
-        -------
-        User
-            The user object
-        """
-        return self.get_user(self.user_id)
+    #     Returns
+    #     -------
+    #     ClientUser
+    #         The user object
+    #     """
+    #     return self.get_user(self.user_id)
 
     @property
     def users(self) -> List[User]:
@@ -512,13 +508,19 @@ class ConnectionState:
     def parse_ready(self, data: Ready) -> None:
         self.clear()
 
-        for user in data["users"]:
-            self._add_user_from_data(user)
-
         if self.auth().is_bot:
-            self.user_id = data["users"][0]["_id"]
+            self.user = ClientUser(state=self, data=data["users"][0])
         else:
-            self.user_id = self.auth().user_id
+            self.user = ClientUser(
+                state=self,
+                data=utils.find(
+                    lambda u: u["_id"] == self.auth().user_id, data["users"]
+                ),
+            )
+
+        for user in data["users"]:
+            if user["_id"] != self.user_id:
+                self._add_user_from_data(user)
 
         for server in data["servers"]:
             self._add_server_from_data(server)

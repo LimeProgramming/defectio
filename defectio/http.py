@@ -217,9 +217,9 @@ class DefectioHTTP:
 
     ## Self
 
-    async def edit_self(self, **kwargs):
+    async def edit_self(self, json):
         path = "users/@me"
-        return await self.request("PATCH", path, json=kwargs)
+        return await self.request("PATCH", path, json=json)
 
     async def change_username(self, username: str, password: str):
         path = "users/@me/username"

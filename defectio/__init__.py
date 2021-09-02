@@ -21,7 +21,21 @@ import logging
 from typing import NamedTuple, Literal
 
 from .client import Client
-from .models import Message, User, Server, Member, Role
+from .models import (
+    Message,
+    User,
+    Server,
+    Member,
+    Role,
+    RawMessageDeleteEvent,
+    RawMessageUpdateEvent,
+    TextChannel,
+    VoiceChannel,
+    GroupChannel,
+    DMChannel,
+    Category,
+    Status,
+)
 from .models import abc
 from . import utils
 from .errors import (
@@ -35,6 +49,7 @@ from .errors import (
     InvalidData,
     LoginFailure,
 )
+
 
 __all__ = (
     "__title__",

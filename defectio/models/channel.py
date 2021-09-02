@@ -45,13 +45,6 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
     def _update(self, data) -> None:
         self.name: str = data["name"]
         self.topic: Optional[str] = data.get("topic")
-        # self.position: int = data["position"]
-        # Does this need coercion into `int`? No idea yet.
-        # self._type: int = data.get("type", self._type)
-        # self.last_message_id: Optional[int] = utils._get_as_snowflake(
-        #     data, "last_message_id"
-        # )
-        # self._fill_overwrites(data)
 
     def _get_channel(self) -> TextChannel:
         return self
@@ -60,30 +53,6 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
     def type(self) -> str:
         """:class:`str`: The channel's type."""
         return self._type
-
-    @property
-    def last_message(self) -> Optional[Message]:
-        """Fetches the last message from this channel in cache.
-
-        The message might not be valid or point to an existing message.
-
-        .. admonition:: Reliable Fetching
-            :class: helpful
-            For a slightly more reliable method of fetching the
-            last message, consider using either :meth:`history`
-            or :meth:`fetch_message` with the :attr:`last_message_id`
-            attribute.
-
-        Returns
-        ---------
-        Optional[:class:`Message`]
-            The last message in this channel or ``None`` if not found.
-        """
-        return (
-            self._state._get_message(self.last_message_id)
-            if self.last_message_id
-            else None
-        )
 
 
 class SavedMessageChannel(abc.Messageable):

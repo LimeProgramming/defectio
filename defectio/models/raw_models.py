@@ -45,12 +45,13 @@ class RawMessageDeleteEvent(_RawReprMixin):
 
 class RawMessageUpdateEvent(_RawReprMixin):
     """Represents the payload for a :func:`on_raw_message_edit` event.
+
     Attributes
     -----------
     message_id: :class:`str`
         The message ID that got updated.
     data: :class:`dict`
-        The raw data given by the `gateway https://developers.revolt.chat/api#tag/Messaging/paths/~1channels~1:channel~1messages/get`_
+        The raw data given by the `gateway https://developers.revolt.chat/api#tag/Messaging/paths/~1channels~1:channel~1messages/get`
     cached_message: Optional[:class:`Message`]
         The cached message, if found in the internal message cache. Represents the message before
         it is modified by the data in :attr:`RawMessageUpdateEvent.data`.
