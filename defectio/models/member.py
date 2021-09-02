@@ -12,9 +12,8 @@ if TYPE_CHECKING:
 
 
 class PartialMember(abc.Messageable, Hashable):
-    def __init__(self, id: str, server: Server, state: ConnectionState):
+    def __init__(self, id: str, state: ConnectionState):
         self._state = state
-        self.server = server
         self.id = id
 
     def __repr__(self) -> str:
@@ -25,9 +24,8 @@ class PartialMember(abc.Messageable, Hashable):
 
 
 class Member(PartialMember):
-    def __init__(self, data: MemberPayload, server: Server, state: ConnectionState):
+    def __init__(self, data: MemberPayload, state: ConnectionState):
         self._state = state
-        self.server = server
         self.nickname = data.get("nickname")
         self.id = data.get("_id").get("user")
 

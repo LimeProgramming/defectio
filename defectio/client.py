@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-from defectio.models.auth import Auth
 import logging
 import signal
 import sys
@@ -17,6 +16,7 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 
 import aiohttp
+from defectio.models.auth import Auth
 
 from . import __version__
 from .gateway import DefectioWebsocket
@@ -25,7 +25,7 @@ from .models import User
 from .state import ConnectionState
 
 if TYPE_CHECKING:
-    pass
+    from .models import Channel, Server
 
 __all__ = ("Client",)
 
@@ -77,6 +77,15 @@ class Client:
         loop: Optional[asyncio.AbstractEventLoop] = None,
         **kwargs: Any,
     ) -> None:
+        """Creates a new client.
+
+        Parameters
+        ----------
+        api_url : Optional[str], optional
+            url to revolt instance, by default "https://api.revolt.chat"
+        loop : Optional[asyncio.AbstractEventLoop], optional
+            asyncio event loop to use otherwise it is grabbed, by default None
+        """
 
         self.api_url: str = api_url
         self.loop: asyncio.AbstractEventLoop = (
@@ -98,6 +107,13 @@ class Client:
         self._connection: ConnectionState = self._get_state(**kwargs)
 
     def _get_state(self, **options: Any) -> ConnectionState:
+        """Returns the connection state.
+
+        Returns
+        -------
+        ConnectionState
+            The connection state.
+        """
         return ConnectionState(
             dispatch=self.dispatch,
             handlers=self._handlers,
@@ -109,6 +125,7 @@ class Client:
         )
 
     def _handle_ready(self) -> None:
+        """Handles the ready event."""
         self._ready.set()
 
     async def _run_event(
@@ -118,6 +135,15 @@ class Client:
         *args: Any,
         **kwargs: Any,
     ) -> None:
+        """Runs an event.
+
+        Parameters
+        ----------
+        coro : Callable[..., Coroutine[Any, Any, Any]]
+            The coroutine to run.
+        event_name : str
+            The name of the event to run.
+        """
         try:
             await coro(*args, **kwargs)
         except asyncio.CancelledError:
@@ -135,11 +161,32 @@ class Client:
         *args: Any,
         **kwargs: Any,
     ) -> asyncio.Task:
+        """Schedules an event to be run.
+
+        Parameters
+        ----------
+        coro : Callable[..., Coroutine[Any, Any, Any]]
+            The coroutine to run.
+        event_name : str
+            The name of the event to run.
+
+        Returns
+        -------
+        asyncio.Task
+            The task that the event was scheduled for.
+        """
         wrapped = self._run_event(coro, event_name, *args, **kwargs)
         # Schedules the task
         return asyncio.create_task(wrapped, name=f"defectio: {event_name}")
 
     def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
+        """Dispatch an event
+
+        Parameters
+        ----------
+        event : str
+            The event to dispatch.
+        """
         logger.debug("Dispatching event %s", event)
         method = "on_" + event
         listeners = self._listeners.get(event)
@@ -199,6 +246,22 @@ class Client:
         check: Optional[Callable[..., bool]] = None,
         timeout: Optional[float] = None,
     ) -> Any:
+        """Waits for a specific event to be dispatched.
+
+        Parameters
+        ----------
+        event : str
+            The event to wait for.
+        check : Optional[Callable[..., bool]], optional
+            A check to run on the event, by default None
+        timeout : Optional[float], optional
+            timeout to wait, by default None
+
+        Returns
+        -------
+        Any
+            response from method
+        """
         future = self.loop.create_future()
         if check is None:
 
@@ -253,6 +316,28 @@ class Client:
         """Optional[:class:`.ClientUser`]: Represents the connected client. ``None`` if not logged in."""
         return self._connection.user
 
+    @property
+    def users(self) -> List[User]:
+        """Returns a list of all the users stored in the internal cache.
+
+        Returns
+        -------
+        List[User]
+            A list of cached users.
+        """
+        return list(self._connection._users.values())
+
+    @property
+    def servers(self) -> List[Server]:
+        """Returns a list of all the servers stored in the internal cache.
+
+        Returns
+        -------
+        List[Server]
+            A list of cached servers.
+        """
+        return list(self._connection._servers.values())
+
     def get_auth(self) -> Auth:
         """Returns the Auth object used for logging in."""
         return self._auth
@@ -267,18 +352,68 @@ class Client:
     ## Getters ##
     #############
 
-    def get_channel(self, channel_id: str):
+    def get_channel(self, channel_id: str) -> Optional[Channel]:
+        """Get a channel with the specified ID from the internal cache.
+
+        Parameters
+        ----------
+        channel_id : str
+            The channel ID to look for.
+
+        Returns
+        -------
+        Optional[Channel]
+            The requested channel. If not found, returns ``None``.
+        """
         channel = self._connection.get_channel(channel_id)
         return channel
+
+    def get_server(self, server_id: str) -> Optional[Server]:
+        """Get a server with the specified ID from the internal cache.
+
+        Parameters
+        ----------
+        server_id : str
+            The server ID to look for.
+
+        Returns
+        -------
+        Optional[Server]
+            The requested server. If not found, returns ``None``.
+        """
+        server = self._connection.get_server(server_id)
+        return server
+        server = self._connection.get_server(server_id)
+        return server
+
+    def get_user(self, user_id: str) -> Optional[User]:
+        """Get a user with the specified ID from the internal cache.
+
+        Parameters
+        ----------
+        user_id : str
+            The user ID to look for.
+
+        Returns
+        -------
+        Optional[User]
+            The requested user. If not found, returns ``None``.
+        """
+        user = self._connection.get_user(user_id)
+        return user
 
     ######################
     ## State Management ##
     ######################
 
     def is_closed(self):
+        """Indicates if the websocket connection is closed."""
         return self.websocket.closed and self.session.closed
 
     async def close(self) -> None:
+        """|coro|
+        Closes the connection to revolt.
+        """
         if self._closed:
             return
 
@@ -290,6 +425,9 @@ class Client:
             await self.session.close()
 
     async def create(self) -> None:
+        """|coro|
+        Creates the client with the cache, websocket and http client.
+        """
         user_agent = "Defectio (https://github.com/Darkflame72/defectio {0}) Python/{1[0]}.{1[1]} aiohttp/{2}".format(
             __version__, sys.version_info, aiohttp.__version__
         )
@@ -305,10 +443,28 @@ class Client:
         self._closed = False
 
     async def bot_login(self, token: str) -> None:
+        """|coro|
+        Logs in using the token provided as a bot.
+
+        Parameters
+        ----------
+        token : str
+            The authentication token.
+        """
         self._auth = self.http.bot_login(token)
         await self.websocket.connect(self._auth)
 
     async def user_login(self, session_token: str, user_id: str) -> None:
+        """|coro|
+        Logs in with a user's session token.
+
+        Parameters
+        ----------
+        session_token : str
+            The session token to login with.
+        user_id : str
+            The ID of the user to login as.
+        """
         self._auth = self.http.session_login(session_token, user_id)
         await self.websocket.connect(self._auth)
 
@@ -319,6 +475,20 @@ class Client:
         session_token: Optional[str] = None,
         user_id: Optional[str] = None,
     ) -> None:
+        """|coro|
+        Creates a client and logs the user in.
+
+        Parameters
+        ----------
+        token : Optional[str]
+            The Revolt API token.
+
+        session_token : Optional[str]
+            The Revolt session ID of a user
+
+        user_id : Optional[str]
+            The ID of the user which th session token belongs to
+        """
         await self.create()
         if token is not None:
             await self.bot_login(token)
@@ -327,6 +497,39 @@ class Client:
         await self.connect()
 
     def run(self, token: Optional[str] = None, **kwargs: Any) -> None:
+        """A blocking call that abstracts away the event loop
+        initialisation from you.
+
+        If you want more control over the event loop then this
+        function should not be used. Use :meth:`start` coroutine
+        or :meth:`connect` + :meth:`login`.
+
+        Roughly Equivalent to: ::
+
+            try:
+                loop.run_until_complete(start(*args, **kwargs))
+            except KeyboardInterrupt:
+                loop.run_until_complete(close())
+                # cancel all tasks lingering
+            finally:
+                loop.close()
+
+        .. warning::
+            This function must be the last function to call due to the fact that it
+            is blocking. That means that registration of events or anything being
+            called after this function call will not execute until it returns.
+
+        Parameters
+        -----------
+        token: Optional[:class:`str`]
+            The authentication token of the bot to login.
+
+        session_token: Optional[:class:`str`]
+            The session token of the logged in user to login.
+
+        user_id: Optional[:class:`str`]
+            The user ID of the logged in user to login.
+        """
         loop = self.loop
         kwargs["token"] = token
 

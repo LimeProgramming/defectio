@@ -1,4 +1,6 @@
-from typing import Union, TYPE_CHECKING
+from typing import TYPE_CHECKING
+from typing import Union
+
 from ..types.payloads import LoginPayload
 
 if TYPE_CHECKING:

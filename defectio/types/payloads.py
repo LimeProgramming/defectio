@@ -252,6 +252,7 @@ class ServerPayload(TypedDict):
 
 
 class ChannelPayload(TypedDict):
+    _id: str
     type: ChannelType
     name: str
     description: str

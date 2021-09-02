@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import asyncio
-from defectio.errors import LoginFailure
 import logging
-from typing import Any, Union
+from typing import Any
 from typing import TYPE_CHECKING
-from .types.websocket import Authenticated, Error
+from typing import Union
 
 import aiohttp
-
 import orjson as json
+from defectio.errors import LoginFailure
+
+from .types.websocket import Authenticated
+from .types.websocket import Error
 
 if TYPE_CHECKING:
     from defectio.client import Client

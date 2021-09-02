@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from typing import List
 from typing import Optional
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
-from .mixins import Hashable
-from ..types.payloads import RelationshipPayload, StatusPayload
 from .. import utils
+from ..types.payloads import RelationshipPayload
+from ..types.payloads import StatusPayload
+from .mixins import Hashable
 
 if TYPE_CHECKING:
     from ..state import ConnectionState

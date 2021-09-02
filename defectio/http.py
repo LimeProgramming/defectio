@@ -12,14 +12,13 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 import aiohttp
+import orjson as json
 import ulid
 from defectio.errors import LoginFailure
 from defectio.errors import RevoltServerError
-from .models import Auth
 
 from . import __version__
-
-import orjson as json
+from .models import Auth
 
 if TYPE_CHECKING:
     import aiohttp
@@ -102,6 +101,7 @@ class DefectioHTTP:
                 return data
 
             if 500 > response.status >= 400:
+                print(data)
                 raise
                 # raise RevoltServerError(response, data)
 

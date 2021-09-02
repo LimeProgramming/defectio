@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import io
 from typing import Optional
 from typing import TYPE_CHECKING
 
@@ -8,7 +9,6 @@ from defectio.models.user import PartialUser
 
 from .abc import Messageable
 from .mixins import Hashable
-import io
 
 
 if TYPE_CHECKING:

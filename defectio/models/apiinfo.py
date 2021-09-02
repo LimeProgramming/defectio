@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from typing import List, TYPE_CHECKING, Optional, TypedDict
+from typing import List
+from typing import Optional
+from typing import TYPE_CHECKING
+from typing import TypedDict
 
 
 if TYPE_CHECKING:

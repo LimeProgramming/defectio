@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict
 from typing import List
+from typing import Optional
 from typing import TYPE_CHECKING
 
 from .mixins import Hashable
@@ -120,8 +121,22 @@ class Server(Hashable):
         return f"<Server {inner}>"
 
     def _update(self, payload: ServerUpdate):
-        for k, v in payload.items():
-            setattr(self, k, v)
+        """[summary]
+
+        Parameters
+        ----------
+        payload : ServerUpdate
+            [description]
+        """
+        self.owner = payload.get("owner", self.owner)
+        self.name = payload.get("name", self.name)
+        self.description = payload.get("description", self.description)
+
+    def get_role(self, role_id: str) -> Optional[Role]:
+        for role in self.roles:
+            if role.id == role_id:
+                return role
+        return None
 
     def create_text_channel(
         self, name: str, *, description: Optional[str] = None
@@ -155,4 +170,4 @@ class Server(Hashable):
         List[Member]
             List of all cached members in the server.
         """
-        return self._state.get_members(self.id)
+        return [self._state.get_member(member_id) for member_id in self.member_ids]

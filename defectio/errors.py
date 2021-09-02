@@ -7,6 +7,7 @@ from typing import Optional
 from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
+
 from defectio.types.websocket import Error
 
 if TYPE_CHECKING:

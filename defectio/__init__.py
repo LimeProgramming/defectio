@@ -21,7 +21,20 @@ import logging
 from typing import NamedTuple, Literal
 
 from .client import Client
-from .models import Message, User, Server, Member
+from .models import Message, User, Server, Member, Role
+from .models import abc
+from . import utils
+from .errors import (
+    DefectioException,
+    ClientException,
+    GatewayNotFound,
+    HTTPException,
+    Forbidden,
+    RevoltServerError,
+    InvalidArgument,
+    InvalidData,
+    LoginFailure,
+)
 
 __all__ = (
     "__title__",
@@ -34,6 +47,7 @@ __all__ = (
     "User",
     "Server",
     "Member",
+    "abc",
 )
 
 
