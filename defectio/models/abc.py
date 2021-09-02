@@ -9,6 +9,12 @@ from typing import Optional
 from typing import Protocol
 from typing import runtime_checkable
 from typing import TYPE_CHECKING
+from ..errors import InvalidArgument
+from .message import(
+    File,
+    AutumnID,
+
+)
 
 if TYPE_CHECKING:
     from ..state import ConnectionState
@@ -91,9 +97,9 @@ class Messageable(Protocol):
         delete_after: int = None,
         nonce=None,
     ):
-
-        channel = await self._get_channel()
         state = self._state
+        attachments = []
+        channel = await self._get_channel()
         content = str(content) if content is not None else None
 
         # if mention_author is not None:
@@ -108,52 +114,45 @@ class Messageable(Protocol):
         #             "reference parameter must be Message or MessageReference"
         #         ) from None
 
-        # if file is not None and files is not None:
-        #     raise InvalidArgument("cannot pass both file and files parameter to send()")
+        if file is not None and files is not None:
+            raise InvalidArgument("cannot pass both file and files parameter to send()")
 
-        # if file is not None:
-        #     if not isinstance(file, File):
-        #         raise InvalidArgument("file parameter must be File")
+        if file is not None:
+            if not isinstance(file, File):
+                raise InvalidArgument("file parameter must be File")
 
-        #     try:
-        #         data = await state.http.send_files(
-        #             channel.id,
-        #             files=[file],
-        #             allowed_mentions=allowed_mentions,
-        #             content=content,
-        #             embed=embed,
-        #             nonce=nonce,
-        #             message_reference=reference,
-        #         )
-        #     finally:
-        #         file.close()
+            try:
+                data = await state.http.send_file(
+                    file= file,
+                    tag = "attachments"
+                )
+                attachments = [AutumnID(data=data).id]
 
-        # elif files is not None:
-        #     if len(files) > 10:
-        #         raise InvalidArgument(
-        #             "files parameter must be a list of up to 10 elements"
-        #         )
-        #     elif not all(isinstance(file, File) for file in files):
-        #         raise InvalidArgument("files parameter must be a list of File")
+            finally:
+                file.close()
 
-        #     try:
-        #         data = await state.http.send_files(
-        #             channel.id,
-        #             files=files,
-        #             content=content,
-        #             tts=tts,
-        #             embed=embed,
-        #             nonce=nonce,
-        #             allowed_mentions=allowed_mentions,
-        #             message_reference=reference,
-        #         )
-        #     finally:
-        #         for f in files:
-        #             f.close()
-        # else:
+        elif files is not None:
+            if len(files) > 4:
+                raise InvalidArgument("files parameter must be a list of up to 4 elements")
+
+            elif not all(isinstance(file, File) for file in files):
+                raise InvalidArgument("files parameter must be a list of File")
+
+            try:
+                data = await state.http.send_file(
+                    file= file,
+                    tag = "attachments"
+                )
+                attachments.append(AutumnID(data=data).id)
+
+            finally:
+                for f in files:
+                    f.close()
+
         data = await state.http.send_message(
             channel.id,
             content,
+            attachments = attachments
         )
 
         ret = state.create_message(channel=channel, data=data)
