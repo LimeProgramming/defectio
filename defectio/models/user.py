@@ -1,5 +1,4 @@
 from __future__ import annotations
-from defectio.types.payloads import ProfilePayload
 
 from typing import Any
 from typing import List
@@ -11,6 +10,7 @@ from typing import TypeVar
 from .. import utils
 from .mixins import Hashable
 from .file import Attachment
+from .abc import Messageable
 
 if TYPE_CHECKING:
     from ..state import ConnectionState
@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     from ..types.websocket import Message
     from ..types.payloads import RelationshipPayload
     from ..types.payloads import StatusPayload
+    from .channel import DMChannel
+    from ..types.payloads import DMChannelPayload, ProfilePayload
 
 
 __all__ = ("User", "ClientUser", "Status", "Relationship", "PartialUser", "BaseUser")
@@ -312,7 +314,7 @@ class ClientUser(BaseUser):
         await self._state.http.edit_self(payload)
 
 
-class User(BaseUser):
+class User(BaseUser, Messageable):
     def __init__(self, data: UserPayload, state: ConnectionState):
         super().__init__(state=state, data=data)
 
@@ -327,3 +329,35 @@ class User(BaseUser):
         self = super()._copy(user)
         self._stored = False
         return self
+
+    async def _get_channel(self) -> DMChannel:
+        ch = await self.create_dm()
+        return ch
+
+    @property
+    def dm_channel(self) -> Optional[DMChannel]:
+        """Optional[:class:`DMChannel`]: Returns the channel associated with this user if it exists.
+        If this returns ``None``, you can create a DM channel by calling the
+        :meth:`create_dm` coroutine function.
+        """
+        return self._state.get_channel(self.id)
+
+    async def create_dm(self) -> DMChannel:
+        """|coro|
+        Creates a :class:`DMChannel` with this user.
+
+        This should be rarely called, as this is done transparently for most
+        people.
+
+        Returns
+        -------
+        :class:`.DMChannel`
+            The channel that was created.
+        """
+        found = self.dm_channel
+        if found is not None:
+            return found
+
+        state = self._state
+        data: DMChannelPayload = await state.http.open_dm(self.id)
+        return state._add_channel_from_data(data)

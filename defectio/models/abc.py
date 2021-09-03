@@ -200,7 +200,7 @@ class Messageable(Protocol):
     __slots__ = ()
     _state: ConnectionState
 
-    def _get_channel(self) -> MessageableChannel:
+    async def _get_channel(self) -> MessageableChannel:
         raise NotImplementedError
 
     async def send(
@@ -213,7 +213,7 @@ class Messageable(Protocol):
         nonce=None,
     ):
 
-        channel = self._get_channel()
+        channel = await self._get_channel()
         state = self._state
         content = str(content) if content is not None else None
 

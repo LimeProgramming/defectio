@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import io
 import os
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 from typing import Optional
 from typing import Union
 
 from defectio.models.mixins import Hashable
-from defectio.state import ConnectionState
-from defectio.types.payloads import AttachmentPayload
+
+if TYPE_CHECKING:
+    from ..state import ConnectionState
+    from ..types.payloads import AttachmentPayload
 
 
 class Attachment(Hashable):

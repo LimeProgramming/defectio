@@ -290,7 +290,7 @@ class DefectioHTTP:
 
     async def open_dm(self, user_id: str) -> DMChannelPayload:
         path = f"users/{user_id}/dm"
-        return await self.request("POST", path)
+        return await self.request("GET", path)
 
     ###################
     ## Relationships ##
