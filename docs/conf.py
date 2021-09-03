@@ -83,7 +83,7 @@ rst_prolog = """
 pygments_style = "friendly"
 
 # stop issues
-autodoc_mock_imports = ["aiohttp", "orjson"]
+autodoc_mock_imports = ["aiohttp", "orjson", "ulid"]
 
 resource_links = {
     "revolt": "https://app.revolt.chat/invite/FfbwgFDk",
