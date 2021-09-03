@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-from defectio.models.user import ClientUser
 import logging
 import signal
 import sys
@@ -18,6 +17,7 @@ from typing import TypeVar
 
 import aiohttp
 from defectio.models.auth import Auth
+from defectio.models.user import ClientUser
 
 from . import __version__
 from .gateway import DefectioWebsocket

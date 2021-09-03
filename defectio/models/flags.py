@@ -1,12 +1,21 @@
 """
 just enough copied from discord.py to start figuring things out.
 """
+from typing import Any
+from typing import Callable
+from typing import ClassVar
+from typing import Dict
+from typing import Generic
+from typing import Iterator
+from typing import List
+from typing import Optional
+from typing import overload
+from typing import Tuple
+from typing import Type
+from typing import TypeVar
 
-
-from typing import Any, Callable, ClassVar, Dict, Generic, Iterator, List, Optional, Tuple, Type, TypeVar, overload
-
-FV = TypeVar('FV', bound='flag_value')
-BF = TypeVar('BF', bound='BaseFlags')
+FV = TypeVar("FV", bound="flag_value")
+BF = TypeVar("BF", bound="BaseFlags")
 
 
 class flag_value:
@@ -33,11 +42,12 @@ class flag_value:
         instance._set_flag(self.flag, value)
 
     def __repr__(self):
-        return f'<flag_value flag={self.flag!r}>'
+        return f"<flag_value flag={self.flag!r}>"
 
 
 class alias_flag_value(flag_value):
     pass
+
 
 def fill_with_flags(*, inverted: bool = False):
     def decorator(cls: Type[BF]):
@@ -60,19 +70,21 @@ def fill_with_flags(*, inverted: bool = False):
     return decorator
 
     # n.b. flags must inherit from this and use the decorator above
+
+
 class BaseFlags:
     VALID_FLAGS: ClassVar[Dict[str, int]]
     DEFAULT_VALUE: ClassVar[int]
 
     value: int
 
-    __slots__ = ('value',)
+    __slots__ = ("value",)
 
     def __init__(self, **kwargs: bool):
         self.value = self.DEFAULT_VALUE
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
-                raise TypeError(f'{key!r} is not a valid flag name.')
+                raise TypeError(f"{key!r} is not a valid flag name.")
             setattr(self, key, value)
 
     @classmethod
@@ -91,7 +103,7 @@ class BaseFlags:
         return hash(self.value)
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} value={self.value}>'
+        return f"<{self.__class__.__name__} value={self.value}>"
 
     def __iter__(self) -> Iterator[Tuple[str, bool]]:
         for name, value in self.__class__.__dict__.items():
@@ -110,4 +122,6 @@ class BaseFlags:
         elif toggle is False:
             self.value &= ~o
         else:
-            raise TypeError(f'Value to set for {self.__class__.__name__} must be a bool.')
+            raise TypeError(
+                f"Value to set for {self.__class__.__name__} must be a bool."
+            )

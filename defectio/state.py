@@ -14,14 +14,9 @@ from typing import Optional
 from typing import TYPE_CHECKING
 from typing import Union
 
+from . import utils
 from .gateway import DefectioWebsocket
 from .http import DefectioHTTP
-from .models.auth import Auth
-from .models.channel import DMChannel
-from .models.channel import GroupChannel
-from .models.channel import TextChannel
-from .models.member import PartialMember
-from . import utils
 from .models import channel_factory
 from .models import Member
 from .models import Message
@@ -30,6 +25,11 @@ from .models import Server
 from .models import User
 from .models import VoiceChannel
 from .models.apiinfo import ApiInfo
+from .models.auth import Auth
+from .models.channel import DMChannel
+from .models.channel import GroupChannel
+from .models.channel import TextChannel
+from .models.member import PartialMember
 from .models.raw_models import RawMessageDeleteEvent
 from .models.raw_models import RawMessageUpdateEvent
 from .models.user import ClientUser

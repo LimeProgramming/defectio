@@ -1,20 +1,33 @@
 from __future__ import annotations
 
-from typing import Callable, Any, ClassVar, Dict, Iterator, Set, TYPE_CHECKING, Tuple, Type, TypeVar, Optional
-from .flags import BaseFlags, flag_value, fill_with_flags, alias_flag_value
+from typing import Any
+from typing import Callable
+from typing import ClassVar
+from typing import Dict
+from typing import Iterator
+from typing import Optional
+from typing import Set
+from typing import Tuple
+from typing import Type
+from typing import TYPE_CHECKING
+from typing import TypeVar
 
-__all__ = (
-    'ServerPermissions',
-    'ChannelPermissions',
-    'ChannelPermissionOverwrite'
-)
+from .flags import alias_flag_value
+from .flags import BaseFlags
+from .flags import fill_with_flags
+from .flags import flag_value
+
+__all__ = ("ServerPermissions", "ChannelPermissions", "ChannelPermissionOverwrite")
 
 # A permission alias works like a regular flag but is marked
 # So the ChannelPermissionOverwrite knows to work with it
 class permission_alias(alias_flag_value):
     alias: str
 
-def make_permission_alias(alias: str) -> Callable[[Callable[[Any], int]], permission_alias]:
+
+def make_permission_alias(
+    alias: str,
+) -> Callable[[Callable[[Any], int]], permission_alias]:
     def decorator(func: Callable[[Any], int]) -> permission_alias:
         ret = permission_alias(func)
         ret.alias = alias
@@ -23,8 +36,9 @@ def make_permission_alias(alias: str) -> Callable[[Callable[[Any], int]], permis
     return decorator
 
 
-SP = TypeVar('SP', bound='ServerPermissions')
-CP = TypeVar('CP', bound='ChannelPermissions')
+SP = TypeVar("SP", bound="ServerPermissions")
+CP = TypeVar("CP", bound="ChannelPermissions")
+
 
 def _augment_from_channelpermissions(cls):
     cls.VALID_NAMES = set(ChannelPermissions.VALID_FLAGS)
@@ -56,39 +70,44 @@ def _augment_from_channelpermissions(cls):
 
 @fill_with_flags()
 class ServerPermissions(BaseFlags):
-
     def __init__(self, permissions: int = 0, **kwargs: bool):
         if not isinstance(permissions, int):
-            raise TypeError(f'Expected int parameter, received {permissions.__class__.__name__} instead.')
+            raise TypeError(
+                f"Expected int parameter, received {permissions.__class__.__name__} instead."
+            )
 
         self.value = permissions
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
-                raise TypeError(f'{key!r} is not a valid permission name.')
+                raise TypeError(f"{key!r} is not a valid permission name.")
             setattr(self, key, value)
 
-    #UF
+    # UF
     def is_subset(self, other: ServerPermissions) -> bool:
         """Returns ``True`` if self has the same or fewer permissions as other."""
         if isinstance(other, ServerPermissions):
             return (self.value & other.value) == self.value
         else:
-            raise TypeError(f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}")
+            raise TypeError(
+                f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}"
+            )
 
-    #UF
+    # UF
     def is_superset(self, other: ServerPermissions) -> bool:
         """Returns ``True`` if self has the same or more permissions as other."""
         if isinstance(other, ServerPermissions):
             return (self.value | other.value) == self.value
         else:
-            raise TypeError(f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}")
+            raise TypeError(
+                f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}"
+            )
 
-    #UF
+    # UF
     def is_strict_subset(self, other: ServerPermissions) -> bool:
         """Returns ``True`` if the permissions on other are a strict subset of those on self."""
         return self.is_subset(other) and self != other
 
-    #UF
+    # UF
     def is_strict_superset(self, other: ServerPermissions) -> bool:
         """Returns ``True`` if the permissions on other are a strict superset of those on self."""
         return self.is_superset(other) and self != other
@@ -97,7 +116,6 @@ class ServerPermissions(BaseFlags):
     __ge__ = is_superset
     __lt__ = is_strict_subset
     __gt__ = is_strict_superset
-
 
     @classmethod
     def none(cls: Type[SP]) -> SP:
@@ -119,14 +137,12 @@ class ServerPermissions(BaseFlags):
 
     @flag_value
     def manage_roles(self) -> int:
-        """:class:`bool`: Returns ``True`` if a user can create or edit roles less than their role's position.
-        """
+        """:class:`bool`: Returns ``True`` if a user can create or edit roles less than their role's position."""
         return 1 << 1
-        
+
     @flag_value
     def manage_channels(self) -> int:
-        """:class:`bool`: Returns ``True`` if a user can edit, delete, or create channels in the server.
-        """
+        """:class:`bool`: Returns ``True`` if a user can edit, delete, or create channels in the server."""
         return 1 << 2
 
     @flag_value
@@ -164,41 +180,47 @@ class ServerPermissions(BaseFlags):
         """:class:`bool`: Returns ``True`` if a users can remove the avatars of other users on the server."""
         return 1 << 15
 
+
 @fill_with_flags()
 class ChannelPermissions(BaseFlags):
-
     def __init__(self, permissions: int = 0, **kwargs: bool):
         if not isinstance(permissions, int):
-            raise TypeError(f'Expected int parameter, received {permissions.__class__.__name__} instead.')
+            raise TypeError(
+                f"Expected int parameter, received {permissions.__class__.__name__} instead."
+            )
 
         self.value = permissions
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
-                raise TypeError(f'{key!r} is not a valid permission name.')
+                raise TypeError(f"{key!r} is not a valid permission name.")
             setattr(self, key, value)
 
-    #UF
+    # UF
     def is_subset(self, other: ChannelPermissions) -> bool:
         """Returns ``True`` if self has the same or fewer permissions as other."""
         if isinstance(other, ChannelPermissions):
             return (self.value & other.value) == self.value
         else:
-            raise TypeError(f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}")
+            raise TypeError(
+                f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}"
+            )
 
-    #UF
+    # UF
     def is_superset(self, other: ChannelPermissions) -> bool:
         """Returns ``True`` if self has the same or more permissions as other."""
         if isinstance(other, ChannelPermissions):
             return (self.value | other.value) == self.value
         else:
-            raise TypeError(f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}")
+            raise TypeError(
+                f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}"
+            )
 
-    #UF
+    # UF
     def is_strict_subset(self, other: ChannelPermissions) -> bool:
         """Returns ``True`` if the permissions on other are a strict subset of those on self."""
         return self.is_subset(other) and self != other
 
-    #UF
+    # UF
     def is_strict_superset(self, other: ChannelPermissions) -> bool:
         """Returns ``True`` if the permissions on other are a strict superset of those on self."""
         return self.is_superset(other) and self != other
@@ -244,7 +266,7 @@ class ChannelPermissions(BaseFlags):
         """
         return 1 << 0
 
-    @make_permission_alias('view_channel')
+    @make_permission_alias("view_channel")
     def read_messages(self) -> int:
         """:class:`bool`: An alias for :attr:`view_channel`."""
         return 1 << 0
@@ -272,7 +294,7 @@ class ChannelPermissions(BaseFlags):
         """:class:`bool`: Returns ``True`` if a user can connect to a voice channel."""
         return 1 << 4
 
-    @make_permission_alias('voice_call')
+    @make_permission_alias("voice_call")
     def connect(self) -> int:
         """:class:`bool`: An alias for :attr:`voice_call`."""
         return 1 << 4
@@ -282,7 +304,7 @@ class ChannelPermissions(BaseFlags):
         """:class:`bool`: Returns ``True`` if the user can invite others."""
         return 1 << 5
 
-    @make_permission_alias('invite_others')
+    @make_permission_alias("invite_others")
     def create_instant_invite(self) -> int:
         """:class:`bool`: An alias for :attr:`invite_others`."""
         return 1 << 5
@@ -297,15 +319,14 @@ class ChannelPermissions(BaseFlags):
         """:class:`bool`: Returns ``True`` if a user can send files in their messages."""
         return 1 << 7
 
-    @make_permission_alias('upload_files')
+    @make_permission_alias("upload_files")
     def attach_files(self) -> int:
         """:class:`bool`: An alias for :attr:`upload_files`."""
         return 1 << 7
 
 
+PO = TypeVar("PO", bound="ChannelPermissionsOverwrite")
 
-
-PO = TypeVar('PO', bound='ChannelPermissionsOverwrite')
 
 @_augment_from_channelpermissions
 class ChannelPermissionsOverwrite:
@@ -332,7 +353,7 @@ class ChannelPermissionsOverwrite:
         Set the value of permissions by their name.
     """
 
-    __slots__ = ('_values',)
+    __slots__ = ("_values",)
 
     if TYPE_CHECKING:
         VALID_NAMES: ClassVar[Set[str]]
@@ -347,22 +368,26 @@ class ChannelPermissionsOverwrite:
         embed_links: Optional[bool]
         upload_files: Optional[bool]
 
-    
     def __init__(self, **kwargs: Optional[bool]):
         self._values: Dict[str, Optional[bool]] = {}
 
         for key, value in kwargs.items():
             if key not in self.VALID_NAMES:
-                raise ValueError(f'no permission called {key}.')
+                raise ValueError(f"no permission called {key}.")
 
             setattr(self, key, value)
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, ChannelPermissionsOverwrite) and self._values == other._values
+        return (
+            isinstance(other, ChannelPermissionsOverwrite)
+            and self._values == other._values
+        )
 
     def _set(self, key: str, value: Optional[bool]) -> None:
         if value not in (True, None, False):
-            raise TypeError(f'Expected bool or NoneType, received {value.__class__.__name__}')
+            raise TypeError(
+                f"Expected bool or NoneType, received {value.__class__.__name__}"
+            )
 
         if value is None:
             self._values.pop(key, None)
@@ -384,7 +409,9 @@ class ChannelPermissionsOverwrite:
         return allow, deny
 
     @classmethod
-    def from_pair(cls: Type[PO], allow: ChannelPermissions, deny: ChannelPermissions) -> PO:
+    def from_pair(
+        cls: Type[PO], allow: ChannelPermissions, deny: ChannelPermissions
+    ) -> PO:
         """Creates an overwrite from an allow/deny pair of :class:`Permissions`."""
         ret = cls()
         for key, value in allow:

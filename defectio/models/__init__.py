@@ -1,16 +1,19 @@
+from . import abc
 from .auth import Auth
 from .channel import channel_factory
 from .channel import DMChannel
+from .channel import GroupChannel
 from .channel import MessageableChannel
 from .channel import TextChannel
 from .channel import VoiceChannel
+from .file import Attachment
+from .file import File
 from .member import Member
 from .message import Message
+from .raw_models import RawMessageDeleteEvent
+from .raw_models import RawMessageUpdateEvent
+from .server import Category
 from .server import Role
 from .server import Server
-from .user import User, Status
-from .raw_models import RawMessageDeleteEvent, RawMessageUpdateEvent
-from .channel import GroupChannel, DMChannel
-from .server import Category
-from . import abc
-from .file import Attachment, File
+from .user import Status
+from .user import User

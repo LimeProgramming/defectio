@@ -1,11 +1,16 @@
 from __future__ import annotations
+from defectio.types.payloads import ProfilePayload
 
-from typing import Any, List, Literal
+from typing import Any
+from typing import List
 from typing import Optional
-from typing import TYPE_CHECKING, Type, TypeVar
+from typing import Type
+from typing import TYPE_CHECKING
+from typing import TypeVar
 
 from .. import utils
 from .mixins import Hashable
+from .file import Attachment
 
 if TYPE_CHECKING:
     from ..state import ConnectionState
@@ -69,6 +74,22 @@ class Relationship:
         self.status = res
 
 
+class Profile:
+    def __init__(
+        self, *, state: ConnectionState, user_id: str, data: ProfilePayload
+    ) -> None:
+        self._state = state
+        self.user_id = user_id
+        self.content = data.get("content")
+        self.background = Attachment(data=data.get("background"), state=state)
+
+    def __str__(self):
+        return f"{self.user_id} ({self.content})"
+
+    def __repr__(self) -> str:
+        return f"<Profile: {self}>"
+
+
 class _UserTag:
     __slots__ = "id"
     id: int
@@ -120,6 +141,8 @@ class BaseUser(PartialUser):
         "status",
         "our_relation",
         "relationships",
+        "flags",
+        "_profile",
     )
 
     if TYPE_CHECKING:
@@ -132,6 +155,8 @@ class BaseUser(PartialUser):
         status: Status
         our_relation: Relationship
         relationships: List[Relationship]
+        flags: int
+        _profile: Optional[Profile]
 
     def __init__(self, *, state: ConnectionState, data: UserPayload) -> None:
         self._state = state
@@ -156,6 +181,8 @@ class BaseUser(PartialUser):
         self.online = data.get("online")
         self._bot = UserBot(data.get("bot"), self._state)
         self.status = Status(data.get("status", {"presense": "Offline"}))
+        self.flags = data.get("flags")
+        self._profile: Optional[Profile] = None
         self.our_relation = Relationship(
             state=self._state, data={"status": data.get("relationship"), "_id": self.id}
         )
@@ -185,6 +212,10 @@ class BaseUser(PartialUser):
             self.our_relation = Relationship(
                 {"status": data.get("relationship"), "_id": self.id}
             )
+        if "profile.content" in data:
+            self._profile.content = data.get("profile.content")
+        if "profile.background" in data:
+            self._profile.background = Attachment(data=data.get("profile.background"))
 
     @classmethod
     def _copy(cls: Type[BU], user: BU) -> BU:
@@ -252,6 +283,14 @@ class BaseUser(PartialUser):
 
         return any(user.id == self.id for user in message.mentions)
 
+    async def get_profile(self) -> Profile:
+        if self._profile is None:
+            profile_data = await self._state.http.get_user_profile(self.id)
+            self._profile = Profile(
+                data=profile_data, state=self._state, user_id=self.id
+            )
+        return self._profile
+
 
 class ClientUser(BaseUser):
     def __init__(self, *, state: ConnectionState, data: UserPayload) -> None:
@@ -276,23 +315,6 @@ class ClientUser(BaseUser):
 class User(BaseUser):
     def __init__(self, data: UserPayload, state: ConnectionState):
         super().__init__(state=state, data=data)
-
-        # bot = data.get("bot")
-        # if bot:
-        #     self.bot = True
-        #     self.owner = bot["owner"]
-        # else:
-        #     self.bot = False
-        #     self.owner = None
-
-        # self.badges = data.get("badges", 0)
-        # self.online = data.get("online", False)
-        # self.flags = data.get("flags", 0)
-        # self.status = Status(StatusPayload(data.get("status", {"presense": "Offline"})))
-        # self.our_relation = data.get("relationship")
-        # self.relationships: List[Relationship] = []
-        # for relationship in data.get("relationships", []):
-        #     self.relationships.append(Relationship(relationship))
 
     def __repr__(self) -> str:
         return f"<User id={self.id!r} name={self.name!r}>"

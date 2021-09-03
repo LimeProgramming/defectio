@@ -1,8 +1,10 @@
-from defectio.models.mixins import Hashable
-from typing import Literal, Optional, Union
-
 import io
 import os
+from typing import Literal
+from typing import Optional
+from typing import Union
+
+from defectio.models.mixins import Hashable
 from defectio.state import ConnectionState
 from defectio.types.payloads import AttachmentPayload
 

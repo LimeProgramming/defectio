@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import io
-from typing import Optional, Union
+from typing import Optional
 from typing import TYPE_CHECKING
+from typing import Union
 
 from defectio.models.user import PartialUser
 

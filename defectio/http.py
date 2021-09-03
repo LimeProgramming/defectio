@@ -1,5 +1,4 @@
 from __future__ import annotations
-from defectio.models.apiinfo import ApiInfo
 
 import logging
 import sys
@@ -15,8 +14,10 @@ from typing import Union
 import aiohttp
 import orjson as json
 import ulid
-from defectio.errors import HTTPException, LoginFailure
+from defectio.errors import HTTPException
+from defectio.errors import LoginFailure
 from defectio.errors import RevoltServerError
+from defectio.models.apiinfo import ApiInfo
 
 from . import __version__
 from .models import Auth
