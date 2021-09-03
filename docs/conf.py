@@ -55,6 +55,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinxext.opengraph",
     "attributetable",
+    "exception_hierachy",
 ]
 
 autodoc_member_order = "bysource"

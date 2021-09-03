@@ -62,7 +62,7 @@ There's a lot going on here, so let's walk you through it step by step.
 Now that we've made a bot, we have to *run* the bot. Luckily, this is simple since this is just a
 Python script, we can run it directly.
 
-On *unix:
+On macos/linux:
 
 .. code-block:: shell
 
