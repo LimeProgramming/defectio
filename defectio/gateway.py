@@ -41,6 +41,9 @@ class DefectioWebsocket:
     def closed(self) -> bool:
         return self.websocket.closed
 
+    def close(self) -> None:
+        self.websocket.close()
+
     async def send_payload(self, payload: Any) -> None:
         await self.websocket.send_str(json.dumps(payload).decode("utf-8"))
 

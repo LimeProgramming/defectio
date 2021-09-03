@@ -1,4 +1,5 @@
 from __future__ import annotations
+from defectio.models.apiinfo import ApiInfo
 
 import logging
 import sys
@@ -14,7 +15,7 @@ from typing import Union
 import aiohttp
 import orjson as json
 import ulid
-from defectio.errors import LoginFailure
+from defectio.errors import HTTPException, LoginFailure
 from defectio.errors import RevoltServerError
 
 from . import __version__
@@ -54,6 +55,7 @@ if TYPE_CHECKING:
         SettingsPayload,
         UnreadsPayload,
     )
+    from .models import File
 
 logger = logging.getLogger("defectio")
 
@@ -64,11 +66,17 @@ class DefectioHTTP:
         session: aiohttp.ClientSession,
         api_url: str,
         user_agent: str,
+        *,
+        api_info: Optional[ApiInfo] = None,
     ):
         self._session = session if session is not None else aiohttp.ClientSession()
         self.auth: Optional[Auth] = None
         self.api_url = api_url
         self.user_agent = user_agent
+        self.api_info = api_info
+
+    def set_api_info(self, api_info: ApiInfo) -> None:
+        self.api_info = api_info
 
     async def request(
         self, method: str, path: str, *, auth_needed=True, **kwargs: Any
@@ -86,11 +94,32 @@ class DefectioHTTP:
 
         response: Optional[aiohttp.ClientResponse] = None
         data: Optional[Union[Dict[str, Any], str]] = None
+        async with self._session.request(method, url, **kwargs) as response:
+            data = await response.text()
+            if data != "":
+                data = json.loads(data)
+            if 300 > response.status >= 200:
+                logger.debug("%s %s has received %s", method, url, data)
+                return data
 
-        # Generate nonce for post messages
-        if method == "POST":
-            kwargs["json"] = kwargs.get("json", {})
-            kwargs["json"]["nonce"] = ulid.new().str
+            if 500 > response.status >= 400:
+                raise HTTPException(response, data)
+
+            if response.status >= 500:
+                raise RevoltServerError(response, data)
+
+    async def uploadrequest(self, method: str, tag: str, **kwargs: Any) -> Any:
+        url = f"{self.api_info.features.autumn['url']}/{tag}"
+        headers = kwargs.get("headers", {})
+        headers["User-Agent"] = self.user_agent
+
+        if not self.auth:
+            raise LoginFailure("Not logged in")
+
+        kwargs["headers"] = {**headers, **self.auth.headers}
+
+        response: Optional[aiohttp.ClientResponse] = None
+        data: Optional[Union[Dict[str, Any], str]] = None
 
         async with self._session.request(method, url, **kwargs) as response:
             data = await response.text()
@@ -101,7 +130,6 @@ class DefectioHTTP:
                 return data
 
             if 500 > response.status >= 400:
-                print(data)
                 raise
                 # raise RevoltServerError(response, data)
 
@@ -131,6 +159,12 @@ class DefectioHTTP:
     async def node_info(self) -> ApiInfoPayload:
         path = ""
         return await self.request("GET", path, auth_needed=False)
+
+    async def send_file(self, *, file: File, tag: str):
+        form = aiohttp.FormData()
+        form.add_field("file", file.fp, filename=file.filename)
+
+        return await self.uploadrequest("POST", tag, data=form)
 
     ################
     ## Onboarding ##
@@ -332,16 +366,18 @@ class DefectioHTTP:
     async def send_message(
         self,
         channel_id: str,
-        content: str,
         *,
-        attachments: Optional[List[Any]] = None,
+        content: Optional[str] = None,
+        attachments: Optional[List[str]] = None,
         replies: Optional[Any] = None,
     ) -> MessagePayload:
         path = f"channels/{channel_id}/messages"
-        json = {"content": content}
-        if attachments:
+        json = {"nonce": ulid.new().str}
+        if content is not None:
+            json["content"] = content
+        if attachments is not None and len(attachments) > 0:
             json["attachments"] = attachments
-        if replies:
+        if replies is not None:
             json["replies"] = replies
         return await self.request("POST", path, json=json)
 
@@ -430,7 +466,7 @@ class DefectioHTTP:
         users: Optional[List[str]] = None,
     ) -> GroupPayload:
         path = "channels/create"
-        json = {"name": name}
+        json = {"name": name, "nonce": ulid.new().str}
         if description:
             json["description"] = description
         if users:
@@ -499,7 +535,7 @@ class DefectioHTTP:
         self, name: str, *, description: Optional[str] = None
     ) -> ServerPayload:
         path = "servers/create"
-        json = {"name": name}
+        json = {"name": name, "nonce": ulid.new().str}
         if description:
             json["description"] = description
         return await self.request("POST", path, json=json)
@@ -513,7 +549,7 @@ class DefectioHTTP:
         description: Optional[str] = None,
     ) -> ChannelPayload:
         path = f"servers/{server_id}/channels"
-        json = {"name": name, "type": type}
+        json = {"name": name, "type": type, "nonce": ulid.new().str}
         if description:
             json["description"] = description
         return await self.request("POST", path, json=json)

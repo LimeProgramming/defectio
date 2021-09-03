@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import asyncio
-import copy
-import sys
-from typing import Any
+from typing import Any, List
 from typing import Dict
 from typing import Optional
 from typing import Protocol
@@ -11,14 +8,13 @@ from typing import runtime_checkable
 from typing import TYPE_CHECKING
 from typing import Union
 
-from defectio.types.payloads import UserPayload
-
 if TYPE_CHECKING:
     from ..state import ConnectionState
     from .server import Server
     from .message import Message
     from ..types.payloads import ChannelType
     from .channel import DMChannel, TextChannel, GroupChannel
+    from defectio.models.message import File
 
     PartialMessageableChannel = Union[TextChannel, DMChannel]
     MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
@@ -210,8 +206,8 @@ class Messageable(Protocol):
         self,
         content: str = None,
         *,
-        file=None,
-        files=None,
+        file: Optional[File] = None,
+        files: Optional[List[File]] = None,
         delete_after: int = None,
         nonce=None,
     ):
@@ -220,70 +216,24 @@ class Messageable(Protocol):
         state = self._state
         content = str(content) if content is not None else None
 
-        # if mention_author is not None:
-        #     allowed_mentions = allowed_mentions or AllowedMentions().to_dict()
-        #     allowed_mentions["replied_user"] = bool(mention_author)
+        attachment_ids: list[str] = []
+        if file is not None:
+            files = [file]
+        if files is not None:
+            for attachment in files:
+                attach = await self._state.http.send_file(
+                    file=attachment, tag="attachments"
+                )
+                attachment_ids.append(attach["id"])
 
-        # if reference is not None:
-        #     try:
-        #         reference = reference.to_message_reference_dict()
-        #     except AttributeError:
-        #         raise InvalidArgument(
-        #             "reference parameter must be Message or MessageReference"
-        #         ) from None
-
-        # if file is not None and files is not None:
-        #     raise InvalidArgument("cannot pass both file and files parameter to send()")
-
-        # if file is not None:
-        #     if not isinstance(file, File):
-        #         raise InvalidArgument("file parameter must be File")
-
-        #     try:
-        #         data = await state.http.send_files(
-        #             channel.id,
-        #             files=[file],
-        #             allowed_mentions=allowed_mentions,
-        #             content=content,
-        #             embed=embed,
-        #             nonce=nonce,
-        #             message_reference=reference,
-        #         )
-        #     finally:
-        #         file.close()
-
-        # elif files is not None:
-        #     if len(files) > 10:
-        #         raise InvalidArgument(
-        #             "files parameter must be a list of up to 10 elements"
-        #         )
-        #     elif not all(isinstance(file, File) for file in files):
-        #         raise InvalidArgument("files parameter must be a list of File")
-
-        #     try:
-        #         data = await state.http.send_files(
-        #             channel.id,
-        #             files=files,
-        #             content=content,
-        #             tts=tts,
-        #             embed=embed,
-        #             nonce=nonce,
-        #             allowed_mentions=allowed_mentions,
-        #             message_reference=reference,
-        #         )
-        #     finally:
-        #         for f in files:
-        #             f.close()
-        # else:
         data = await state.http.send_message(
-            channel.id,
-            content,
+            channel.id, content=content, attachments=attachment_ids
         )
 
-        ret = state.create_message(channel=channel, data=data)
+        new_message = state.create_message(channel=channel, data=data)
         if delete_after is not None:
-            await ret.delete(delay=delete_after)
-        return ret
+            await new_message.delete(delay=delete_after)
+        return new_message
 
     async def fetch_message(self, id):
         channel = await self._get_channel()

@@ -13,3 +13,4 @@ from .raw_models import RawMessageDeleteEvent, RawMessageUpdateEvent
 from .channel import GroupChannel, DMChannel
 from .server import Category
 from . import abc
+from .file import Attachment, File

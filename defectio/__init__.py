@@ -35,6 +35,8 @@ from .models import (
     DMChannel,
     Category,
     Status,
+    File,
+    Attachment,
 )
 from .models import abc
 from . import utils

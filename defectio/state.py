@@ -123,7 +123,7 @@ class ConnectionState:
     def clear(self) -> None:
         """Clear all data from the internal cache and reset the connection state."""
         self.user_id: Optional[str] = None
-        self.api_info: Optional[ApiInfoPayload] = None
+        self.api_info: Optional[ApiInfo] = None
         self._servers: Dict[str, Server] = {}
         self._users: Dict[str, User] = {}
         self._server_channels: Dict[str, List[Channel]] = {}
@@ -163,6 +163,7 @@ class ConnectionState:
         """
         api_info = ApiInfo(api_info)
         self.api_info = api_info
+        self.http.set_api_info(api_info)
         return api_info
 
     @property
