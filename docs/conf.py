@@ -82,6 +82,9 @@ rst_prolog = """
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "friendly"
 
+# stop issues
+autodoc_mock_imports = ["aiohttp", "orjson"]
+
 resource_links = {
     "revolt": "https://app.revolt.chat/invite/FfbwgFDk",
     "issues": "https://github.com/Darkflame72/defectio/issues",
