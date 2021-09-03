@@ -46,7 +46,7 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
         self.name: str = data["name"]
         self.topic: Optional[str] = data.get("topic")
 
-    def _get_channel(self) -> TextChannel:
+    async def _get_channel(self) -> TextChannel:
         return self
 
     @property
@@ -57,9 +57,11 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
 
 class SavedMessageChannel(abc.Messageable):
     def __init__(self, data: ChannelPayload, state: ConnectionState):
+        self.id = data.get("_id")
+        print(data)
         super().__init__(data, state)
 
-    def _get_channel(self) -> SavedMessageChannel:
+    async def _get_channel(self) -> SavedMessageChannel:
         return self
 
 
@@ -74,7 +76,7 @@ class DMChannel(abc.Messageable):
         #     self.last_message = None
         self._recipients = data.get("recipients")
 
-    def _get_channel(self) -> DMChannel:
+    async def _get_channel(self) -> DMChannel:
         return self
 
     @property
@@ -102,7 +104,7 @@ class GroupChannel(abc.Messageable):
         self._recipients = data.get("recipients")
         # self.last_message = Message(self._state, data.get("last_message"))
 
-    def _get_channel(self) -> GroupChannel:
+    async def _get_channel(self) -> GroupChannel:
         return self
 
     @property
@@ -129,7 +131,7 @@ class VoiceChannel(abc.Messageable):
         # )
         # self._fill_overwrites(data)
 
-    def _get_channel(self) -> VoiceChannel:
+    async def _get_channel(self) -> VoiceChannel:
         return self
 
 
@@ -137,9 +139,9 @@ MessageableChannel = Union[TextChannel, DMChannel, GroupChannel, SavedMessageCha
 
 
 def channel_factory(data: ChannelPayload) -> type[abc.Messageable]:
-    # Literal["SavedMessage", "DirectMessage", "Group", "TextChannel", "VoiceChannel"]
+    # Literal["SavedMessages", "DirectMessage", "Group", "TextChannel", "VoiceChannel"]
     channel_type = data["channel_type"]
-    if channel_type == "SavedMessage":
+    if channel_type == "SavedMessages":
         return SavedMessageChannel
     elif channel_type == "DirectMessage":
         return DMChannel
@@ -150,4 +152,5 @@ def channel_factory(data: ChannelPayload) -> type[abc.Messageable]:
     elif channel_type == "VoiceChannel":
         return VoiceChannel
     else:
+        print(channel_type)
         raise Exception

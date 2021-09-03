@@ -117,13 +117,13 @@ class UserBot:
         return None
 
 
-class PartialUser(Hashable, _UserTag):
+class PartialUser(Hashable, _UserTag, Messageable):
     def __init__(
         self,
         id: str,
     ) -> None:
         self.id = id
-        self.status = Status(StatusPayload({"presense": "Offline"}))
+        self.status = Status({"presense": "Offline"})
 
     def __repr__(self) -> str:
         return f"<PartialUser id={self.id!r}>"
