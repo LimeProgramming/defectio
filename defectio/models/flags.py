@@ -4,10 +4,7 @@ just enough copied from discord.py to start figuring things out.
 from typing import Any
 from typing import Callable
 from typing import ClassVar
-from typing import Dict
-from typing import Generic
 from typing import Iterator
-from typing import List
 from typing import Optional
 from typing import overload
 from typing import Tuple
@@ -73,7 +70,7 @@ def fill_with_flags(*, inverted: bool = False):
 
 
 class BaseFlags:
-    VALID_FLAGS: ClassVar[Dict[str, int]]
+    VALID_FLAGS: ClassVar[dict[str, int]]
     DEFAULT_VALUE: ClassVar[int]
 
     value: int

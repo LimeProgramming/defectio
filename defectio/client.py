@@ -8,10 +8,7 @@ import traceback
 from typing import Any
 from typing import Callable
 from typing import Coroutine
-from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
@@ -97,9 +94,9 @@ class Client:
         self.http: DefectioHTTP = None
         self.session = kwargs.pop("session", None)
 
-        self._handlers: Dict[str, Callable] = {"ready": self._handle_ready}
-        self._listeners: Dict[
-            str, List[Tuple[asyncio.Future, Callable[..., bool]]]
+        self._handlers: dict[str, Callable] = {"ready": self._handle_ready}
+        self._listeners: list[
+            str, list[tuple[asyncio.Future, Callable[..., bool]]]
         ] = {}
 
         self._ready = asyncio.Event()
@@ -318,23 +315,23 @@ class Client:
         return self._connection.user
 
     @property
-    def users(self) -> List[User]:
+    def users(self) -> list[User]:
         """Returns a list of all the users stored in the internal cache.
 
         Returns
         -------
-        List[User]
+        list[User]
             A list of cached users.
         """
         return list(self._connection._users.values())
 
     @property
-    def servers(self) -> List[Server]:
+    def servers(self) -> list[Server]:
         """Returns a list of all the servers stored in the internal cache.
 
         Returns
         -------
-        List[Server]
+        list[Server]
             A list of cached servers.
         """
         return list(self._connection._servers.values())

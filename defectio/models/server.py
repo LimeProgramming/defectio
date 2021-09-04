@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Dict
-from typing import List
 from typing import Optional
 from typing import TYPE_CHECKING
 
@@ -70,7 +68,7 @@ class Role(Hashable):
 class Category(Hashable):
     def __init__(self, data: CategoryPayload, state: ConnectionState) -> None:
         self._state = state
-        self.channels: List[MessageableChannel] = []
+        self.channels: list[MessageableChannel] = []
         self._from_data(data)
 
     def _from_data(self, data: CategoryPayload) -> None:
@@ -82,9 +80,9 @@ class Category(Hashable):
 
 class Server(Hashable):
     def __init__(self, data: ServerPayload, state: ConnectionState):
-        self.channel_ids: List[str] = []
-        self.member_ids: List[str] = []
-        self.categories: List[str] = []
+        self.channel_ids: list[str] = []
+        self.member_ids: list[str] = []
+        self.categories: list[str] = []
         self._state: ConnectionState = state
         self._from_data(data)
 
@@ -98,7 +96,7 @@ class Server(Hashable):
         self.categories = [
             Category(payload, self._state) for payload in data.get("categories", [])
         ]
-        self.roles: List[Role] = []
+        self.roles: list[Role] = []
         for key, value in data.get("roles", {}).items():
             self.roles.append(Role(key, value, self._state))
         self.icon = data.get("icon")
@@ -157,17 +155,17 @@ class Server(Hashable):
         Returns
         -------
         [type]
-            List of all channels
+            list of all channels
         """
         return [self._state.get_channel(channel_id) for channel_id in self.channel_ids]
 
     @property
-    def members(self) -> List[Member]:
+    def members(self) -> list[Member]:
         """All cached members in the server.
 
         Returns
         -------
-        List[Member]
-            List of all cached members in the server.
+        list[Member]
+            list of all cached members in the server.
         """
         return [self._state.get_member(member_id) for member_id in self.member_ids]

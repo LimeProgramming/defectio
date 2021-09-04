@@ -1,6 +1,4 @@
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import Literal
 from typing import Optional
 from typing import Tuple
@@ -16,12 +14,12 @@ ChannelType = Literal[
 
 
 class ApiInfoFeaturePayload(TypedDict):
-    captcha: Dict[str, Any]
+    captcha: dict[str, Any]
     email: bool
     invite_only: str
-    autumn: Dict[str, Any]
-    january: Dict[str, Any]
-    voso: Dict[str, Any]
+    autumn: dict[str, Any]
+    january: dict[str, Any]
+    voso: dict[str, Any]
 
 
 class ApiInfoPayload(TypedDict):
@@ -74,7 +72,7 @@ class UserPayload(TypedDict):
     _id: str
     username: str
     avatar: AttachmentPayload
-    relations: List[RelationshipPayload]
+    relations: list[RelationshipPayload]
     badges: int
     status: StatusPayload
     relationship: RelationType
@@ -88,7 +86,7 @@ class ProfilePayload(TypedDict):
     background: AttachmentPayload
 
 
-MutualFriends = TypedDict("MutualFriends", {"users": List[str]})
+MutualFriends = TypedDict("MutualFriends", {"users": list[str]})
 
 
 class LastMessagePayload(TypedDict):
@@ -101,7 +99,7 @@ class DMChannelPayload(TypedDict):
     _id: str
     channel_type: Literal["DirectMessage"]
     active: bool
-    recipients: List[str]
+    recipients: list[str]
     last_message: LastMessagePayload
 
 
@@ -125,7 +123,7 @@ class ChannelPayload(TypedDict):
     description: str
     icon: IconPayload
     default_permissions: int
-    role_permissions: Dict[str, int]
+    role_permissions: dict[str, int]
     channel_type: ChannelType
 
 
@@ -155,11 +153,11 @@ class MessagePayload(TypedDict):
     channel: str
     author: str
     content: ContentPayload
-    attachments: List[AttachmentPayload]
+    attachments: list[AttachmentPayload]
     edited: Edited
-    embeds: List[Embed]
-    mentions: List[str]
-    replies: List[str]
+    embeds: list[Embed]
+    mentions: list[str]
+    replies: list[str]
 
 
 class MemberIdPayload(TypedDict):
@@ -173,28 +171,28 @@ class BasicMemberPayload(TypedDict):
 
 
 class FetchMessagePayload(TypedDict):
-    messages: List[MessagePayload]
-    users: List[UserPayload]
-    members: List[BasicMemberPayload]
+    messages: list[MessagePayload]
+    users: list[UserPayload]
+    members: list[BasicMemberPayload]
     avatar: AttachmentPayload
-    roles: List[str]
+    roles: list[str]
 
 
 class MessagePollPayload(TypedDict):
-    changed: List[MessagePayload]
-    deleted: List[str]
+    changed: list[MessagePayload]
+    deleted: list[str]
 
 
 class SearchMessagePayload(TypedDict):
-    messages: List[MessagePayload]
-    users: List[UserPayload]
-    members: List[BasicMemberPayload]
+    messages: list[MessagePayload]
+    users: list[UserPayload]
+    members: list[BasicMemberPayload]
 
 
 class GroupPayload(TypedDict):
     _id: str
     channel_type: Literal["Group"]
-    recipients: List[str]
+    recipients: list[str]
     name: str
     owner: str
     description: str
@@ -209,7 +207,7 @@ JoinCall = TypedDict("JoinCall", {"token": str})
 class CategoryPayload(TypedDict):
     id: str
     title: str
-    channels: List[str]
+    channels: list[str]
 
 
 class SystemMessagePayload(TypedDict):
@@ -224,7 +222,7 @@ class RolePayload(TypedDict):
     colour: str
     hoist: Optional[bool]
     rank: int
-    permissions: List[int]
+    permissions: list[int]
 
 
 class BannerPayload(TypedDict):
@@ -242,11 +240,11 @@ class ServerPayload(TypedDict):
     owner: str
     name: str
     description: Optional[str]
-    channels: List[str]
-    categories: List[CategoryPayload]
+    channels: list[str]
+    categories: list[CategoryPayload]
     system_message: SystemMessagePayload
-    roles: Dict[str, RolePayload]
-    default_permissions: List[int]
+    roles: dict[str, RolePayload]
+    default_permissions: list[int]
     icon: IconPayload
     banner: BannerPayload
 
@@ -263,12 +261,12 @@ class MemberPayload(TypedDict):
     _id: MemberIdPayload
     nickname: str
     avatar: AttachmentPayload
-    roles: List[str]
+    roles: list[str]
 
 
 class ServerMembersPayload(TypedDict):
-    members: List[MemberPayload]
-    users: List[UserPayload]
+    members: list[MemberPayload]
+    users: list[UserPayload]
 
 
 class BanPayload(TypedDict):
@@ -277,13 +275,13 @@ class BanPayload(TypedDict):
 
 
 class BansPayload(TypedDict):
-    users: List[UserPayload]
-    bans: List[BanPayload]
+    users: list[UserPayload]
+    bans: list[BanPayload]
 
 
 class CreateRole(Type):
     id: str
-    permissions: List[int]
+    permissions: list[int]
 
 
 class BotPayload(TypedDict):
@@ -327,10 +325,10 @@ class JoinInvitePayload(TypedDict):
     server: ServerPayload
 
 
-Settings = Dict[str, Tuple[int, str]]
+Settings = dict[str, Tuple[int, str]]
 
 
 class UnreadsPayload(TypedDict):
     _id: MemberIdPayload
     last_id: str
-    mentions: List[str]
+    mentions: list[str]

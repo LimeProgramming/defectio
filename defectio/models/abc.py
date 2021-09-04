@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import Optional
 from typing import Protocol
 from typing import runtime_checkable
@@ -109,14 +107,14 @@ class ServerChannel:
     if TYPE_CHECKING:
 
         def __init__(
-            self, *, state: ConnectionState, server: Server, data: Dict[str, Any]
+            self, *, state: ConnectionState, server: Server, data: dict[str, Any]
         ):
             ...
 
     def __str__(self) -> str:
         return self.name
 
-    def _update(self, server: Server, data: Dict[str, Any]) -> None:
+    def _update(self, server: Server, data: dict[str, Any]) -> None:
         raise NotImplementedError
 
     async def delete(self, *, reason: Optional[str] = None) -> None:
@@ -154,14 +152,14 @@ class GuildChannel:
     if TYPE_CHECKING:
 
         def __init__(
-            self, *, state: ConnectionState, server: Server, data: Dict[str, Any]
+            self, *, state: ConnectionState, server: Server, data: dict[str, Any]
         ):
             ...
 
     def __str__(self) -> str:
         return self.name
 
-    def _update(self, server: Server, data: Dict[str, Any]) -> None:
+    def _update(self, server: Server, data: dict[str, Any]) -> None:
         raise NotImplementedError
 
     @property
@@ -208,7 +206,7 @@ class Messageable(Protocol):
         content: str = None,
         *,
         file: Optional[File] = None,
-        files: Optional[List[File]] = None,
+        files: Optional[list[File]] = None,
         delete_after: int = None,
         nonce=None,
     ):

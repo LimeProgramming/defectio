@@ -7,7 +7,6 @@ from .mixins import Hashable
 
 if TYPE_CHECKING:
     from ..state import ConnectionState
-    from .server import Server
     from ..types.payloads import MemberPayload
 
 

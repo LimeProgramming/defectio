@@ -1,19 +1,14 @@
 import collections
 import datetime
 from typing import Any
-from typing import AsyncIterable
 from typing import AsyncIterator
 from typing import Callable
-from typing import Dict
-from typing import Generator
 from typing import Generic
 from typing import Iterable
 from typing import Iterator
-from typing import List
 from typing import Optional
 from typing import Sequence
-from inspect import isawaitable as _isawaitable, signature as _signature
-from typing import Tuple
+from inspect import signature as _signature
 from typing import TypeVar
 from typing import Union, Protocol, TYPE_CHECKING, Mapping, ForwardRef, Literal
 from operator import attrgetter
@@ -23,7 +18,7 @@ import sys
 PY_310 = sys.version_info >= (3, 10)
 
 
-def flatten_literal_params(parameters: Iterable[Any]) -> Tuple[Any, ...]:
+def flatten_literal_params(parameters: Iterable[Any]) -> tuple[Any, ...]:
     params = []
     literal_cls = type(Literal[0])
     for p in parameters:
@@ -34,16 +29,16 @@ def flatten_literal_params(parameters: Iterable[Any]) -> Tuple[Any, ...]:
     return tuple(params)
 
 
-def normalise_optional_params(parameters: Iterable[Any]) -> Tuple[Any, ...]:
+def normalise_optional_params(parameters: Iterable[Any]) -> tuple[Any, ...]:
     none_cls = type(None)
     return tuple(p for p in parameters if p is not none_cls) + (none_cls,)
 
 
 def evaluate_annotation(
     tp: Any,
-    globals: Dict[str, Any],
-    locals: Dict[str, Any],
-    cache: Dict[str, Any],
+    globals: dict[str, Any],
+    locals: dict[str, Any],
+    cache: dict[str, Any],
     *,
     implicit_str: bool = True,
 ):

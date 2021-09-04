@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from ..types.payloads import MessagePayload, AttachmentPayload
     from ..types.websocket import MessageUpdate
     from .channel import MessageableChannel
-    from .user import User
 
 
 class Attachment:

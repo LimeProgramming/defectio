@@ -10,7 +10,6 @@ from typing import Any
 from typing import Awaitable
 from typing import Callable
 from typing import Generic
-from typing import List
 from typing import Optional
 from typing import Type
 from typing import TypeVar
@@ -222,8 +221,8 @@ class Loop(Generic[LF]):
             return self._hours
 
     @property
-    def time(self) -> Optional[List[datetime.time]]:
-        """Optional[List[:class:`datetime.time`]]: Read-only list for the exact times this loop runs at.
+    def time(self) -> Optional[list[datetime.time]]:
+        """Optional[list[:class:`datetime.time`]]: Read-only list for the exact times this loop runs at.
         ``None`` if relative times were passed instead.
         """
         if self._time is not MISSING:
@@ -559,7 +558,7 @@ class Loop(Generic[LF]):
         *,
         dt: Type[datetime.time] = datetime.time,
         utc: datetime.timezone = datetime.timezone.utc,
-    ) -> List[datetime.time]:
+    ) -> list[datetime.time]:
         if isinstance(time, dt):
             inner = time if time.tzinfo is not None else time.replace(tzinfo=utc)
             return [inner]
@@ -570,7 +569,7 @@ class Loop(Generic[LF]):
         if not time:
             raise ValueError("time parameter must not be an empty sequence.")
 
-        ret: List[datetime.time] = []
+        ret: list[datetime.time] = []
         for index, t in enumerate(time):
             if not isinstance(t, dt):
                 raise TypeError(
@@ -629,7 +628,7 @@ class Loop(Generic[LF]):
             self._seconds = float(seconds)
             self._hours = float(hours)
             self._minutes = float(minutes)
-            self._time: List[datetime.time] = MISSING
+            self._time: list[datetime.time] = MISSING
         else:
             if any((seconds, minutes, hours)):
                 raise TypeError("Cannot mix explicit time with relative time")

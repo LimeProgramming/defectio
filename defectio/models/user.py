@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import List
 from typing import Optional
 from typing import Type
 from typing import TYPE_CHECKING
@@ -156,7 +155,7 @@ class BaseUser(PartialUser):
         _bot: Optional[UserBot]
         status: Status
         our_relation: Relationship
-        relationships: List[Relationship]
+        relationships: list[Relationship]
         flags: int
         _profile: Optional[Profile]
 
@@ -188,7 +187,7 @@ class BaseUser(PartialUser):
         self.our_relation = Relationship(
             state=self._state, data={"status": data.get("relationship"), "_id": self.id}
         )
-        self.relationships: List[Relationship] = []
+        self.relationships: list[Relationship] = []
         for relationship in data.get("relationships", []):
             self.relationships.append(
                 Relationship(state=self._state, data=relationship)

@@ -3,11 +3,9 @@ from __future__ import annotations
 from typing import Any
 from typing import Callable
 from typing import ClassVar
-from typing import Dict
 from typing import Iterator
 from typing import Optional
 from typing import Set
-from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
@@ -369,7 +367,7 @@ class ChannelPermissionsOverwrite:
         upload_files: Optional[bool]
 
     def __init__(self, **kwargs: Optional[bool]):
-        self._values: Dict[str, Optional[bool]] = {}
+        self._values: dict[str, Optional[bool]] = {}
 
         for key, value in kwargs.items():
             if key not in self.VALID_NAMES:
@@ -394,8 +392,8 @@ class ChannelPermissionsOverwrite:
         else:
             self._values[key] = value
 
-    def pair(self) -> Tuple[ChannelPermissions, ChannelPermissions]:
-        """Tuple[:class:`Permissions`, :class:`Permissions`]: Returns the (allow, deny) pair from this overwrite."""
+    def pair(self) -> tuple[ChannelPermissions, ChannelPermissions]:
+        """tuple[:class:`Permissions`, :class:`Permissions`]: Returns the (allow, deny) pair from this overwrite."""
 
         allow = ChannelPermissions.none()
         deny = ChannelPermissions.none()
@@ -451,7 +449,7 @@ class ChannelPermissionsOverwrite:
 
             setattr(self, key, value)
 
-    def __iter__(self) -> Iterator[Tuple[str, Optional[bool]]]:
+    def __iter__(self) -> Iterator[tuple[str, Optional[bool]]]:
         for key in self.PURE_FLAGS:
             yield key, self._values.get(key)
 

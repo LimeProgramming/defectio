@@ -1,22 +1,19 @@
 from __future__ import annotations
 
-from typing import List
 from typing import Optional
-from typing import Text
 from typing import TYPE_CHECKING
 from typing import Union
 
-from defectio.models.user import User
-from defectio.types.payloads import DMChannelPayload
+from .user import User
 
 from . import abc
-from .message import Message
 from .mixins import Hashable
 
 if TYPE_CHECKING:
     from ..types.payloads import ChannelPayload
     from ..state import ConnectionState
     from .server import Server
+    from ..types.payloads import DMChannelPayload
 
 __all__ = (
     "TextChannel",
@@ -80,7 +77,7 @@ class DMChannel(abc.Messageable):
         return self
 
     @property
-    def recipients(self) -> List[User]:
+    def recipients(self) -> list[User]:
         return [self._state.get_user(user) for user in self._recipients]
 
     def __str__(self) -> str:
@@ -108,7 +105,7 @@ class GroupChannel(abc.Messageable):
         return self
 
     @property
-    def recipients(self) -> List[User]:
+    def recipients(self) -> list[User]:
         return [self._state.get_user(user) for user in self._recipients]
 
 

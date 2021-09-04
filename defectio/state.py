@@ -8,8 +8,6 @@ from collections import deque
 from typing import Any
 from typing import Callable
 from typing import Deque
-from typing import Dict
-from typing import List
 from typing import Optional
 from typing import TYPE_CHECKING
 from typing import Union
@@ -81,7 +79,7 @@ class ConnectionState:
     def __init__(
         self,
         dispatch: Callable,
-        handlers: Dict[str, Callable],
+        handlers: dict[str, Callable],
         http: Callable[[], DefectioHTTP],
         websocket: Callable[[], DefectioWebsocket],
         auth: Auth,
@@ -94,7 +92,7 @@ class ConnectionState:
         ----------
         dispatch : Callable
             Callback to dispatch a message to a handler
-        handlers : Dict[str, Callable]
+        handlers : dict[str, Callable]
             Mapping of message type to handler functions
         http : Callable[[], DefectioHTTP]
             HTTP request handler
@@ -108,11 +106,11 @@ class ConnectionState:
         self.get_http = http
         self.get_websocket = websocket
         self.auth = auth
-        self.handlers: Dict[str, Callable] = handlers
+        self.handlers: dict[str, Callable] = handlers
         self.dispatch: Callable = dispatch
         self.max_messages: Optional[int] = options.get("max_messages", 1000)
         self.loop: asyncio.AbstractEventLoop = loop
-        self.parsers: Dict[str, Callable[[Dict[str, Any]], None]] = {}
+        self.parsers: dict[str, Callable[[dict[str, Any]], None]] = {}
 
         for attr, func in inspect.getmembers(self):
             if attr.startswith("parse_"):
@@ -124,10 +122,10 @@ class ConnectionState:
         """Clear all data from the internal cache and reset the connection state."""
         self.user_id: Optional[str] = None
         self.api_info: Optional[ApiInfo] = None
-        self._servers: Dict[str, Server] = {}
-        self._users: Dict[str, User] = {}
-        self._server_channels: Dict[str, List[Channel]] = {}
-        self._members: Dict[str, List[Member]] = {}
+        self._servers: dict[str, Server] = {}
+        self._users: dict[str, User] = {}
+        self._server_channels: dict[str, list[Channel]] = {}
+        self._members: dict[str, list[Member]] = {}
         if self.max_messages is not None:
             self._messages: Optional[Deque[Message]] = deque(maxlen=self.max_messages)
         else:
@@ -191,13 +189,13 @@ class ConnectionState:
     #     return self.get_user(self.user_id)
 
     @property
-    def users(self) -> List[User]:
+    def users(self) -> list[User]:
         """Get all users from internal cache
 
         Returns
         -------
-        List[User]
-            List of users
+        list[User]
+            list of users
         """
         return list(self._users.values())
 
@@ -254,7 +252,7 @@ class ConnectionState:
         del self._users[user_id]
 
     @property
-    def servers(self) -> List[Server]:
+    def servers(self) -> list[Server]:
         return list(self._servers.values())
 
     def get_server(self, server_id: Optional[str]) -> Optional[Server]:
@@ -315,7 +313,7 @@ class ConnectionState:
         del server
 
     @property
-    def channels(self) -> List[Channel]:
+    def channels(self) -> list[Channel]:
         return list(self._server_channels.values())
 
     def get_channel(self, channel_id: str) -> Optional[Channel]:
@@ -380,7 +378,7 @@ class ConnectionState:
         del channel
 
     @property
-    def messages(self) -> Optional[List[Message]]:
+    def messages(self) -> Optional[list[Message]]:
         return list(self._messages)
 
     def get_message(self, msg_id: Optional[str]) -> Optional[Message]:
@@ -444,7 +442,7 @@ class ConnectionState:
         del message
 
     @property
-    def members(self) -> List[Member]:
+    def members(self) -> list[Member]:
         return list(self._members.values())
 
     def get_member(self, member_id: str) -> Optional[Member]:

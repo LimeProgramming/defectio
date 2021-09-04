@@ -1,11 +1,7 @@
 from __future__ import annotations
 
 import logging
-import sys
 from typing import Any
-from typing import Coroutine
-from typing import Dict
-from typing import List
 from typing import Literal
 from typing import Optional
 from typing import TYPE_CHECKING
@@ -81,7 +77,7 @@ class DefectioHTTP:
 
     async def request(
         self, method: str, path: str, *, auth_needed=True, **kwargs: Any
-    ) -> Any:
+    ) -> dict[str, Any]:
         url = f"{self.api_url}/{path}"
         headers = kwargs.get("headers", {})
         headers["User-Agent"] = self.user_agent
@@ -94,7 +90,7 @@ class DefectioHTTP:
         kwargs["headers"] = headers
 
         response: Optional[aiohttp.ClientResponse] = None
-        data: Optional[Union[Dict[str, Any], str]] = None
+        data: Optional[Union[dict[str, Any], str]] = None
         async with self._session.request(method, url, **kwargs) as response:
             data = await response.text()
             if data != "":
@@ -120,7 +116,7 @@ class DefectioHTTP:
         kwargs["headers"] = {**headers, **self.auth.headers}
 
         response: Optional[aiohttp.ClientResponse] = None
-        data: Optional[Union[Dict[str, Any], str]] = None
+        data: Optional[Union[dict[str, Any], str]] = None
 
         async with self._session.request(method, url, **kwargs) as response:
             data = await response.text()
@@ -238,7 +234,7 @@ class DefectioHTTP:
         path = f"auth/sessions/{session_id}"
         return await self.request("POST", path)
 
-    async def get_sessions(self) -> List[SessionPayload]:
+    async def get_sessions(self) -> list[SessionPayload]:
         path = "auth/sessions"
         return await self.request("GET", path)
 
@@ -284,7 +280,7 @@ class DefectioHTTP:
     ## Direct Messaging ##
     ######################
 
-    async def get_dms(self) -> List[DMChannelPayload]:
+    async def get_dms(self) -> list[DMChannelPayload]:
         path = "users/dms"
         return await self.request("GET", path)
 
@@ -296,7 +292,7 @@ class DefectioHTTP:
     ## Relationships ##
     ###################
 
-    async def get_relationships(self) -> List[RelationshipPayload]:
+    async def get_relationships(self) -> list[RelationshipPayload]:
         path = "users/relationships"
         return await self.request("GET", path)
 
@@ -369,7 +365,7 @@ class DefectioHTTP:
         channel_id: str,
         *,
         content: Optional[str] = None,
-        attachments: Optional[List[str]] = None,
+        attachments: Optional[list[str]] = None,
         replies: Optional[Any] = None,
     ) -> MessagePayload:
         path = f"channels/{channel_id}/messages"
@@ -390,9 +386,9 @@ class DefectioHTTP:
         before: Optional[str] = None,
         after: Optional[str] = None,
         sort: Literal["Latest", "Oldest"] = "Latest",
-        nearby: Optional[List[str]] = None,
+        nearby: Optional[list[str]] = None,
         include_users: bool = True,
-    ) -> List[FetchMessagePayload]:
+    ) -> list[FetchMessagePayload]:
         path = f"channels/{channel_id}/messages"
         json = {"sort": sort}
         if limit:
@@ -425,7 +421,7 @@ class DefectioHTTP:
         return await self.request("DELETE", path)
 
     async def poll_message_changes(
-        self, channel_id: str, message_ids: List[str]
+        self, channel_id: str, message_ids: list[str]
     ) -> MessagePayload:
         path = f"channels/{channel_id}/messages/stale"
         return await self.request("GET", path, json=message_ids)
@@ -464,7 +460,7 @@ class DefectioHTTP:
         name: str,
         *,
         description: Optional[str] = None,
-        users: Optional[List[str]] = None,
+        users: Optional[list[str]] = None,
     ) -> GroupPayload:
         path = "channels/create"
         json = {"name": name, "nonce": ulid.new().str}
@@ -474,7 +470,7 @@ class DefectioHTTP:
             json["users"] = users
         return await self.request("POST", path, json=json)
 
-    async def get_group_members(self, group_id: str) -> List[UserPayload]:
+    async def get_group_members(self, group_id: str) -> list[UserPayload]:
         path = f"channels/{group_id}/members"
         return await self.request("GET", path)
 
@@ -506,7 +502,7 @@ class DefectioHTTP:
         description: Optional[str] = None,
         icon: Optional[str] = None,
         banner: Optional[str] = None,
-        categories: Optional[List[Any]] = None,
+        categories: Optional[list[Any]] = None,
         system_messages: Optional[Any] = None,
         remove: Optional[Literal["Banner", "Description", "Icon"]] = None,
     ):
@@ -576,8 +572,8 @@ class DefectioHTTP:
         server_id: str,
         member_id: str,
         *,
-        nickname: Optional[List[str]] = None,
-        roles: Optional[List[str]] = None,
+        nickname: Optional[list[str]] = None,
+        roles: Optional[list[str]] = None,
         avatar: Optional[str] = None,
         remove: Optional[Literal["Avatar", "Nickname"]] = None,
     ):
@@ -673,7 +669,7 @@ class DefectioHTTP:
         json = {"name": name}
         return await self.request("POST", path, json=json)
 
-    async def get_owned_bots(self) -> List[BotPayload]:
+    async def get_owned_bots(self) -> list[BotPayload]:
         path = "bots/@me"
         return await self.request("GET", path)
 
@@ -747,12 +743,12 @@ class DefectioHTTP:
     ## Sync ##
     ##########
 
-    async def get_settings(self, keys: List[str]) -> SettingsPayload:
+    async def get_settings(self, keys: list[str]) -> SettingsPayload:
         path = "sync/settings/fetch"
         json = {"keys": keys}
         return await self.request("POST", path, json=json)
 
-    async def set_settings(self, settings: Dict[str, Any]):
+    async def set_settings(self, settings: dict[str, Any]):
         path = "sync/settings/set"
         return await self.request("POST", path, json=settings)
 
