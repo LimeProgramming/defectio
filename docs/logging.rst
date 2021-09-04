@@ -1,7 +1,3 @@
-:orphan:
-
-.. _logging_setup:
-
 Setting Up Logging
 ===================
 

@@ -1,9 +1,3 @@
-:orphan:
-
-.. _quickstart:
-
-.. currentmodule:: defectio
-
 Quickstart
 ============
 

@@ -56,6 +56,7 @@ extensions = [
     "sphinxext.opengraph",
     "attributetable",
     "exception_hierachy",
+    "sphinx.ext.viewcode"
 ]
 
 autodoc_member_order = "bysource"
