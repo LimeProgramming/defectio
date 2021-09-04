@@ -10,11 +10,13 @@ from typing import Callable
 from typing import Coroutine
 from typing import Optional
 from typing import TYPE_CHECKING
-from typing import TypeVar
+from typing import TypeVar, Sequence
 
 import aiohttp
 from defectio.models.auth import Auth
 from defectio.models.user import ClientUser
+from defectio import utils
+from .models import Message
 
 from . import __version__
 from .gateway import DefectioWebsocket
@@ -326,6 +328,13 @@ class Client:
         return list(self._connection._users.values())
 
     @property
+    def cached_messages(self) -> Sequence[Message]:
+        """Sequence[:class:`.Message`]: Read-only list of messages the connected client has cached.
+        .. versionadded:: 1.1
+        """
+        return utils.SequenceProxy(self._connection._messages or [])
+
+    @property
     def servers(self) -> list[Server]:
         """Returns a list of all the servers stored in the internal cache.
 
@@ -335,6 +344,17 @@ class Client:
             A list of cached servers.
         """
         return list(self._connection._servers.values())
+
+    @property
+    def channels(self) -> list[Channel]:
+        """Returns a list of all the channels stored in the internal cache.
+
+        Returns
+        -------
+        list[Channel]
+            [A list of cached channels
+        """
+        return list(self._connection._server_channels.values())
 
     def get_auth(self) -> Auth:
         """Returns the Auth object used for logging in."""
@@ -381,8 +401,6 @@ class Client:
         """
         server = self._connection.get_server(server_id)
         return server
-        server = self._connection.get_server(server_id)
-        return server
 
     def get_user(self, user_id: str) -> Optional[User]:
         """Get a user with the specified ID from the internal cache.
@@ -398,6 +416,69 @@ class Client:
             The requested user. If not found, returns ``None``.
         """
         user = self._connection.get_user(user_id)
+        return user
+
+    async def fetch_channel(self, channel_id: str) -> Optional[Channel]:
+        """Fetches a channel from revolt bypassing the internal cache.
+
+        This should be used if you beleive the cache may be stale but
+        it is recommended to use :meth:`get_channel` instead.
+
+        Parameters
+        ----------
+        channel_id : str
+            The channel ID to look for.
+
+        Returns
+        -------
+        Optional[Channel]
+            The requested channel. If not found, returns ``None``.
+        """
+        channel = self._connection.http.get_channel(channel_id)
+        if channel:
+            channel = self._connection._add_channel_from_data(channel)
+        return channel
+
+    async def fetch_server(self, server_id: str) -> Optional[Server]:
+        """Fetches a server from revolution bypassing the internal cache.
+
+        This should be used if you beleive the cache may be stale but
+        it is recommended to use :meth:`get_server` instead.
+
+        Parameters
+        ----------
+        server_id : str
+            The server ID to look for.
+
+        Returns
+        -------
+        Optional[Server]
+            The requested server. If not found, returns ``None``.
+        """
+        server = self._connection.http.get_server(server_id)
+        if server:
+            server = self._connection._add_server_from_data(server)
+        return server
+
+    async def fetch_user(self, user_id: str) -> Optional[User]:
+        """Fetches a user from revolution bypassing the internal cache.
+
+        This should be used if you beleive the cache may be stale but
+        it is recommended to use :meth:`get_user` instead.
+
+        Parameters
+        ----------
+        user_id : str
+            The user ID to look for.
+
+        Returns
+        -------
+        Optional[User]
+            The requested user. If not found, returns ``None``.
+        """
+        user = self._connection.http.get_user(user_id)
+        if user:
+            user = self._connection._add_user_from_data(user)
         return user
 
     ######################
