@@ -23,6 +23,7 @@ class ExponentialBackoff(Generic[T]):
     delay increases exponentially with each retry up to a maximum of
     2^10 * base, and is reset if no more attempts are needed in a period
     of 2^11 * base seconds.
+    
     Parameters
     ----------
     base: :class:`int`
