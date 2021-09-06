@@ -106,7 +106,7 @@ class DefectioWebsocket:
         except KeyError:
             logger.debug("Unknown event %s.", event)
         else:
-            func(payload)
+            await func(payload)
 
     async def begin_typing(self, channel: str) -> None:
         payload = {"type": "BeginTyping", "channel": channel}

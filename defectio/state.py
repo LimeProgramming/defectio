@@ -505,7 +505,7 @@ class ConnectionState:
 
         del member
 
-    def parse_ready(self, data: Ready) -> None:
+    async def parse_ready(self, data: Ready) -> None:
         self.clear()
 
         if self.auth().is_bot:
@@ -534,13 +534,15 @@ class ConnectionState:
         self.call_handlers("ready")
         self.dispatch("ready")
 
-    def parse_message(self, data: MessagePayload) -> None:
+    async def parse_message(self, data: MessagePayload) -> None:
+        if data["author"] == "00000000000000000000000000":
+            return
         message = self._add_message_from_data(data)
         self.dispatch("message", message)
         if self._messages is not None:
             self._messages.append(message)
 
-    def parse_messageupdate(self, data: MessageUpdate) -> None:
+    async def parse_messageupdate(self, data: MessageUpdate) -> None:
         raw = RawMessageUpdateEvent(data)
         message = self.get_message(raw.message_id)
         if message is not None:
@@ -552,7 +554,7 @@ class ConnectionState:
         else:
             self.dispatch("raw_message_edit", raw)
 
-    def parse_messagedelete(self, data: MessageDelete) -> None:
+    async def parse_messagedelete(self, data: MessageDelete) -> None:
         raw = RawMessageDeleteEvent(data)
         found = self.get_message(data["id"])
         raw.cached_message = found
@@ -561,73 +563,77 @@ class ConnectionState:
             self.dispatch("message_delete", found)
             self._messages.remove(found)
 
-    def parse_channelcreate(self, data: ChannelCreate) -> None:
+    async def parse_channelcreate(self, data: ChannelCreate) -> None:
         channel = self._add_channel_from_data(data)
         self.dispatch("channel_create", channel)
 
-    def parse_channelupdate(self, data: ChannelUpdate) -> None:
+    async def parse_channelupdate(self, data: ChannelUpdate) -> None:
         channel = self.get_channel(data["id"])
         if channel is not None:
             channel._update(data)
             self.dispatch("channel_update", channel)
         self.dispatch("channel_update", data)
 
-    def parse_channeldelete(self, data: ChannelDelete) -> None:
+    async def parse_channeldelete(self, data: ChannelDelete) -> None:
         channel = self.get_channel(data["id"])
         channel_copy = copy.copy(channel)
         self._remove_channel(channel)
         self.dispatch("channel_delete", channel_copy)
 
-    def parse_channelgroupjoin(self, data: ChannelGroupJoin) -> None:
+    async def parse_channelgroupjoin(self, data: ChannelGroupJoin) -> None:
         self.dispatch("channel_group_join", data)
 
-    def parse_channelgroupleave(self, data: ChannelGroupLeave) -> None:
+    async def parse_channelgroupleave(self, data: ChannelGroupLeave) -> None:
         channel = self.get_channel(data["channel"])
         channel_copy = copy.copy(channel)
         self._remove_channel(channel)
         self.dispatch("channel_group_leave", channel_copy)
 
-    def parse_channelstarttyping(self, data: ChannelStartTyping) -> None:
+    async def parse_channelstarttyping(self, data: ChannelStartTyping) -> None:
         channel = self.get_channel(data["id"])
         user = self.get_user(data["user"])
         self.dispatch("channel_start_typing", channel, user)
 
-    def parse_channelstoptyping(self, data: ChannelStopTyping) -> None:
+    async def parse_channelstoptyping(self, data: ChannelStopTyping) -> None:
         channel = self.get_channel(data["id"])
         user = self.get_user(data["user"])
         self.dispatch("channel_stop_typing", channel, user)
 
-    def parse_channelack(self, data: ChannelAckPayload) -> None:
+    async def parse_channelack(self, data: ChannelAckPayload) -> None:
         self.dispatch("channel_ack", data)
 
-    def parse_serverupdate(self, data: ServerUpdate) -> None:
+    async def parse_serverupdate(self, data: ServerUpdate) -> None:
         server = self.get_server(data["id"])
         if server is not None:
             old_server = copy.copy(server)
             server._update(data)
             self.dispatch("server_update", old_server, server)
-        else:
-            logger.debug(
-                "SERVER_UPDATE referencing an unknown server ID: %s. Discarding.",
-                data["id"],
-            )
 
-    def parse_serverdelete(self, data: ServerDelete) -> None:
+    async def parse_serverdelete(self, data: ServerDelete) -> None:
         server = self.get_server(data["id"])
         if server is not None:
             self.servers.pop(server.id)
         self.dispatch("server_delete", server)
 
-    def parse_servermemberjoin(self, data: ServerMemberJoin) -> None:
+    async def parse_servermemberjoin(self, data: ServerMemberJoin) -> None:
+        if data["user"] == self.user.id:
+            server_data = await self.http.get_server(data["id"])
+            server = self._add_server_from_data(server_data)
+            print(server_data)
+            for channel in server.channel_ids:
+                channel_data = await self.http.get_channel(channel)
+                channel = self._add_channel_from_data(channel_data)
+                print(channel)
         member = self._add_member_from_data(data)
         self.dispatch("server_member_join", member)
 
-    def parse_servermemberleave(self, data: ServerMemberLeave) -> None:
-        member = self.get_member(data["server"], data["id"])
-        self.members.get(data.get("id"), {}).pop(data.get("user"))
-        self.dispatch("server_member_leave", member)
+    async def parse_servermemberleave(self, data: ServerMemberLeave) -> None:
+        member = self.get_member(data["id"], data["user"])
+        old_member = copy.copy(member)
+        self.members.remove(member)
+        self.dispatch("server_member_leave", old_member)
 
-    def parse_servermemberupdate(self, data: ServerMemberUpdate) -> None:
+    async def parse_servermemberupdate(self, data: ServerMemberUpdate) -> None:
         member = self.get_member(data["id"])
         if isinstance(member, Member):
             old_member = copy.copy(member)
@@ -636,7 +642,7 @@ class ConnectionState:
             self.dispatch("server_member_update", old_member, member)
         self.dispatch("raw_server_member_update", data)
 
-    def parse_serverroleupdate(self, data: ServerRoleUpdate) -> None:
+    async def parse_serverroleupdate(self, data: ServerRoleUpdate) -> None:
         server = self.get_server(data["id"])
         if server is not None:
             role = utils.find(lambda r: r.id == data["role_id"], server.roles)
@@ -653,14 +659,14 @@ class ConnectionState:
                 data["id"],
             )
 
-    def parse_serverroledelete(self, data: ServerRoleDelete) -> None:
+    async def parse_serverroledelete(self, data: ServerRoleDelete) -> None:
         server = self.get_server(data["id"])
         if server is not None:
             role = utils.find(lambda r: r.id == data["role_id"], server.roles)
             server.roles.remove(role)
             self.dispatch("server_role_delete", role)
 
-    def parse_userupdate(self, data: UserUpdate) -> None:
+    async def parse_userupdate(self, data: UserUpdate) -> None:
         user = self.get_user(data["id"])
         if user is not None:
             old_user = copy.copy(user)
@@ -669,7 +675,7 @@ class ConnectionState:
             self.dispatch("user_update", old_user, user)
         self.dispatch("raw_user_update", data)
 
-    def parse_userrelationship(self, data: UserRelationship) -> None:
+    async def parse_userrelationship(self, data: UserRelationship) -> None:
         user = self.get_user(data["user"])
         user.our_relation._update(data)
         self.dispatch("user_relationship", user)
