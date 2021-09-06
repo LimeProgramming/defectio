@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import copy
+from defectio.models.server import Role
 import inspect
 import logging
 from collections import deque
@@ -638,17 +639,26 @@ class ConnectionState:
     def parse_serverroleupdate(self, data: ServerRoleUpdate) -> None:
         server = self.get_server(data["id"])
         if server is not None:
-            old_server = copy.copy(server)
-            server._from_data(data)
-            self.dispatch("server_update", old_server, server)
+            role = utils.find(lambda r: r.id == data["role_id"], server.roles)
+            if role is not None:
+                role._update(data)
+                self.dispatch("server_role_update", role)
+            else:
+                role = Role(data["role_id"], data["data"], self)
+                server.roles.append(role)
+                self.dispatch("server_role_update", role)
         else:
             logger.debug(
-                "SERVER_UPDATE referencing an unknown guild ID: %s. Discarding.",
+                "SERVER_ROLE_UPDATE referencing an unknown server ID: %s. Discarding.",
                 data["id"],
             )
 
     def parse_serverroledelete(self, data: ServerRoleDelete) -> None:
-        self.dispatch("server_role_delete", data)
+        server = self.get_server(data["id"])
+        if server is not None:
+            role = utils.find(lambda r: r.id == data["role_id"], server.roles)
+            server.roles.remove(role)
+            self.dispatch("server_role_delete", role)
 
     def parse_userupdate(self, data: UserUpdate) -> None:
         user = self.get_user(data["id"])
@@ -660,7 +670,9 @@ class ConnectionState:
         self.dispatch("raw_user_update", data)
 
     def parse_userrelationship(self, data: UserRelationship) -> None:
-        self.dispatch("user_relationship", data)
+        user = self.get_user(data["user"])
+        user.our_relation._update(data)
+        self.dispatch("user_relationship", user)
 
     # creaters
 

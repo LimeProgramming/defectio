@@ -24,10 +24,26 @@ class SystemMessages:
     ) -> None:
         self._state = state
         self.server = server
-        self.user_joined = state.get_channel(data.get("user_joined"))
-        self.user_left = state.get_channel(data.get("user_left"))
-        self.user_kicked = state.get_channel(data.get("user_kicked"))
-        self.user_banned = state.get_channel(data.get("user_banned"))
+        self._user_joined = data.get("user_joined")
+        self._user_left = data.get("user_left")
+        self._user_kicked = data.get("user_kicked")
+        self._user_banned = data.get("user_banned")
+
+    @property
+    def user_joined(self) -> Optional[MessageableChannel]:
+        return self._state.get_channel(self._user_joined)
+
+    @property
+    def user_left(self) -> Optional[MessageableChannel]:
+        return self._state.get_channel(self._user_left)
+
+    @property
+    def user_kicked(self) -> Optional[MessageableChannel]:
+        return self._state.get_channel(self._user_kicked)
+
+    @property
+    def user_banned(self) -> Optional[MessageableChannel]:
+        return self._state.get_channel(self._user_banned)
 
     def __repr__(self) -> str:
         return (
@@ -102,6 +118,7 @@ class Server(Hashable):
         self.icon = data.get("icon")
         self.banner = data.get("banner")
         self.default_permissions = data.get("default_permissions")
+        print(data)
         self.system_message = SystemMessages(  # weird ordering since servers are loaded before channels so on caching default to None # TODO
             data.get("system_messages"), self, self._state
         )
