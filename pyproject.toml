@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "defectio"
-version = "0.1.5a"
+version = "0.1.6a"
 description = "Wrapper for Revolt API"
 authors = ["Leon Bowie <leon@bowie-co.nz>"]
 license = "MIT"
@@ -13,11 +13,9 @@ classifiers = [
   "Natural Language :: English",
   "Framework :: AsyncIO",
   "Operating System :: OS Independent",
-  "Topic :: Games/Entertainment",
   "Topic :: Software Development :: Libraries",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Utilities",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
 ]
 
