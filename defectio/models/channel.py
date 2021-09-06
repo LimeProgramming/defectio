@@ -29,7 +29,8 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
         self.id: str = data["_id"]
         self._type: str = data["channel_type"]
         self.server = server
-        self._update(data)
+        self.name = data["name"]
+        self.description = data.get("description")
 
     def __repr__(self) -> str:
         attrs = [
@@ -40,8 +41,8 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
         return f"<{self.__class__.__name__} {joined}>"
 
     def _update(self, data) -> None:
-        self.name: str = data["name"]
-        self.topic: Optional[str] = data.get("topic")
+        self.name = data.get("name", self.name)
+        self.description = data.get("description", self.description)
 
     async def _get_channel(self) -> TextChannel:
         return self
@@ -55,7 +56,6 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
 class SavedMessageChannel(abc.Messageable):
     def __init__(self, data: ChannelPayload, state: ConnectionState):
         self.id = data.get("_id")
-        print(data)
         super().__init__(data, state)
 
     async def _get_channel(self) -> SavedMessageChannel:
@@ -93,12 +93,14 @@ class GroupChannel(abc.Messageable):
     def __init__(self, data: ChannelPayload, state: ConnectionState):
         super().__init__(data, state)
         self.id = data.get("_id")
-        self._update(data)
-
-    def _update(self, data: ChannelPayload) -> None:
         self.name = data.get("name")
         self.active = data.get("active")
         self._recipients = data.get("recipients")
+
+    def _update(self, data: ChannelPayload) -> None:
+        self.name = data.get("name", self.name)
+        self.active = data.get("active", self.active)
+        self._recipients = data.get("recipients", self._recipients)
         # self.last_message = Message(self._state, data.get("last_message"))
 
     async def _get_channel(self) -> GroupChannel:
@@ -115,18 +117,12 @@ class VoiceChannel(abc.Messageable):
         self.id: str = data["_id"]
         self._type: str = data["channel_type"]
         self.server = server
-        self._update(data)
+        self.name: str = data["name"]
+        self.description: Optional[str] = data.get("description")
 
     def _update(self, data) -> None:
-        self.name: str = data["name"]
-        self.topic: Optional[str] = data.get("topic")
-        # self.position: int = data["position"]
-        # Does this need coercion into `int`? No idea yet.
-        # self._type: int = data.get("type", self._type)
-        # self.last_message_id: Optional[int] = utils._get_as_snowflake(
-        #     data, "last_message_id"
-        # )
-        # self._fill_overwrites(data)
+        self.name: str = data.get("name", self.name)
+        self.description: Optional[str] = data.get("description", self.description)
 
     async def _get_channel(self) -> VoiceChannel:
         return self
@@ -149,5 +145,4 @@ def channel_factory(data: ChannelPayload) -> type[abc.Messageable]:
     elif channel_type == "VoiceChannel":
         return VoiceChannel
     else:
-        print(channel_type)
         raise Exception

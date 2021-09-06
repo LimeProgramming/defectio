@@ -565,7 +565,7 @@ class ConnectionState:
         self.dispatch("channel_create", channel)
 
     def parse_channelupdate(self, data: ChannelUpdate) -> None:
-        channel = self.get_channel(data["_id"])
+        channel = self.get_channel(data["id"])
         if channel is not None:
             channel._update(data)
             self.dispatch("channel_update", channel)
