@@ -5,6 +5,7 @@ import logging
 from typing import Any
 from typing import TYPE_CHECKING
 from typing import Union
+from .backoff import ExponentialBackoff
 
 import aiohttp
 import orjson as json
@@ -34,15 +35,22 @@ class DefectioWebsocket:
         self._dispatch: Client.dispatch = client.dispatch
         self._parsers = client._connection.parsers
         self.user_agent = user_agent
+        self._closed = False
+        self.authenticated = False
 
         self.auth: Auth
 
     @property
     def closed(self) -> bool:
-        return self.websocket.closed
+        return self._closed
 
     async def close(self) -> None:
-        await self.websocket.close()
+        if self._closed:
+            return
+        if not self.ws.closed:
+            await self.websocket.close()
+        self._closed = True
+        self.authenticated = False
 
     async def send_payload(self, payload: Any) -> None:
         await self.websocket.send_str(json.dumps(payload).decode("utf-8"))
@@ -58,6 +66,28 @@ class DefectioWebsocket:
                 response = Error(payload)
         return response
 
+    async def start(self, auth: Auth) -> None:
+        backoff = ExponentialBackoff()
+
+        while not self._closed:
+            backoff.delay()
+
+            try:
+                await self.connect(auth)
+            except (aiohttp.ClientError, asyncio.TimeoutError):
+                logger.info(
+                    "Failed to connect to the gateway, attempting a reconnect..."
+                )
+                continue
+
+            if self.websocket.close_code is None:
+                logger.info("Websocket connection closed by the client.")
+                return
+            logger.info(
+                "Websocket connection closed with code %s, attempting a reconnect...",
+                self.websocket.close_code,
+            )
+
     async def send_authenticate(self) -> None:
         payload = {
             "type": "Authenticate",
@@ -71,6 +101,7 @@ class DefectioWebsocket:
         if authenticated["type"] != "Authenticated":
             logger.error("Authentication failed.")
             raise LoginFailure(authenticated)
+        self.authenticated = True
 
     async def connect(self, auth: Auth) -> None:
         self.auth = auth
@@ -85,7 +116,6 @@ class DefectioWebsocket:
             "heartbeat": 15.0,
         }
         self.websocket = await self.session.ws_connect(self.ws_url, **kwargs)
-
         logger.debug("Websocket connected to %s", self.ws_url)
 
         await self.send_authenticate()

@@ -531,7 +531,7 @@ class Client:
             The authentication token.
         """
         self._auth = self.http.bot_login(token)
-        await self.websocket.connect(self._auth)
+        await self.websocket.start(self._auth)
 
     async def user_login(self, session_token: str, user_id: str) -> None:
         """|coro|
@@ -545,7 +545,7 @@ class Client:
             The ID of the user to login as.
         """
         self._auth = self.http.session_login(session_token, user_id)
-        await self.websocket.connect(self._auth)
+        await self.websocket.start(self._auth)
 
     async def start(
         self,
