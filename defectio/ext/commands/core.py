@@ -1,3 +1,25 @@
+"""
+The MIT License (MIT)
+
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2021-present Darkflame72
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+"""
 from __future__ import annotations
 
 from typing import (
@@ -64,8 +86,6 @@ __all__ = (
     "dynamic_cooldown",
     "max_concurrency",
 )
-
-MISSING: Any = defectio.utils.MISSING
 
 T = TypeVar("T")
 CogT = TypeVar("CogT", bound="Cog")
@@ -1316,8 +1336,8 @@ class GroupMixin(Generic[CogT]):
 
     def command(
         self,
-        name: str = MISSING,
-        cls: Type[CommandT] = MISSING,
+        name: str = None,
+        cls: Type[CommandT] = None,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[[Callable[Concatenate[ContextT, P], Coro[Any]]], CommandT]:
@@ -1368,8 +1388,8 @@ class GroupMixin(Generic[CogT]):
 
     def group(
         self,
-        name: str = MISSING,
-        cls: Type[GroupT] = MISSING,
+        name: str = None,
+        cls: Type[GroupT] = None,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[[Callable[Concatenate[ContextT, P], Coro[Any]]], GroupT]:
@@ -1541,7 +1561,7 @@ def command(
 
 
 def command(
-    name: str = MISSING, cls: Type[CommandT] = MISSING, **attrs: Any
+    name: str = None, cls: Type[CommandT] = None, **attrs: Any
 ) -> Callable[
     [
         Union[
@@ -1580,7 +1600,7 @@ def command(
     TypeError
         If the function is not a coroutine or is already a command.
     """
-    if cls is MISSING:
+    if cls is None:
         cls = Command  # type: ignore
 
     def decorator(
@@ -1631,8 +1651,8 @@ def group(
 
 
 def group(
-    name: str = MISSING,
-    cls: Type[GroupT] = MISSING,
+    name: str = None,
+    cls: Type[GroupT] = None,
     **attrs: Any,
 ) -> Callable[
     [
@@ -1648,7 +1668,7 @@ def group(
     This is similar to the :func:`.command` decorator but the ``cls``
     parameter is set to :class:`Group` by default.
     """
-    if cls is MISSING:
+    if cls is None:
         cls = Group
     return command(name=name, cls=cls, **attrs)
 

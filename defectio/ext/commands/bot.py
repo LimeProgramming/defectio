@@ -1,3 +1,25 @@
+"""
+The MIT License (MIT)
+
+Copyright (c) 2015-2021 Rapptz
+Copyright (c) 2021-present Darkflame72
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+"""
 from __future__ import annotations
 
 
@@ -45,8 +67,6 @@ __all__ = (
     "when_mentioned_or",
     "Bot",
 )
-
-MISSING: Any = defectio.utils.MISSING
 
 T = TypeVar("T")
 CFT = TypeVar("CFT", bound="CoroFunc")
@@ -420,7 +440,7 @@ class BotBase(GroupMixin):
 
     # listener registration
 
-    def add_listener(self, func: CoroFunc, name: str = MISSING) -> None:
+    def add_listener(self, func: CoroFunc, name: str = None) -> None:
         """The non decorator alternative to :meth:`.listen`.
 
         Parameters
@@ -442,7 +462,7 @@ class BotBase(GroupMixin):
             bot.add_listener(my_message, 'on_message')
 
         """
-        name = func.__name__ if name is MISSING else name
+        name = func.__name__ if name is None else name
 
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Listeners must be coroutines")
@@ -452,7 +472,7 @@ class BotBase(GroupMixin):
         else:
             self.extra_events[name] = [func]
 
-    def remove_listener(self, func: CoroFunc, name: str = MISSING) -> None:
+    def remove_listener(self, func: CoroFunc, name: str = None) -> None:
         """Removes a listener from the pool of listeners.
 
         Parameters
@@ -464,7 +484,7 @@ class BotBase(GroupMixin):
             ``func.__name__``.
         """
 
-        name = func.__name__ if name is MISSING else name
+        name = func.__name__ if name is None else name
 
         if name in self.extra_events:
             try:
@@ -472,7 +492,7 @@ class BotBase(GroupMixin):
             except ValueError:
                 pass
 
-    def listen(self, name: str = MISSING) -> Callable[[CFT], CFT]:
+    def listen(self, name: str = None) -> Callable[[CFT], CFT]:
         """A decorator that registers another function as an external
         event listener. Basically this allows you to listen to multiple
         events from different places e.g. such as :func:`.on_ready`
