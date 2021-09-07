@@ -10,7 +10,7 @@ from typing import Union
 import aiohttp
 import orjson as json
 import ulid
-from defectio.errors import HTTPException
+from defectio.errors import HTTPException, NotFound, Forbidden
 from defectio.errors import LoginFailure
 from defectio.errors import RevoltServerError
 from defectio.models.apiinfo import ApiInfo
@@ -132,6 +132,17 @@ class DefectioHTTP:
 
             if response.status >= 500:
                 raise RevoltServerError(response, data)
+
+    async def get_from_cdn(self, url: str) -> bytes:
+        async with self.__session.get(url) as resp:
+            if resp.status == 200:
+                return await resp.read()
+            elif resp.status == 404:
+                raise NotFound(resp, "asset not found")
+            elif resp.status == 403:
+                raise Forbidden(resp, "cannot retrieve asset")
+            else:
+                raise HTTPException(resp, "failed to get asset")
 
     def bot_login(self, token: str) -> Auth:
         self.auth = Auth(token)

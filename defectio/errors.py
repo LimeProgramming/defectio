@@ -104,6 +104,14 @@ class HTTPException(DefectioException):
         super().__init__(fmt.format(self.response, self.code, self.text))
 
 
+class NotFound(HTTPException):
+    """Exception that's raised for when status code 404 occurs.
+    Subclass of :exc:`HTTPException`
+    """
+
+    pass
+
+
 class Forbidden(HTTPException):
     """Exception that's raised for when status code 403 occurs.
 

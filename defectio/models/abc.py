@@ -1,4 +1,5 @@
 from __future__ import annotations
+from defectio.models.server import Category
 
 from typing import Any
 from typing import Optional
@@ -14,6 +15,7 @@ if TYPE_CHECKING:
     from ..types.payloads import ChannelType
     from .channel import DMChannel, TextChannel, GroupChannel
     from defectio.models.message import File
+    from .user import ClientUser
 
     PartialMessageableChannel = Union[TextChannel, DMChannel]
     MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
@@ -45,6 +47,7 @@ class User(DefectioBase, Protocol):
     The following implement this ABC:
 
     - :class:`~defectio.User`
+    - :class:`~discord.ClientUser`
     - :class:`~defectio.Member`
 
     Attributes
@@ -90,7 +93,7 @@ class PrivateChannel(DefectioBase, Protocol):
 
     __slots__ = ()
 
-    me: User
+    me: ClientUser
 
 
 class ServerChannel:
@@ -101,52 +104,6 @@ class ServerChannel:
     server: Server
     type: str
     position: int
-    category_id: Optional[int]
-    _state: ConnectionState
-
-    if TYPE_CHECKING:
-
-        def __init__(
-            self, *, state: ConnectionState, server: Server, data: dict[str, Any]
-        ):
-            ...
-
-    def __str__(self) -> str:
-        return self.name
-
-    def _update(self, server: Server, data: dict[str, Any]) -> None:
-        raise NotImplementedError
-
-    async def delete(self, *, reason: Optional[str] = None) -> None:
-        await self._state.http.close_channel(self.id)
-
-
-class GuildChannel:
-    """An ABC that details the common operations on a Revolt server channel.
-
-    The following implement this ABC:
-
-    - :class:`~defectio.TextChannel`
-    - :class:`~defectio.VoiceChannel`
-    - :class:`~defectio.CategoryChannel`
-
-    This ABC must also implement :class:`~defectio.abc.DefectioBase`.
-
-    Attributes
-    -----------
-    name: :class:`str`
-        The channel name.
-    server: :class:`~discord.Server`
-        The server the channel belongs to.
-    """
-
-    __slots__ = ()
-
-    id: int
-    name: str
-    server: Server
-    type: ChannelType
-    category_id: Optional[str]
     _state: ConnectionState
 
     if TYPE_CHECKING:
@@ -164,23 +121,18 @@ class GuildChannel:
 
     @property
     def mention(self) -> str:
-        """:class:`str`: The string that allows you to mention the channel."""
         return f"<#{self.id}>"
 
     async def delete(self) -> None:
-        """|coro|
-        Deletes the channel.
-
-        Raises
-        -------
-        ~defectio.Forbidden
-            You do not have proper permissions to delete the channel.
-        ~defectio.NotFound
-            The channel was not found or was already deleted.
-        ~defectio.HTTPException
-            Deleting the channel failed.
-        """
         await self._state.http.close_channel(self.id)
+
+    @property
+    def category(self) -> Optional[Category]:
+        """Optional[:class:`~defectio.Category`]: The category this channel belongs to.
+
+        If there is no category then this is ``None``.
+        """
+        return self.server.get_category_channel(self.id)
 
 
 class Messageable(Protocol):

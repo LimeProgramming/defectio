@@ -6,7 +6,7 @@ from .channel import GroupChannel
 from .channel import MessageableChannel
 from .channel import TextChannel
 from .channel import VoiceChannel
-from .file import Attachment
+from .attachment import Attachment
 from .file import File
 from .member import Member
 from .message import Message
@@ -17,3 +17,5 @@ from .server import Role
 from .server import Server
 from .user import Status
 from .user import User
+from .colour import Colour, Color
+from .apiinfo import ApiFeatures, ApiInfo

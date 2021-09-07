@@ -1,15 +1,23 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import TypedDict
-
 
 if TYPE_CHECKING:
     from ..types.payloads import ApiInfoPayload, ApiInfoFeaturePayload
 
-__all__ = ("ApiInfo", "ApiFeatures")
+__all__ = ("ApiInfo", "ApiFeatures", "ApiUrl")
 
-ApiUrl = TypedDict("ApiUrl", {"enabled": bool, "url": str})
+
+class ApiUrl:
+    def __init__(self, data: ApiInfoFeaturePayload):
+        self.enabled = data.get("enabled", False)
+        self.url = data.get("url", "")
+
+    def __repr__(self):
+        return f"<ApiUrl {self.enabled} {self.url}>"
+
+    def __str__(self):
+        return f"{self.enabled} {self.url}"
 
 
 class ApiFeatures:

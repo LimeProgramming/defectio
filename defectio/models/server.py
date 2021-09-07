@@ -1,4 +1,5 @@
 from __future__ import annotations
+from defectio.models.colour import Colour
 
 from typing import Optional
 from typing import TYPE_CHECKING
@@ -19,6 +20,16 @@ if TYPE_CHECKING:
 
 
 class SystemMessages:
+
+    __slots__ = (
+        "_user_joined",
+        "_user_left",
+        "_user_kicked",
+        "_user_banned",
+        "_state",
+        "server",
+    )
+
     def __init__(
         self, data: SystemMessagePayload, server: Server, state: ConnectionState
     ) -> None:
@@ -63,7 +74,10 @@ class Role(Hashable):
         self.id = id
         self._state = state
         self.name = data.get("name")
-        self.colour = data.get("colour")
+        if "colour" in data:
+            self.colour = Colour.from_hex(data["colour"])
+        else:
+            self.colour = None
         self.hoist = data.get("hoist", False)
         self.rank = data.get("rank")
 
@@ -74,11 +88,15 @@ class Role(Hashable):
         self.hoist = event.get("hoist", self.hoist)
         self.rank = event.get("rank", self.rank)
 
+    @property
+    def color(self) -> Optional[Colour]:
+        return self.colour
+
     def __str__(self) -> str:
         return self.__repr__()
 
     def __repr__(self) -> str:
-        return f"<Role server={self.server.id} name={self.name}>"
+        return f"<Role server={self.server.id} name={self.name} colour={self.colour}>"
 
 
 class Category(Hashable):
@@ -98,7 +116,7 @@ class Server(Hashable):
     def __init__(self, data: ServerPayload, state: ConnectionState):
         self.channel_ids: list[str] = []
         self.member_ids: list[str] = []
-        self.categories: list[str] = []
+        self._categories: dict[str, Category] = {}
         self._state: ConnectionState = state
         self._from_data(data)
 
@@ -109,9 +127,8 @@ class Server(Hashable):
         self.description = data.get("description")
         self.channel_ids = data.get("channels")
         self.member_ids = data.get("members")
-        self.categories = [
-            Category(payload, self._state) for payload in data.get("categories", [])
-        ]
+        for category in data.get("categories", []):
+            self._categories[category["id"]] = Category(category, self._state)
         self.roles: list[Role] = []
         for key, value in data.get("roles", {}).items():
             self.roles.append(Role(key, value, self._state))
@@ -165,6 +182,25 @@ class Server(Hashable):
         self._state.add_channel(channel)
         self.channel_ids.append(channel["_id"])
 
+    def get_member_named(self, name: str):
+        for member in self.members:
+            if member.name == name:
+                return member
+        return None
+
+    def get_category_channel(self, channel_id: str) -> Optional[Category]:
+        for category in self._categories.values():
+            for channel in category.channels:
+                if channel.id == channel_id:
+                    return category
+        return None
+
+    def get_channel(self, id: str) -> Optional[MessageableChannel]:
+        for channel in self.channels:
+            if channel.id == id:
+                return channel
+        return None
+
     @property
     def channels(self):
         """All channels in the server
@@ -186,3 +222,14 @@ class Server(Hashable):
             list of all cached members in the server.
         """
         return [self._state.get_member(member_id) for member_id in self.member_ids]
+
+    @property
+    def categories(self) -> list[Category]:
+        """All categories in the server
+
+        Returns
+        -------
+        list[Category]
+            list of all categories
+        """
+        return list(self._categories.values())

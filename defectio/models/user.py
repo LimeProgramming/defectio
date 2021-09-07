@@ -8,7 +8,7 @@ from typing import TypeVar
 
 from .. import utils
 from .mixins import Hashable
-from .file import Attachment
+from .attachment import Attachment
 from .abc import Messageable
 
 if TYPE_CHECKING:

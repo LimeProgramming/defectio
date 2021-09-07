@@ -8,14 +8,29 @@ from typing import Iterable
 from typing import Iterator
 from typing import Optional
 from typing import Sequence
-from inspect import signature as _signature
+from inspect import signature as _signature, isawaitable as _isawaitable
 from typing import TypeVar
 from typing import Union, Protocol, TYPE_CHECKING, Mapping, ForwardRef, Literal
 from operator import attrgetter
 import sys
+import re
+import unicodedata
 
 
 PY_310 = sys.version_info >= (3, 10)
+
+_IS_ASCII = re.compile(r"^[\x00-\x7f]+$")
+
+
+def _string_width(string: str, *, _IS_ASCII=_IS_ASCII) -> int:
+    """Returns string's width."""
+    match = _IS_ASCII.match(string)
+    if match:
+        return match.endpos
+
+    UNICODE_WIDE_CHAR_TYPE = "WFA"
+    func = unicodedata.east_asian_width
+    return sum(2 if func(char) in UNICODE_WIDE_CHAR_TYPE else 1 for char in string)
 
 
 def flatten_literal_params(parameters: Iterable[Any]) -> tuple[Any, ...]:
@@ -248,3 +263,28 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
         if _all(pred(elem) == value for pred, value in converted):
             return elem
     return None
+
+
+async def maybe_coroutine(f, *args, **kwargs):
+    value = f(*args, **kwargs)
+    if _isawaitable(value):
+        return await value
+    else:
+        return value
+
+
+def resolve_annotation(
+    annotation: Any,
+    globalns: dict[str, Any],
+    localns: Optional[dict[str, Any]],
+    cache: Optional[dict[str, Any]],
+) -> Any:
+    if annotation is None:
+        return type(None)
+    if isinstance(annotation, str):
+        annotation = ForwardRef(annotation)
+
+    locals = globalns if localns is None else localns
+    if cache is None:
+        cache = {}
+    return evaluate_annotation(annotation, globalns, locals, cache)

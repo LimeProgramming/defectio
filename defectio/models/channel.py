@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from ..state import ConnectionState
     from .server import Server
     from ..types.payloads import DMChannelPayload
+    from .message import Message
 
 __all__ = (
     "TextChannel",
@@ -24,13 +25,16 @@ __all__ = (
 
 
 class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
+    __slots__ = ("name", "description", "_state", "id", "type", "server", "nsfw")
+
     def __init__(self, *, state: ConnectionState, server: Server, data: ChannelPayload):
         self._state: ConnectionState = state
         self.id: str = data["_id"]
-        self._type: str = data["channel_type"]
+        self.type: str = data["channel_type"]
         self.server = server
         self.name = data["name"]
         self.description = data.get("description")
+        self.nsfw = data.get("nsfw")
 
     def __repr__(self) -> str:
         attrs = [
@@ -46,11 +50,6 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
 
     async def _get_channel(self) -> TextChannel:
         return self
-
-    @property
-    def type(self) -> str:
-        """:class:`str`: The channel's type."""
-        return self._type
 
 
 class SavedMessageChannel(abc.Messageable):
