@@ -31,3 +31,9 @@ client.run("")
 ## Contribute
 
 Join our server [here](https://app.revolt.chat/invite/FfbwgFDk)
+
+## License
+
+Licensed under an MIT license
+
+Based on discord.py by Rapptz [here](https://github.com/Rapptz/discord.py)
