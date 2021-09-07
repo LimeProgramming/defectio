@@ -1,3 +1,13 @@
+"""
+defectio.ext.tasks
+~~~~~~~~~~~~~~~~~~~~~
+
+An extension module to facilitate management of asyncio tasks.
+
+:copyright: (c) 2015-2021 Rapptz
+:copyright: (c) 2021-present Darkflame72
+:license: MIT, see LICENSE for more details.
+"""
 from __future__ import annotations
 
 import asyncio
