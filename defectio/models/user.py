@@ -336,6 +336,7 @@ class User(BaseUser, Messageable):
     @property
     def dm_channel(self) -> Optional[DMChannel]:
         """Optional[:class:`DMChannel`]: Returns the channel associated with this user if it exists.
+
         If this returns ``None``, you can create a DM channel by calling the
         :meth:`create_dm` coroutine function.
         """
@@ -344,9 +345,6 @@ class User(BaseUser, Messageable):
     async def create_dm(self) -> DMChannel:
         """|coro|
         Creates a :class:`DMChannel` with this user.
-
-        This should be rarely called, as this is done transparently for most
-        people.
 
         Returns
         -------

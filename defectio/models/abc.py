@@ -1,4 +1,5 @@
 from __future__ import annotations
+from defectio.types.payloads import ChannelPayload
 from defectio.models.server import Category
 
 from typing import Any
@@ -109,7 +110,7 @@ class ServerChannel:
     if TYPE_CHECKING:
 
         def __init__(
-            self, *, state: ConnectionState, server: Server, data: dict[str, Any]
+            self, *, state: ConnectionState, server: Server, data: ChannelPayload
         ):
             ...
 

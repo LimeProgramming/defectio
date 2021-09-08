@@ -1,4 +1,6 @@
 from __future__ import annotations
+from defectio.models.permission import ChannelPermission
+from defectio.models.server import Role
 
 from typing import Optional
 from typing import TYPE_CHECKING
@@ -25,7 +27,16 @@ __all__ = (
 
 
 class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
-    __slots__ = ("name", "description", "_state", "id", "type", "server", "nsfw")
+    __slots__ = (
+        "name",
+        "description",
+        "_state",
+        "id",
+        "type",
+        "server",
+        "nsfw",
+        "overrides",
+    )
 
     def __init__(self, *, state: ConnectionState, server: Server, data: ChannelPayload):
         self._state: ConnectionState = state
@@ -35,6 +46,9 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
         self.name = data["name"]
         self.description = data.get("description")
         self.nsfw = data.get("nsfw")
+        self.overrides: list[Role] = []
+        for role_id, perm in data.get("role_permissions", {}).items():
+            self.overrides.append({role_id: ChannelPermission(perm)})
 
     def __repr__(self) -> str:
         attrs = [
@@ -47,6 +61,12 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
     def _update(self, data) -> None:
         self.name = data.get("name", self.name)
         self.description = data.get("description", self.description)
+        if "role_permissions" in data:
+            for role_id, perm in data.get("role_permissions").items():
+                if role_id not in self.overrides:
+                    self.overrides.append({role_id: ChannelPermission(perm)})
+                else:
+                    self.overrides[role_id] = ChannelPermission(perm)
 
     async def _get_channel(self) -> TextChannel:
         return self
@@ -118,10 +138,19 @@ class VoiceChannel(abc.Messageable):
         self.server = server
         self.name: str = data["name"]
         self.description: Optional[str] = data.get("description")
+        self.overrides: list[Role] = []
+        for role_id, perm in data.get("role_permissions", {}).items():
+            self.overrides.append({role_id: ChannelPermission(perm)})
 
     def _update(self, data) -> None:
         self.name: str = data.get("name", self.name)
         self.description: Optional[str] = data.get("description", self.description)
+        if "role_permissions" in data:
+            for role_id, perm in data.get("role_permissions").items():
+                if role_id not in self.overrides:
+                    self.overrides.append({role_id: ChannelPermission(perm)})
+                else:
+                    self.overrides[role_id] = ChannelPermission(perm)
 
     async def _get_channel(self) -> VoiceChannel:
         return self

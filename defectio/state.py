@@ -35,9 +35,7 @@ from .models.user import ClientUser
 
 
 if TYPE_CHECKING:
-    from . import abc
     from .types.websocket import (
-        Authenticated,
         ChannelAck as ChannelAckPayload,
         ChannelCreate,
         ChannelDelete,
@@ -48,7 +46,6 @@ if TYPE_CHECKING:
         ChannelUpdate,
         MessageDelete,
         MessageUpdate,
-        Pong,
         Ready,
         ServerDelete,
         ServerMemberJoin,

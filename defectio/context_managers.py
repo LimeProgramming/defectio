@@ -14,7 +14,6 @@ __all__ = ("Typing",)
 
 
 def _typing_done_callback(fut: asyncio.Future) -> None:
-    # just retrieve any exception and call it a day
     try:
         fut.exception()
     except (asyncio.CancelledError, Exception):

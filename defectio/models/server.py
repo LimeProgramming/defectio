@@ -1,4 +1,5 @@
 from __future__ import annotations
+from defectio.models.permission import ChannelPermission, ServerPermission
 from defectio.models.colour import Colour
 
 from typing import Optional
@@ -80,6 +81,8 @@ class Role(Hashable):
             self.colour = None
         self.hoist = data.get("hoist", False)
         self.rank = data.get("rank")
+        self.default_server_permissions = ServerPermission(data.get("permissions")[0])
+        self.default_channel_permissions = ChannelPermission(data.get("permissions")[1])
 
     def _update(self, event: ServerRoleUpdate) -> None:
         if event.get("clear") == "Colour":
@@ -134,11 +137,11 @@ class Server(Hashable):
             self.roles.append(Role(key, value, self._state))
         self.icon = data.get("icon")
         self.banner = data.get("banner")
-        self.default_permissions = data.get("default_permissions")
-        print(data)
-        self.system_message = SystemMessages(  # weird ordering since servers are loaded before channels so on caching default to None # TODO
+        self.system_message = SystemMessages(
             data.get("system_messages"), self, self._state
         )
+        self.server_permissions = ServerPermission(data.get("default_permissions")[0])
+        self.channel_permissions = ChannelPermission(data.get("default_permissions")[1])
 
     def __str__(self) -> str:
         return self.name

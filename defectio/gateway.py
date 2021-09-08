@@ -32,13 +32,13 @@ class DefectioWebsocket:
         self.session = session
         self.ws_url = ws_url
         self.websocket: aiohttp.ClientWebSocketResponse
-        self._dispatch: Client.dispatch = client.dispatch
-        self._parsers = client._connection.parsers
         self.user_agent = user_agent
         self._closed = False
-        self.authenticated = False
+        self._dispatch: Client.dispatch = client.dispatch
+        self._parsers = client._connection.parsers
 
         self.auth: Auth
+        self.authenticated = False
 
     @property
     def closed(self) -> bool:

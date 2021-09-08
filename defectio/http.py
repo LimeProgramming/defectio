@@ -105,7 +105,7 @@ class DefectioHTTP:
             if response.status >= 500:
                 raise RevoltServerError(response, data)
 
-    async def uploadrequest(self, method: str, tag: str, **kwargs: Any) -> Any:
+    async def upload_request(self, method: str, tag: str, **kwargs: Any) -> Any:
         url = f"{self.api_info.features.autumn['url']}/{tag}"
         headers = kwargs.get("headers", {})
         headers["User-Agent"] = self.user_agent
@@ -127,14 +127,13 @@ class DefectioHTTP:
                 return data
 
             if 500 > response.status >= 400:
-                raise
-                # raise RevoltServerError(response, data)
+                raise RevoltServerError(response, data)
 
             if response.status >= 500:
                 raise RevoltServerError(response, data)
 
-    async def get_from_cdn(self, url: str) -> bytes:
-        async with self.__session.get(url) as resp:
+    async def get_from_url(self, url: str) -> bytes:
+        async with self._session.get(url) as resp:
             if resp.status == 200:
                 return await resp.read()
             elif resp.status == 404:
@@ -172,7 +171,7 @@ class DefectioHTTP:
         form = aiohttp.FormData()
         form.add_field("file", file.fp, filename=file.filename)
 
-        return await self.uploadrequest("POST", tag, data=form)
+        return await self.upload_request("POST", tag, data=form)
 
     ################
     ## Onboarding ##
