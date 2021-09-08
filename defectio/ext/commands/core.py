@@ -43,6 +43,7 @@ import asyncio
 import functools
 import inspect
 import datetime
+from . import utils
 
 import defectio
 
@@ -119,7 +120,7 @@ def get_signature_parameters(
     signature = inspect.signature(function)
     params = {}
     cache: Dict[str, Any] = {}
-    eval_annotation = defectio.utils.evaluate_annotation
+    eval_annotation = utils.evaluate_annotation
     for name, parameter in signature.parameters.items():
         annotation = parameter.annotation
         if annotation is parameter.empty:
@@ -1135,7 +1136,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             if cog is not None:
                 local_check = Cog._get_overridden_method(cog.cog_check)
                 if local_check is not None:
-                    ret = await defectio.utils.maybe_coroutine(local_check, ctx)
+                    ret = await utils.maybe_coroutine(local_check, ctx)
                     if not ret:
                         return False
 
@@ -1144,7 +1145,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                 # since we have no checks, then we just return True.
                 return True
 
-            return await defectio.utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
+            return await utils.async_all(predicate(ctx) for predicate in predicates)  # type: ignore
         finally:
             ctx.command = original
 

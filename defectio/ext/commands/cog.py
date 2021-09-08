@@ -23,7 +23,6 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import inspect
-import defectio.utils
 
 from typing import (
     Any,

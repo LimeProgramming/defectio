@@ -52,6 +52,7 @@ from .context import Context
 from . import errors
 from .help import HelpCommand, DefaultHelpCommand
 from .cog import Cog
+from . import utils
 
 if TYPE_CHECKING:
     import importlib.machinery
@@ -176,7 +177,7 @@ class BotBase(GroupMixin):
         for event in self.extra_events.get(ev, []):
             self._schedule_event(event, ev, *args, **kwargs)  # type: ignore
 
-    @defectio.utils.copy_doc(defectio.Client.close)
+    @utils.copy_doc(defectio.Client.close)
     async def close(self) -> None:
         for extension in tuple(self.__extensions):
             try:
@@ -337,7 +338,7 @@ class BotBase(GroupMixin):
             return True
 
         # type-checker doesn't distinguish between functions and methods
-        return await defectio.utils.async_all(f(ctx) for f in data)  # type: ignore
+        return await utils.async_all(f(ctx) for f in data)  # type: ignore
 
     async def is_owner(self, user: defectio.User) -> bool:
         """|coro|
@@ -893,7 +894,7 @@ class BotBase(GroupMixin):
         """
         prefix = ret = self.command_prefix
         if callable(prefix):
-            ret = await defectio.utils.maybe_coroutine(prefix, self, message)
+            ret = await utils.maybe_coroutine(prefix, self, message)
 
         if not isinstance(ret, str):
             try:

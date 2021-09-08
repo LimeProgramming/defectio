@@ -29,6 +29,7 @@ from typing import Any, Dict, Generic, List, Optional, TYPE_CHECKING, TypeVar, U
 
 import defectio
 import defectio.utils
+from . import utils
 
 from defectio import Message
 
@@ -271,26 +272,26 @@ class Context(defectio.abc.Messageable, Generic[BotT]):
             return None
         return self.command.cog
 
-    @defectio.utils.cached_property
+    @utils.cached_property
     def server(self) -> Optional[Server]:
         """Optional[:class:`.Server`]: Returns the server associated with this context's command. None if not available."""
         return self.message.server
 
-    @defectio.utils.cached_property
+    @utils.cached_property
     def channel(self) -> MessageableChannel:
         """Union[:class:`.abc.Messageable`]: Returns the channel associated with this context's command.
         Shorthand for :attr:`.Message.channel`.
         """
         return self.message.channel
 
-    @defectio.utils.cached_property
+    @utils.cached_property
     def author(self) -> Union[User, Member]:
         """Union[:class:`~defectio.User`, :class:`.Member`]:
         Returns the author associated with this context's command. Shorthand for :attr:`.Message.author`
         """
         return self.message.author
 
-    @defectio.utils.cached_property
+    @utils.cached_property
     def me(self) -> Union[Member, ClientUser]:
         """Union[:class:`.Member`, :class:`.ClientUser`]:
         Similar to :attr:`.Server.me` except it may return the :class:`.ClientUser` in private message contexts.

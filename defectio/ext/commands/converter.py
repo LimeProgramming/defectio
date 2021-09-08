@@ -40,6 +40,7 @@ from typing import (
     Union,
     runtime_checkable,
 )
+from . import utils
 
 import defectio
 from .errors import *
@@ -150,7 +151,7 @@ class MemberConverter(IDConverter[defectio.Member]):
             return None
 
         # If we're not being rate limited then we can use the websocket to actually query
-        members = await server.query_members(limit=1, user_ids=[user_id], cache=cache)
+        members = await server.query_members(limit=1, user_ids=[user_id])
         if not members:
             return None
         return members[0]
@@ -467,12 +468,12 @@ class clean_content(Converter[str]):
 
         result = re.sub(r"<(@[!&]?|#)([0-9]{15,20})>", repl, argument)
         if self.escape_markdown:
-            result = defectio.utils.escape_markdown(result)
+            result = utils.escape_markdown(result)
         elif self.remove_markdown:
-            result = defectio.utils.remove_markdown(result)
+            result = utils.remove_markdown(result)
 
         # Completely ensure no mentions escape:
-        return defectio.utils.escape_mentions(result)
+        return utils.escape_mentions(result)
 
 
 class Greedy(List[T]):
