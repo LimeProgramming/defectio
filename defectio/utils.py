@@ -38,7 +38,7 @@ def find(predicate: Callable[[T], Any], seq: Iterable[T]) -> Optional[T]:
 
 
 def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
-    r"""A helper that returns the first element in the iterable that meets
+    """A helper that returns the first element in the iterable that meets
     all the traits passed in ``attrs``. This is an alternative for
     :func:`~discord.utils.find`.
     When multiple attributes are specified, they are checked using
@@ -48,6 +48,7 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     pass in ``x__y`` as the keyword argument.
     If nothing is found that matches the attributes passed, then
     ``None`` is returned.
+
     Examples
     ---------
     Basic usage:
@@ -59,6 +60,7 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     Nested attribute matching:
     .. code-block:: python3
         channel = discord.utils.get(client.get_all_channels(), guild__name='Cool', name='general')
+    
     Parameters
     -----------
     iterable
