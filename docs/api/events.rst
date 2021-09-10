@@ -230,8 +230,6 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     Called when a :class:`Member` leaves or joins a :class:`Server`.
 
-    This requires :attr:`Intents.members` to be enabled.
-
     :param member: The member who joined or left.
     :type member: :class:`Member`
 
