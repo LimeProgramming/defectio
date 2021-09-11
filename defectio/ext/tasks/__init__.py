@@ -8,29 +8,6 @@ An extension module to facilitate management of asyncio tasks.
 :copyright: (c) 2021-present Darkflame72
 :license: MIT, see LICENSE for more details.
 """
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-2021 Rapptz
-Copyright (c) 2021-present Darkflame72
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -51,7 +28,6 @@ from typing import Union
 import aiohttp
 import defectio
 from defectio.backoff import ExponentialBackoff
-from defectio.utils import MISSING
 
 __all__ = ("loop",)
 
@@ -111,8 +87,8 @@ class Loop(Generic[LF]):
         self.loop: asyncio.AbstractEventLoop = loop
         self.count: Optional[int] = count
         self._current_loop = 0
-        self._handle: SleepHandle = MISSING
-        self._task: asyncio.Task[None] = MISSING
+        self._handle: SleepHandle = None
+        self._task: asyncio.Task[None] = None
         self._injected = None
         self._valid_exception = (
             OSError,
@@ -131,7 +107,7 @@ class Loop(Generic[LF]):
 
         self.change_interval(seconds=seconds, minutes=minutes, hours=hours, time=time)
         self._last_iteration_failed = False
-        self._last_iteration: datetime.datetime = MISSING
+        self._last_iteration: datetime.datetime = None
         self._next_iteration = None
 
         if not inspect.iscoroutinefunction(self.coro):
@@ -157,7 +133,7 @@ class Loop(Generic[LF]):
         backoff = ExponentialBackoff()
         await self._call_loop_function("before_loop")
         self._last_iteration_failed = False
-        if self._time is not MISSING:
+        if self._time is not None:
             # the time index should be prepared every time the internal loop is started
             self._prepare_time_index()
             self._next_iteration = self._get_next_sleep_time()
@@ -186,7 +162,7 @@ class Loop(Generic[LF]):
                     now = datetime.datetime.now(datetime.timezone.utc)
                     if now > self._next_iteration:
                         self._next_iteration = now
-                        if self._time is not MISSING:
+                        if self._time is not None:
                             self._prepare_time_index(now)
 
                     self._current_loop += 1
@@ -234,7 +210,7 @@ class Loop(Generic[LF]):
         """Optional[:class:`float`]: Read-only value for the number of seconds
         between each iteration. ``None`` if an explicit ``time`` value was passed instead.
         """
-        if self._seconds is not MISSING:
+        if self._seconds is not None:
             return self._seconds
 
     @property
@@ -242,7 +218,7 @@ class Loop(Generic[LF]):
         """Optional[:class:`float`]: Read-only value for the number of minutes
         between each iteration. ``None`` if an explicit ``time`` value was passed instead.
         """
-        if self._minutes is not MISSING:
+        if self._minutes is not None:
             return self._minutes
 
     @property
@@ -250,7 +226,7 @@ class Loop(Generic[LF]):
         """Optional[:class:`float`]: Read-only value for the number of hours
         between each iteration. ``None`` if an explicit ``time`` value was passed instead.
         """
-        if self._hours is not MISSING:
+        if self._hours is not None:
             return self._hours
 
     @property
@@ -258,7 +234,7 @@ class Loop(Generic[LF]):
         """Optional[list[:class:`datetime.time`]]: Read-only list for the exact times this loop runs at.
         ``None`` if relative times were passed instead.
         """
-        if self._time is not MISSING:
+        if self._time is not None:
             return self._time.copy()
 
     @property
@@ -269,7 +245,7 @@ class Loop(Generic[LF]):
     @property
     def next_iteration(self) -> Optional[datetime.datetime]:
         """Optional[:class:`datetime.datetime`]: When the next iteration of the loop will occur."""
-        if self._task is MISSING:
+        if self._task is None:
             return None
         elif self._task and self._task.done() or self._stop_next_iteration:
             return None
@@ -313,13 +289,13 @@ class Loop(Generic[LF]):
             The task that has been created.
         """
 
-        if self._task is not MISSING and not self._task.done():
+        if self._task is not None and not self._task.done():
             raise RuntimeError("Task is already launched and is not completed.")
 
         if self._injected is not None:
             args = (self._injected, *args)
 
-        if self.loop is MISSING:
+        if self.loop is None:
             self.loop = asyncio.get_event_loop()
 
         self._task = self.loop.create_task(self._loop(*args, **kwargs))
@@ -340,7 +316,7 @@ class Loop(Generic[LF]):
             before stopping via :meth:`clear_exception_types` or
             use :meth:`cancel` instead.
         """
-        if self._task is not MISSING and not self._task.done():
+        if self._task is not None and not self._task.done():
             self._stop_next_iteration = True
 
     def _can_be_cancelled(self) -> bool:
@@ -435,7 +411,7 @@ class Loop(Generic[LF]):
 
     def get_task(self) -> Optional[asyncio.Task[None]]:
         """Optional[:class:`asyncio.Task`]: Fetches the internal task or ``None`` if there isn't one running."""
-        return self._task if self._task is not MISSING else None
+        return self._task if self._task is not None else None
 
     def is_being_cancelled(self) -> bool:
         """Whether the task is being cancelled."""
@@ -447,7 +423,7 @@ class Loop(Generic[LF]):
 
     def is_running(self) -> bool:
         """:class:`bool`: Check if the task is currently running."""
-        return not bool(self._task.done()) if self._task is not MISSING else False
+        return not bool(self._task.done()) if self._task is not None else False
 
     async def _error(self, *args: Any) -> None:
         exception: Exception = args[-1]
@@ -539,7 +515,7 @@ class Loop(Generic[LF]):
         return coro
 
     def _get_next_sleep_time(self) -> datetime.datetime:
-        if self._sleep is not MISSING:
+        if self._sleep is not None:
             return self._last_iteration + datetime.timedelta(seconds=self._sleep)
 
         if self._time_index >= len(self._time):
@@ -568,14 +544,14 @@ class Loop(Generic[LF]):
         self._time_index += 1
         return datetime.datetime.combine(next_date, next_time)
 
-    def _prepare_time_index(self, now: datetime.datetime = MISSING) -> None:
+    def _prepare_time_index(self, now: datetime.datetime = None) -> None:
         # now kwarg should be a datetime.datetime representing the time "now"
         # to calculate the next time index from
 
         # pre-condition: self._time is set
         time_now = (
             now
-            if now is not MISSING
+            if now is not None
             else datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
         ).timetz()
         for idx, time in enumerate(self._time):
@@ -619,7 +595,7 @@ class Loop(Generic[LF]):
         seconds: float = 0,
         minutes: float = 0,
         hours: float = 0,
-        time: Union[datetime.time, Sequence[datetime.time]] = MISSING,
+        time: Union[datetime.time, Sequence[datetime.time]] = None,
     ) -> None:
         """Changes the interval for the sleep time.
 
@@ -649,7 +625,7 @@ class Loop(Generic[LF]):
             ``time`` parameter was passed in conjunction with relative time parameters.
         """
 
-        if time is MISSING:
+        if time is None:
             seconds = seconds or 0
             minutes = minutes or 0
             hours = hours or 0
@@ -661,15 +637,15 @@ class Loop(Generic[LF]):
             self._seconds = float(seconds)
             self._hours = float(hours)
             self._minutes = float(minutes)
-            self._time: list[datetime.time] = MISSING
+            self._time: list[datetime.time] = None
         else:
             if any((seconds, minutes, hours)):
                 raise TypeError("Cannot mix explicit time with relative time")
             self._time = self._get_time_parameter(time)
-            self._sleep = self._seconds = self._minutes = self._hours = MISSING
+            self._sleep = self._seconds = self._minutes = self._hours = None
 
         if self.is_running():
-            if self._time is not MISSING:
+            if self._time is not None:
                 # prepare the next time index starting from after the last iteration
                 self._prepare_time_index(now=self._last_iteration)
 
@@ -681,13 +657,13 @@ class Loop(Generic[LF]):
 
 def loop(
     *,
-    seconds: float = MISSING,
-    minutes: float = MISSING,
-    hours: float = MISSING,
-    time: Union[datetime.time, Sequence[datetime.time]] = MISSING,
+    seconds: float = None,
+    minutes: float = None,
+    hours: float = None,
+    time: Union[datetime.time, Sequence[datetime.time]] = None,
     count: Optional[int] = None,
     reconnect: bool = True,
-    loop: asyncio.AbstractEventLoop = MISSING,
+    loop: asyncio.AbstractEventLoop = None,
 ) -> Callable[[LF], Loop[LF]]:
     """A decorator that schedules a task in the background for you with
     optional reconnect logic. The decorator returns a :class:`Loop`.
