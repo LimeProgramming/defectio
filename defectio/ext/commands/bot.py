@@ -1046,9 +1046,6 @@ class BotBase(GroupMixin):
         await self.invoke(ctx)
 
     async def on_message(self, message: Message):
-        if message.author.bot:
-            return
-
         await self.process_commands(message)
 
 
