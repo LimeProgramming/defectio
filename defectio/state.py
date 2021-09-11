@@ -629,7 +629,7 @@ class ConnectionState:
         self.dispatch("server_member_leave", old_member)
 
     async def parse_servermemberupdate(self, data: ServerMemberUpdate) -> None:
-        member = self.get_member(data["id"])
+        member = self.get_member(data["id"]["user"])
         if isinstance(member, Member):
             old_member = copy.copy(member)
             member._update(data)

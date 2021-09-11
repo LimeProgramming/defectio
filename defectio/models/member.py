@@ -1,4 +1,6 @@
 from __future__ import annotations
+from defectio.models.server import Role
+from defectio.types.websocket import ServerMemberUpdate
 
 from typing import TYPE_CHECKING
 
@@ -27,6 +29,9 @@ class Member(PartialMember):
         self._state = state
         self.nickname = data.get("nickname")
         self.id = data.get("_id").get("user")
+
+    def _update(self, data: ServerMemberUpdate):
+        self.nickname = data.get("nickname", self.nickname)
 
     def __repr__(self) -> str:
         return f"<Member id={self.id} nickname={self.nickname}>"
