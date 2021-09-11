@@ -34,6 +34,7 @@ from inspect import signature as _signature, isawaitable as _isawaitable
 from typing import TypeVar
 from typing import Union, Protocol, TYPE_CHECKING, Mapping, ForwardRef, Literal
 from operator import attrgetter
+from inspect import _isawaitable
 import sys
 import re
 import unicodedata
@@ -68,6 +69,14 @@ def flatten_literal_params(parameters: Iterable[Any]) -> tuple[Any, ...]:
 def normalise_optional_params(parameters: Iterable[Any]) -> tuple[Any, ...]:
     none_cls = type(None)
     return tuple(p for p in parameters if p is not none_cls) + (none_cls,)
+
+async def async_all(gen, *, check=_isawaitable):
+    for elem in gen:
+        if check(elem):
+            elem = await elem
+        if not elem:
+            return False
+    return True
 
 
 def evaluate_annotation(
