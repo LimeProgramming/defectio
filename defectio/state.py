@@ -618,12 +618,12 @@ class ConnectionState:
             server = self._add_server_from_data(server_data)
             for channel in server.channel_ids:
                 channel_data = await self.http.get_channel(channel)
-                self._add_channel_from_data(channel_data)                
+                self._add_channel_from_data(channel_data)
         member = self._add_member_from_data(data)
         self.dispatch("server_member_join", member)
 
     async def parse_servermemberleave(self, data: ServerMemberLeave) -> None:
-        member = self.get_member(data["id"], data["user"])
+        member = self.get_member(data["id"])
         old_member = copy.copy(member)
         self.members.remove(member)
         self.dispatch("server_member_leave", old_member)
