@@ -616,11 +616,9 @@ class ConnectionState:
         if data["user"] == self.user.id:
             server_data = await self.http.get_server(data["id"])
             server = self._add_server_from_data(server_data)
-            print(server_data)
             for channel in server.channel_ids:
                 channel_data = await self.http.get_channel(channel)
-                channel = self._add_channel_from_data(channel_data)
-                print(channel)
+                self._add_channel_from_data(channel_data)                
         member = self._add_member_from_data(data)
         self.dispatch("server_member_join", member)
 
