@@ -93,9 +93,9 @@ class DefectioHTTP:
         data: Optional[Union[dict[str, Any], str]] = None
         async with self._session.request(method, url, **kwargs) as response:
             data = await response.text()
-            if data != "":
-                data = json.loads(data)
             if 300 > response.status >= 200:
+                if data != "":
+                    data = json.loads(data)
                 logger.debug("%s %s has received %s", method, url, data)
                 return data
 
@@ -106,7 +106,7 @@ class DefectioHTTP:
                 raise RevoltServerError(response, data)
 
     async def upload_request(self, method: str, tag: str, **kwargs: Any) -> Any:
-        url = f"{self.api_info.features.autumn['url']}/{tag}"
+        url = f"{self.api_info.features.autumn.url}/{tag}"
         headers = kwargs.get("headers", {})
         headers["User-Agent"] = self.user_agent
 
@@ -120,9 +120,9 @@ class DefectioHTTP:
 
         async with self._session.request(method, url, **kwargs) as response:
             data = await response.text()
-            if data != "":
-                data = json.loads(data)
             if 300 > response.status >= 200:
+                if data != "":
+                    data = json.loads(data)
                 logger.debug("%s %s has received %s", method, url, data)
                 return data
 

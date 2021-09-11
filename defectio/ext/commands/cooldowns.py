@@ -59,7 +59,7 @@ class BucketType(Enum):
     def get_key(self, msg: Message) -> Any:
         if self is BucketType.user:
             return msg.author.id
-        elif self is BucketType.guild:
+        elif self is BucketType.server:
             return (msg.guild or msg.author).id
         elif self is BucketType.channel:
             return msg.channel.id
