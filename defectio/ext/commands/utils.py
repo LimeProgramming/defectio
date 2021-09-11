@@ -34,7 +34,6 @@ from inspect import signature as _signature, isawaitable as _isawaitable
 from typing import TypeVar
 from typing import Union, Protocol, TYPE_CHECKING, Mapping, ForwardRef, Literal
 from operator import attrgetter
-from inspect import _isawaitable
 import sys
 import re
 import unicodedata
