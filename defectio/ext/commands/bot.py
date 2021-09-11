@@ -950,9 +950,6 @@ class BotBase(GroupMixin):
         view = StringView(message.content)
         ctx = cls(prefix=None, view=view, bot=self, message=message)
 
-        if message.author.id == self.user.id:  # type: ignore
-            return ctx
-
         prefix = await self.get_prefix(message)
         invoked_prefix = prefix
 
@@ -1044,13 +1041,14 @@ class BotBase(GroupMixin):
         message: :class:`defectio.Message`
             The message to process commands for.
         """
-        # if message.author.bot:
-        #     return
 
         ctx = await self.get_context(message)
         await self.invoke(ctx)
 
-    async def on_message(self, message):
+    async def on_message(self, message: Message):
+        if message.author.bot:
+            return
+
         await self.process_commands(message)
 
 
