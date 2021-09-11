@@ -3,4 +3,4 @@ import defectio
 
 def test_version() -> None:
     """Mock version."""
-    assert defectio.__version__ == "0.1.8a"
+    assert defectio.__version__ == "0.1.9a"

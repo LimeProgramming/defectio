@@ -13,7 +13,7 @@ __title__ = "defectio"
 __author__ = "Darkflame72"
 __license__ = "MIT"
 __copyright__ = "Copyright 2021-present Darkflame72"
-__version__ = "0.1.8a"
+__version__ = "0.1.9a"
 
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
@@ -77,7 +77,7 @@ class VersionInfo(NamedTuple):
 
 
 version_info: VersionInfo = VersionInfo(
-    major=0, minor=1, micro=8, releaselevel="alpha", serial=0
+    major=0, minor=1, micro=9, releaselevel="alpha", serial=0
 )
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
