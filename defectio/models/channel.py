@@ -75,6 +75,7 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
 class SavedMessageChannel(abc.Messageable):
     def __init__(self, data: ChannelPayload, state: ConnectionState):
         self.id = data.get("_id")
+        self._state: ConnectionState = state
         super().__init__(data, state)
 
     async def _get_channel(self) -> SavedMessageChannel:
@@ -115,6 +116,7 @@ class GroupChannel(abc.Messageable):
         self.name = data.get("name")
         self.active = data.get("active")
         self._recipients = data.get("recipients")
+        self._state: ConnectionState = state
 
     def _update(self, data: ChannelPayload) -> None:
         self.name = data.get("name", self.name)
