@@ -69,6 +69,14 @@ def normalise_optional_params(parameters: Iterable[Any]) -> tuple[Any, ...]:
     none_cls = type(None)
     return tuple(p for p in parameters if p is not none_cls) + (none_cls,)
 
+async def async_all(gen, *, check=_isawaitable):
+    for elem in gen:
+        if check(elem):
+            elem = await elem
+        if not elem:
+            return False
+    return True
+
 
 def evaluate_annotation(
     tp: Any,
