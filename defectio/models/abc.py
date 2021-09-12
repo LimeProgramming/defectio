@@ -160,7 +160,7 @@ class Messageable(Protocol):
         *,
         file: Optional[File] = None,
         files: Optional[list[File]] = None,
-        replies: Optional[list[Reply]] = None,
+        replies: Optional[list[Reply]] = [],
         delete_after: int = None,
         nonce=None,
     ):
