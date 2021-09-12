@@ -23,6 +23,7 @@ from typing import NamedTuple, Literal
 from .client import Client
 from .models import (
     Message,
+    Reply,
     User,
     Server,
     Member,

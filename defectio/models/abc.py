@@ -12,7 +12,7 @@ from typing import Union
 if TYPE_CHECKING:
     from ..state import ConnectionState
     from .server import Server
-    from .message import Message
+    from .message import Message, Reply
     from ..types.payloads import ChannelType
     from .channel import DMChannel, TextChannel, GroupChannel
     from defectio.models.message import File
@@ -160,6 +160,7 @@ class Messageable(Protocol):
         *,
         file: Optional[File] = None,
         files: Optional[list[File]] = None,
+        replies: Optional[list[Reply]] = [],
         delete_after: int = None,
         nonce=None,
     ):
@@ -177,10 +178,15 @@ class Messageable(Protocol):
                     file=attachment, tag="attachments"
                 )
                 attachment_ids.append(attach["id"])
-
+        
+        replies = [{"id": r.message.id, "mention": r.mention} for r in replies]
         data = await state.http.send_message(
-            channel.id, content=content, attachments=attachment_ids
+            channel.id,
+            content=content,
+            attachments=attachment_ids,
+            replies=replies
         )
+
 
         new_message = state.create_message(channel=channel, data=data)
         if delete_after is not None:

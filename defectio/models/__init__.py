@@ -9,7 +9,7 @@ from .channel import VoiceChannel
 from .attachment import Attachment
 from .file import File
 from .member import Member
-from .message import Message
+from .message import Message, Reply
 from .raw_models import RawMessageDeleteEvent
 from .raw_models import RawMessageUpdateEvent
 from .server import Category
