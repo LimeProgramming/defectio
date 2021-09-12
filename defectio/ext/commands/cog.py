@@ -293,7 +293,7 @@ class Cog(metaclass=CogMeta):
         return getattr(method.__func__, "__cog_special_method__", method)
 
     @classmethod
-    def listener(cls, name: str) -> Callable[[FuncT], FuncT]:
+    def listener(cls, name: str = None) -> Callable[[FuncT], FuncT]:
         """A decorator that marks a function as a listener.
 
         This is the cog equivalent of :meth:`.Bot.listen`.
@@ -311,7 +311,7 @@ class Cog(metaclass=CogMeta):
             the name.
         """
 
-        if not isinstance(name, str):
+        if name is not None and not isinstance(name, str):
             raise TypeError(
                 f"Cog.listener expected str but received {name.__class__.__name__!r} instead."
             )
