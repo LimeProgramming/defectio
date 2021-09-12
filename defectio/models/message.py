@@ -35,6 +35,14 @@ class Attachment:
 
         return f"{base_url}/{self.tag}/{self.id}"
 
+class Reply:
+    def __init__(self, message: Message, mention: Optional[bool] = True):
+        self.message: Message = message
+        self.mention: Optional[bool] = mention
+
+    def __repr__(self):
+        return "<Reply message={0!r} mention={1}>".format(self.message, self.mention)
+
 
 class File:
     """Respresents a file about to be uploaded to revolt
@@ -98,6 +106,25 @@ class Message(Hashable):
     @property
     def author(self) -> PartialUser:
         return self._state.get_user(self.author_id) or PartialUser(self.author_id)
+
+    async def reply(
+        self,
+        content: str = None,
+        *,
+        file: Optional[File] = None,
+        files: Optional[list[File]] = None,
+        mention: bool = False,
+        delete_after: int = None,
+        nonce=None,
+    ):
+        await self.channel.send(
+            content,
+            file=file,
+            files=files,
+            delete_after=delete_after,
+            nonce=nonce,
+            replies=[Reply(self, mention)],
+        )
 
     async def delete(self, *, delay: Optional[float] = None) -> None:
         if delay is not None:
