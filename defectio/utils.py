@@ -20,6 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
+import datetime
 from typing import Any
 from typing import Callable
 from typing import Iterable
@@ -36,6 +37,11 @@ def find(predicate: Callable[[T], Any], seq: Iterable[T]) -> Optional[T]:
             return element
     return None
 
+def compute_timedelta(dt: datetime.datetime):
+    if dt.tzinfo is None:
+        dt = dt.astimezone()
+    now = datetime.datetime.now(datetime.timezone.utc)
+    return max((dt - now).total_seconds(), 0)
 
 def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
     """A helper that returns the first element in the iterable that meets
