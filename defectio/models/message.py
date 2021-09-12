@@ -84,6 +84,7 @@ class Message(Hashable):
         self.channel = channel
         self.content = data.get("content")
         self.author_id = data.get("author")
+        self.replies = [state.get_message(r) for r in data.get("replies", [])]
         self.attachments = [Attachment(state, a) for a in data.get("attachments", [])]
 
     def __repr__(self) -> str:
