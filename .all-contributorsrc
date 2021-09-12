@@ -13,6 +13,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "jottew",
+      "name": "jotte",
+      "avatar_url": "https://avatars.githubusercontent.com/u/71946106?v=4",
+      "profile": "https://github.com/jottew",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "insertish",
+      "name": "Paul Makles",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38285861?v=4",
+      "profile": "https://insrt.uk",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
