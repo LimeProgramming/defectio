@@ -49,6 +49,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <table>
   <tr>
     <td align="center"><a href="https://github.com/jottew"><img src="https://avatars.githubusercontent.com/u/71946106?v=4?s=100" width="100px;" alt=""/><br /><sub><b>jotte</b></sub></a><br /><a href="https://github.com/Darkflame72/defectio/commits?author=jottew" title="Code">💻</a></td>
+    <td align="center"><a href="https://insrt.uk"><img src="https://avatars.githubusercontent.com/u/38285861?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Paul Makles</b></sub></a><br /><a href="https://github.com/Darkflame72/defectio/issues?q=author%3Ainsertish" title="Bug reports">🐛</a></td>
   </tr>
 </table>
 
