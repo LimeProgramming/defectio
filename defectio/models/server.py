@@ -1,4 +1,5 @@
 from __future__ import annotations
+from defectio.types.payloads import IconPayload
 from defectio.models.permission import ChannelPermission, ServerPermission
 from defectio.models.colour import Colour
 
@@ -18,6 +19,31 @@ if TYPE_CHECKING:
     from ..types.websocket import ServerUpdate, ServerRoleUpdate
     from .member import Member
     from .channel import MessageableChannel
+
+
+class Icon:
+    __slots__ = (
+        "id",
+        "tag",
+        "size",
+        "filename",
+        "content_type",
+        "metadata",
+        "_state",
+    )
+
+    def __init__(self, payload: IconPayload, state: ConnectionState) -> None:
+        self.id = payload["_id"]
+        self._state = state
+        self.tag = payload["tag"]
+        self.size = payload["size"]
+        self.filename = payload["filename"]
+        self.content_type = payload["content_type"]
+        self.metadata = payload["metadata"]
+
+    @property
+    def url(self) -> str:
+        return f"{self._state.http.api_info.features.autumn.url}/icons/{self.id}"
 
 
 class SystemMessages:
@@ -135,13 +161,16 @@ class Server(Hashable):
         self.roles: list[Role] = []
         for key, value in data.get("roles", {}).items():
             self.roles.append(Role(key, value, self._state))
-        self.icon = data.get("icon")
         self.banner = data.get("banner")
         self.system_message = SystemMessages(
             data.get("system_messages"), self, self._state
         )
         self.server_permissions = ServerPermission(data.get("default_permissions")[0])
         self.channel_permissions = ChannelPermission(data.get("default_permissions")[1])
+        if "icon" in data:
+            self.icon = Icon(data["icon"], self._state)
+        else:
+            self.icon = None
 
     def __str__(self) -> str:
         return self.name
@@ -166,6 +195,10 @@ class Server(Hashable):
         self.owner = payload.get("owner", self.owner)
         self.name = payload.get("name", self.name)
         self.description = payload.get("description", self.description)
+        if "icon" in payload:
+            self.icon = Icon(payload["icon"], self._state)
+        else:
+            self.icon = None
 
     def get_role(self, role_id: str) -> Optional[Role]:
         for role in self.roles:

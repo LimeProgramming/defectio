@@ -514,6 +514,7 @@ class Client:
         self.http = DefectioHTTP(self.session, self.api_url, user_agent)
         api_info = await self.http.node_info()
         api_info = self._connection.set_api_info(api_info)
+        self.api_info = api_info
         self.websocket = DefectioWebsocket(
             self.session, api_info.ws_url, user_agent, self
         )
