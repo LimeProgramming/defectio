@@ -1,4 +1,5 @@
 from __future__ import annotations
+from defectio.models.channel import TextChannel, VoiceChannel
 from defectio.types.payloads import IconPayload
 from defectio.models.permission import ChannelPermission, ServerPermission
 from defectio.models.colour import Colour
@@ -247,6 +248,28 @@ class Server(Hashable):
             list of all channels
         """
         return [self._state.get_channel(channel_id) for channel_id in self.channel_ids]
+
+    @property
+    def text_channels(self):
+        """All text channels in the server
+
+        Returns
+        -------
+        [type]
+            list of all text channels
+        """
+        return [i for i in self.channels if isinstance(i, TextChannel)]
+    
+    @property
+    def voice_channels(self):
+        """All voice channels in the server
+
+        Returns
+        -------
+        [type]
+            list of all voice channels
+        """
+        return [i for i in self.channels if isinstance(i, VoiceChannel)]
 
     @property
     def members(self) -> list[Member]:
