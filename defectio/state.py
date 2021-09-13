@@ -502,18 +502,25 @@ class ConnectionState:
 
         del member
 
+    async def fetch_account(self):
+        path = "/auth/account"
+        return await self.http.request("GET", path)
+
+
     async def parse_ready(self, data: Ready) -> None:
         self.clear()
-
-        if self.auth().is_bot:
+        
+        if self.http.is_bot:
             self.user = ClientUser(state=self, data=data["users"][0])
         else:
+            account = await self.fetch_account()
+            user_id = account.get("_id")
             self.user = ClientUser(
-                state=self,
-                data=utils.find(
-                    lambda u: u["_id"] == self.auth().user_id, data["users"]
-                ),
-            )
+                    state=self,
+                    data=utils.find(
+                        lambda u: u["_id"] == user_id, data["users"]
+                    ),
+                )
 
         for user in data["users"]:
             if user["_id"] != self.user_id:

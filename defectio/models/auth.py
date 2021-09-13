@@ -1,27 +1,14 @@
-from typing import TYPE_CHECKING
-from typing import Union
-from ..types.payloads import LoginPayload
-
-
 class Auth:
-    def __init__(self, data: Union[LoginPayload, str]):
-        try:
-            self.user_id = data["user_id"]
-            self.session_token = data["session_token"]
-            self.is_bot = False
-            self.token = None
-        except TypeError:
-            self.token = str(data)
-            self.is_bot = True
+    def __init__(self, data: str, bot: bool = True):
+        self.token = str(data)
+        self.is_bot = bot
 
     @property
     def headers(self):
         if self.is_bot is True:
             return {"x-bot-token": self.token}
-        return {"x-session-id": self.user_id, "x-session-token": self.session_token}
+        return {"x-session-token": self.token}
 
     @property
     def payload(self):
-        if self.is_bot is True:
-            return {"token": self.token}
-        return {"token": self.session_token}
+        return {"token": self.token}

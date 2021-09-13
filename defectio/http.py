@@ -143,9 +143,9 @@ class DefectioHTTP:
             else:
                 raise HTTPException(resp, "failed to get asset")
 
-    def bot_login(self, token: str) -> Auth:
-        self.auth = Auth(token)
-        self.is_bot = True
+    def start(self, token: str, bot: bool = True) -> Auth:
+        self.auth = Auth(token, bot=bot)
+        self.is_bot = bot
         return self.auth
 
     async def user_login(self, email: str, password: str) -> Auth:
@@ -153,11 +153,6 @@ class DefectioHTTP:
         self.auth = Auth(session)
         self.is_bot = False
         return self.auth
-
-    def session_login(self, session_token: str, user_id: str) -> Auth:
-        auth = Auth({"session_token": session_token, "user_id": user_id})
-        self.auth = auth
-        return auth
 
     async def close(self) -> None:
         if self._session:

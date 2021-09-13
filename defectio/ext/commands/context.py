@@ -144,6 +144,16 @@ class Context(defectio.abc.Messageable, Generic[BotT]):
         self.command_failed: bool = command_failed
         self.current_parameter: Optional[inspect.Parameter] = current_parameter
         self._state: ConnectionState = self.message._state
+        
+    async def reply(
+        self,
+        content: str = None,
+        **kwargs: Any
+    ) -> Message:
+        return await self.message.reply(
+            content,
+            **kwargs
+        )
 
     async def invoke(
         self, command: Command[CogT, P, T], /, *args: P.args, **kwargs: P.kwargs
