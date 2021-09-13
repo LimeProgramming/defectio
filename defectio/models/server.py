@@ -1,6 +1,5 @@
 from __future__ import annotations
 from defectio.types.payloads import IconPayload
-from .channel import VoiceChannel, TextChannel
 from defectio.models.permission import ChannelPermission, ServerPermission
 from defectio.models.colour import Colour
 
@@ -258,6 +257,7 @@ class Server(Hashable):
         [type]
             list of all text channels
         """
+        from .channel import TextChannel
         return [i for i in self.channels if isinstance(i, TextChannel)]
     
     @property
@@ -269,6 +269,8 @@ class Server(Hashable):
         [type]
             list of all voice channels
         """
+        from .channel import VoiceChannel
+
         return [i for i in self.channels if isinstance(i, VoiceChannel)]
 
     @property
