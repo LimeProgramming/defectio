@@ -56,14 +56,19 @@ class DefectioWebsocket:
         await self.websocket.send_str(json.dumps(payload).decode("utf-8"))
 
     async def wait_for_auth(self) -> Union[Error, Authenticated]:
-        auth_event = await self.websocket.receive()
         response: Union[Error, Authenticated]
-        if auth_event.type == aiohttp.WSMsgType.TEXT:
-            payload = json.loads(auth_event.data)
-            if payload.get("type") == "Authenticated":
-                response = Authenticated(payload)
-            else:
-                response = Error(payload)
+        valid = ["Error", "Authenticated"]
+        while True:
+            auth_event = await self.websocket.receive()
+            if auth_event.type == aiohttp.WSMsgType.TEXT:
+                payload = json.loads(auth_event.data)
+                if payload.get("type") in valid:
+                    break
+                
+        if payload.get("type") == "Error":
+            response = Error(payload)
+        elif payload.get("type") == "Authenticated":
+            response = Authenticated(payload)
         return response
 
     async def start(self, auth: Auth) -> None:
