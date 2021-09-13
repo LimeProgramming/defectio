@@ -1,5 +1,6 @@
 from __future__ import annotations
 from defectio.types.payloads import IconPayload
+from .channel import VoiceChannel, TextChannel
 from defectio.models.permission import ChannelPermission, ServerPermission
 from defectio.models.colour import Colour
 
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.websocket import ServerUpdate, ServerRoleUpdate
     from .member import Member
-    from .channel import MessageableChannel, VoiceChannel, TextChannel
+    from .channel import MessageableChannel
 
 
 class Icon:
