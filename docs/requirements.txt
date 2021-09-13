@@ -1,4 +1,4 @@
-sphinx==4.1.2
+sphinx==4.2.0
 sphinxcontrib_trio==1.1.2
 furo==2021.9.8
 sphinxext-opengraph==0.4.2
