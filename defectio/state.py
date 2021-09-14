@@ -506,21 +506,18 @@ class ConnectionState:
         path = "/auth/account"
         return await self.http.request("GET", path)
 
-
     async def parse_ready(self, data: Ready) -> None:
         self.clear()
-        
+
         if self.http.is_bot:
             self.user = ClientUser(state=self, data=data["users"][0])
         else:
             account = await self.fetch_account()
             user_id = account.get("_id")
             self.user = ClientUser(
-                    state=self,
-                    data=utils.find(
-                        lambda u: u["_id"] == user_id, data["users"]
-                    ),
-                )
+                state=self,
+                data=utils.find(lambda u: u["_id"] == user_id, data["users"]),
+            )
 
         for user in data["users"]:
             if user["_id"] != self.user_id:
@@ -626,6 +623,7 @@ class ConnectionState:
             for channel in server.channel_ids:
                 channel_data = await self.http.get_channel(channel)
                 self._add_channel_from_data(channel_data)
+                logger.info("Joined server %s", server.name)
         member = self._add_member_from_data(data)
         self.dispatch("server_member_join", member)
 
