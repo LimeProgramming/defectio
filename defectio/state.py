@@ -614,7 +614,7 @@ class ConnectionState:
         server = self.get_server(data["id"])
         if server is not None:
             self.servers.pop(server.id)
-        self.dispatch("server_delete", server)
+            self.dispatch("server_delete", server)
 
     async def parse_servermemberjoin(self, data: ServerMemberJoin) -> None:
         if data["user"] == self.user.id:
@@ -629,9 +629,9 @@ class ConnectionState:
 
     async def parse_servermemberleave(self, data: ServerMemberLeave) -> None:
         member = self.get_member(data["id"])
-        old_member = copy.copy(member)
-        self.members.remove(member)
-        self.dispatch("server_member_leave", old_member)
+        if member is not None:
+            old_member = self._members.pop(member)
+            self.dispatch("server_member_leave", old_member)
 
     async def parse_servermemberupdate(self, data: ServerMemberUpdate) -> None:
         member = self.get_member(data["id"]["user"])
