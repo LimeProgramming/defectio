@@ -117,7 +117,7 @@ class Message(Hashable):
         delete_after: int = None,
         nonce=None,
     ):
-        await self.channel.send(
+        return await self.channel.send(
             content,
             file=file,
             files=files,

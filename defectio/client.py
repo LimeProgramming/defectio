@@ -522,7 +522,7 @@ class Client:
     async def connect(self) -> None:
         self._closed = False
 
-    async def bot_login(self, token: str) -> None:
+    async def login(self, token: str, bot: bool = True) -> None:
         """|coro|
         Logs in using the token provided as a bot.
 
@@ -531,29 +531,14 @@ class Client:
         token : str
             The authentication token.
         """
-        self._auth = self.http.bot_login(token)
-        await self.websocket.start(self._auth)
-
-    async def user_login(self, session_token: str, user_id: str) -> None:
-        """|coro|
-        Logs in with a user's session token.
-
-        Parameters
-        ----------
-        session_token : str
-            The session token to login with.
-        user_id : str
-            The ID of the user to login as.
-        """
-        self._auth = self.http.session_login(session_token, user_id)
+        self._auth = self.http.start(token, bot=bot)
         await self.websocket.start(self._auth)
 
     async def start(
         self,
         *,
         token: Optional[str] = None,
-        session_token: Optional[str] = None,
-        user_id: Optional[str] = None,
+        bot: bool = True,
     ) -> None:
         """|coro|
         Creates a client and logs the user in.
@@ -570,10 +555,7 @@ class Client:
             The ID of the user which th session token belongs to
         """
         await self.create()
-        if token is not None:
-            await self.bot_login(token)
-        elif session_token is not None and user_id is not None:
-            await self.user_login(session_token, user_id)
+        await self.login(token, bot=bot)
         await self.connect()
 
     def run(self, token: Optional[str] = None, **kwargs: Any) -> None:

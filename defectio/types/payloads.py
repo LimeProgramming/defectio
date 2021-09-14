@@ -30,12 +30,6 @@ class ApiInfoPayload(TypedDict):
     vapid: str
 
 
-class LoginPayload(TypedDict):
-    id: str
-    user_id: str
-    session_token: str
-
-
 class SessionPayload(TypedDict):
     id: str
     friendly_name: str

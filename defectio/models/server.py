@@ -249,6 +249,31 @@ class Server(Hashable):
         return [self._state.get_channel(channel_id) for channel_id in self.channel_ids]
 
     @property
+    def text_channels(self):
+        """All text channels in the server
+
+        Returns
+        -------
+        [type]
+            list of all text channels
+        """
+        from .channel import TextChannel
+        return [i for i in self.channels if isinstance(i, TextChannel)]
+    
+    @property
+    def voice_channels(self):
+        """All voice channels in the server
+
+        Returns
+        -------
+        [type]
+            list of all voice channels
+        """
+        from .channel import VoiceChannel
+
+        return [i for i in self.channels if isinstance(i, VoiceChannel)]
+
+    @property
     def members(self) -> list[Member]:
         """All cached members in the server.
 
