@@ -137,7 +137,8 @@ class DefectioHTTP:
             if resp.status == 200:
                 return await resp.read()
             elif resp.status == 404:
-                raise NotFound(resp, "asset not found")
+                # raise NotFound(resp, "asset not found")
+                return None
             elif resp.status == 403:
                 raise Forbidden(resp, "cannot retrieve asset")
             else:

@@ -175,17 +175,6 @@ class ConnectionState:
     def websocket(self) -> DefectioWebsocket:
         return self.get_websocket()
 
-    # @property
-    # def user(self) -> ClientUser:
-    #     """Get the user object
-
-    #     Returns
-    #     -------
-    #     ClientUser
-    #         The user object
-    #     """
-    #     return self.get_user(self.user_id)
-
     @property
     def users(self) -> list[User]:
         """Get all users from internal cache
@@ -197,7 +186,7 @@ class ConnectionState:
         """
         return list(self._users.values())
 
-    def get_user(self, user_id: Optional[str]) -> Optional[User]:
+    def get_user(self, user_id: str) -> Optional[User | ClientUser]:
         """Get user from internal cache
 
         Parameters
@@ -207,10 +196,32 @@ class ConnectionState:
 
         Returns
         -------
-        Optional[User]
+        Optional[User | ClientUser]
             User object from the cache
         """
         return self._users.get(user_id)
+        return user
+
+    async def fetch_user(self, user_id: str) -> Optional[User | ClientUser]:
+        """Get user
+
+        Parameters
+        ----------
+        user_id : Optional[str]
+            User ID to get
+
+        Returns
+        -------
+        Optional[User | ClientUser]
+            User object from the cache
+        """
+        user = self._users.get(user_id)
+        if user is None:
+            user_data = await self.http.get_user(user_id)
+            if user_data is not None:
+                user = self._add_user_from_data(user_data)
+
+        return user
 
     def _add_user(self, user: User) -> None:
         """Add a user in internal cache
@@ -254,6 +265,22 @@ class ConnectionState:
         return list(self._servers.values())
 
     def get_server(self, server_id: Optional[str]) -> Optional[Server]:
+        """Get a server by ID from the cache
+
+        Parameters
+        ----------
+        server_id : Optional[str]
+            Server ID
+
+        Returns
+        -------
+        Optional[Server]
+            Server object
+        """
+
+        return self._servers.get(server_id)
+
+    async def fetch_server(self, server_id: str) -> Optional[Server]:
         """Get a server by ID
 
         Parameters
@@ -266,7 +293,16 @@ class ConnectionState:
         Optional[Server]
             Server object
         """
-        return self._servers.get(server_id)
+
+        server = self._servers.get(server_id)
+        if server is None:
+            server_data = await self.http.get_server(server_id)
+            if server_data is not None:
+                server = self._add_server_from_data(server_data)
+                for channel_id in server.channel_ids:
+                    channel_data = await self.http.get_channel(channel_id)
+                    self._add_channel_from_data(channel_data)
+        return server
 
     def _add_server(self, server: Server) -> None:
         """Add a server to the internal cache
@@ -328,7 +364,30 @@ class ConnectionState:
             Channel object from the cache
         """
 
+        return self._server_channels.get(channel_id)
+
+    async def fetch_channel(self, channel_id: str) -> Optional[Channel]:
+        """Get a channel from the cache or api
+
+        Parameters
+        ----------
+        channel_id : str
+            ID of the channel to get
+
+        Returns
+        -------
+        Optional[Channel]
+            Channel object from the cache
+        """
+
         channel = self._server_channels.get(channel_id)
+        if channel is None:
+            print(10)
+            channel_data = await self.http.get_channel(channel_id)
+            if channel_data is not None:
+                channel = self._add_channel_from_data(channel_data)
+                if "server" in channel_data:
+                    await self.fetch_server(channel_data["server"])
         return channel
 
     def _add_channel(self, channel: Channel) -> None:
@@ -506,21 +565,20 @@ class ConnectionState:
         path = "/auth/account"
         return await self.http.request("GET", path)
 
+    @property
+    def user(self) -> ClientUser:
+        user = self.get_user(self.user_id)
+        return user
+
     async def parse_ready(self, data: Ready) -> None:
         self.clear()
 
-        if self.http.is_bot:
-            self.user = ClientUser(state=self, data=data["users"][0])
-        else:
-            account = await self.fetch_account()
-            user_id = account.get("_id")
-            self.user = ClientUser(
-                state=self,
-                data=utils.find(lambda u: u["_id"] == user_id, data["users"]),
-            )
-
         for user in data["users"]:
-            if user["_id"] != self.user_id:
+            if user["relationship"] == "User":
+                user_data = ClientUser(state=self, data=user)
+                self.user_id = user_data.id
+                self._add_user(user_data)
+            else:
                 self._add_user_from_data(user)
 
         for server in data["servers"]:
@@ -538,10 +596,16 @@ class ConnectionState:
     async def parse_message(self, data: MessagePayload) -> None:
         if data["author"] == "00000000000000000000000000":
             return
+        else:
+            await self.fetch_user(data["author"])
+        channel = await self.fetch_channel(data["channel"])
+        if channel.type == "TextChannel":
+            if data["author"] != "00000000000000000000000000":
+                await self.fetch_user(data["author"])
         message = self._add_message_from_data(data)
-        self.dispatch("message", message)
         if self._messages is not None:
             self._messages.append(message)
+            self.dispatch("message", message)
 
     async def parse_messageupdate(self, data: MessageUpdate) -> None:
         raw = RawMessageUpdateEvent(data)
@@ -553,6 +617,7 @@ class ConnectionState:
             message._update(data)
             self.dispatch("message_edit", older_message, message)
         else:
+            # done here so raw is always sent before message edit
             self.dispatch("raw_message_edit", raw)
 
     async def parse_messagedelete(self, data: MessageDelete) -> None:
@@ -566,29 +631,38 @@ class ConnectionState:
 
     async def parse_channelcreate(self, data: ChannelCreate) -> None:
         channel = self._add_channel_from_data(data)
+        server = await self.fetch_server(channel.server)
+        if channel.id not in server.channel_ids:
+            server.channel_ids.append(channel.id)
         self.dispatch("channel_create", channel)
 
     async def parse_channelupdate(self, data: ChannelUpdate) -> None:
         channel = self.get_channel(data["id"])
         if channel is not None:
             channel._update(data)
+            self.dispatch("raw_channel_update", data)
             self.dispatch("channel_update", channel)
-        self.dispatch("channel_update", data)
+        self.dispatch("raw_channel_update", data)
 
     async def parse_channeldelete(self, data: ChannelDelete) -> None:
-        channel = self.get_channel(data["id"])
-        channel_copy = copy.copy(channel)
-        self._remove_channel(channel)
-        self.dispatch("channel_delete", channel_copy)
+        channel = self.fetch_channel(data["id"])
+        if channel is not None:
+            channel_copy = copy.copy(channel)
+            self._remove_channel(channel)
+            self.dispatch("raw_channel_delete", data)
+            self.dispatch("channel_delete", channel_copy)
+        self.dispatch("raw_channel_delete", data)
 
     async def parse_channelgroupjoin(self, data: ChannelGroupJoin) -> None:
+        await self.fetch_channel(data["id"])
         self.dispatch("channel_group_join", data)
 
     async def parse_channelgroupleave(self, data: ChannelGroupLeave) -> None:
         channel = self.get_channel(data["channel"])
-        channel_copy = copy.copy(channel)
-        self._remove_channel(channel)
-        self.dispatch("channel_group_leave", channel_copy)
+        if channel is not None:
+            channel_copy = copy.copy(channel)
+            self._remove_channel(channel)
+            self.dispatch("channel_group_leave", channel_copy)
 
     async def parse_channelstarttyping(self, data: ChannelStartTyping) -> None:
         channel = self.get_channel(data["id"])
@@ -617,13 +691,10 @@ class ConnectionState:
             self.dispatch("server_delete", server)
 
     async def parse_servermemberjoin(self, data: ServerMemberJoin) -> None:
-        if data["user"] == self.user.id:
-            server_data = await self.http.get_server(data["id"])
-            server = self._add_server_from_data(server_data)
-            for channel in server.channel_ids:
-                channel_data = await self.http.get_channel(channel)
-                self._add_channel_from_data(channel_data)
-                logger.info("Joined server %s", server.name)
+        server = await self.fetch_server(data["id"])
+        user = await self.fetch_user(data["user"])
+        if data["user"] == self.user.id and server is not None:
+            logger.info("Joined server %s", server.name)
         member = self._add_member_from_data(data)
         self.dispatch("server_member_join", member)
 
