@@ -476,7 +476,7 @@ class Client:
         Optional[User]
             The requested user. If not found, returns ``None``.
         """
-        user = self._connection.http.get_user(user_id)
+        user = await self._connection.http.get_user(user_id)
         if user:
             user = self._connection._add_user_from_data(user)
         return user
