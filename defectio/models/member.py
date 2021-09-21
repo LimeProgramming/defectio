@@ -1,4 +1,6 @@
 from __future__ import annotations
+from defectio.models.server import Role
+from defectio.types.websocket import ServerMemberUpdate
 
 from typing import TYPE_CHECKING
 
@@ -7,14 +9,12 @@ from .mixins import Hashable
 
 if TYPE_CHECKING:
     from ..state import ConnectionState
-    from .server import Server
     from ..types.payloads import MemberPayload
 
 
 class PartialMember(abc.Messageable, Hashable):
-    def __init__(self, id: str, server: Server, state: ConnectionState):
+    def __init__(self, id: str, state: ConnectionState):
         self._state = state
-        self.server = server
         self.id = id
 
     def __repr__(self) -> str:
@@ -25,11 +25,13 @@ class PartialMember(abc.Messageable, Hashable):
 
 
 class Member(PartialMember):
-    def __init__(self, data: MemberPayload, server: Server, state: ConnectionState):
+    def __init__(self, data: MemberPayload, state: ConnectionState):
         self._state = state
-        self.server = server
         self.nickname = data.get("nickname")
         self.id = data.get("_id").get("user")
+
+    def _update(self, data: ServerMemberUpdate):
+        self.nickname = data.get("nickname", self.nickname)
 
     def __repr__(self) -> str:
         return f"<Member id={self.id} nickname={self.nickname}>"

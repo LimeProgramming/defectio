@@ -1,14 +1,17 @@
 # Credit to sphinx.ext.extlinks for being a good starter
 # Copyright 2007-2020 by the Sphinx team
 # Licensed under BSD.
-
-from typing import Any, Dict, List, Tuple
-
-from docutils import nodes, utils
-from docutils.nodes import Node, system_message
-from docutils.parsers.rst.states import Inliner
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Tuple
 
 import sphinx
+from docutils import nodes
+from docutils import utils
+from docutils.nodes import Node
+from docutils.nodes import system_message
+from docutils.parsers.rst.states import Inliner
 from sphinx.application import Sphinx
 from sphinx.util.nodes import split_explicit_title
 from sphinx.util.typing import RoleFunction

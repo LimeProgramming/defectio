@@ -1,19 +1,22 @@
 from __future__ import annotations
-from defectio.models.user import User
+from defectio.models.permission import ChannelPermission
+from defectio.models.server import Role
 
 from typing import Optional
-from typing import Text
 from typing import TYPE_CHECKING
-from typing import Union, List
+from typing import Union
+
+from .user import User
 
 from . import abc
-from .message import Message
 from .mixins import Hashable
 
 if TYPE_CHECKING:
     from ..types.payloads import ChannelPayload
     from ..state import ConnectionState
     from .server import Server
+    from ..types.payloads import DMChannelPayload
+    from .message import Message
 
 __all__ = (
     "TextChannel",
@@ -24,69 +27,28 @@ __all__ = (
 
 
 class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
-    """Represents a server text channel.
-    .. container:: operations
-        .. describe:: x == y
-            Checks if two channels are equal.
-        .. describe:: x != y
-            Checks if two channels are not equal.
-        .. describe:: hash(x)
-            Returns the channel's hash.
-        .. describe:: str(x)
-            Returns the channel's name.
-    Attributes
-    -----------
-    name: :class:`str`
-        The channel name.
-    guild: :class:`Guild`
-        The guild the channel belongs to.
-    id: :class:`int`
-        The channel ID.
-    category_id: Optional[:class:`int`]
-        The category channel ID this channel belongs to, if applicable.
-    topic: Optional[:class:`str`]
-        The channel's topic. ``None`` if it doesn't exist.
-    position: :class:`int`
-        The position in the channel list. This is a number that starts at 0. e.g. the
-        top channel is position 0.
-    last_message_id: Optional[:class:`int`]
-        The last message ID of the message sent to this channel. It may
-        *not* point to an existing or valid message.
-    slowmode_delay: :class:`int`
-        The number of seconds a member must wait between sending messages
-        in this channel. A value of `0` denotes that it is disabled.
-        Bots and users with :attr:`~Permissions.manage_channels` or
-        :attr:`~Permissions.manage_messages` bypass slowmode.
-    nsfw: :class:`bool`
-        If the channel is marked as "not safe for work".
-        .. note::
-            To check if the channel or the guild of that channel are marked as NSFW, consider :meth:`is_nsfw` instead.
-    default_auto_archive_duration: :class:`int`
-        The default auto archive duration in minutes for threads created in this channel.
-        .. versionadded:: 2.0
-    """
-
     __slots__ = (
         "name",
-        "id",
-        "server",
-        "topic",
+        "description",
         "_state",
+        "id",
+        "type",
+        "server",
         "nsfw",
-        "category_id",
-        "position",
-        "slowmode_delay",
-        "_overwrites",
-        "_type",
-        "last_message_id",
-        "default_auto_archive_duration",
+        "overrides",
     )
 
-    def __init__(self, *, state: ConnectionState, server: Server, data):
+    def __init__(self, *, state: ConnectionState, server: Server, data: ChannelPayload):
         self._state: ConnectionState = state
         self.id: str = data["_id"]
-        self._type: str = data["channel_type"]
-        self._update(server, data)
+        self.type: str = data["channel_type"]
+        self.server = server
+        self.name = data["name"]
+        self.description = data.get("description")
+        self.nsfw = data.get("nsfw")
+        self.overrides: list[Role] = []
+        for role_id, perm in data.get("role_permissions", {}).items():
+            self.overrides.append({role_id: ChannelPermission(perm)})
 
     def __repr__(self) -> str:
         attrs = [
@@ -96,83 +58,78 @@ class TextChannel(abc.Messageable, abc.ServerChannel, Hashable):
         joined = " ".join("%s=%r" % t for t in attrs)
         return f"<{self.__class__.__name__} {joined}>"
 
-    def _update(self, server, data) -> None:
-        self.server = server
-        self.name: str = data["name"]
-        self.topic: Optional[str] = data.get("topic")
-        # self.position: int = data["position"]
-        # Does this need coercion into `int`? No idea yet.
-        # self._type: int = data.get("type", self._type)
-        # self.last_message_id: Optional[int] = utils._get_as_snowflake(
-        #     data, "last_message_id"
-        # )
-        # self._fill_overwrites(data)
+    def _update(self, data) -> None:
+        self.name = data.get("name", self.name)
+        self.description = data.get("description", self.description)
+        if "role_permissions" in data:
+            for role_id, perm in data.get("role_permissions").items():
+                if role_id not in self.overrides:
+                    self.overrides.append({role_id: ChannelPermission(perm)})
+                else:
+                    self.overrides[role_id] = ChannelPermission(perm)
 
-    async def _get_channel(self):
+    async def _get_channel(self) -> TextChannel:
         return self
-
-    @property
-    def type(self) -> str:
-        """:class:`str`: The channel's type."""
-        return self._type
-
-    @property
-    def last_message(self) -> Optional[Message]:
-        """Fetches the last message from this channel in cache.
-        The message might not be valid or point to an existing message.
-        .. admonition:: Reliable Fetching
-            :class: helpful
-            For a slightly more reliable method of fetching the
-            last message, consider using either :meth:`history`
-            or :meth:`fetch_message` with the :attr:`last_message_id`
-            attribute.
-        Returns
-        ---------
-        Optional[:class:`Message`]
-            The last message in this channel or ``None`` if not found.
-        """
-        return (
-            self._state._get_message(self.last_message_id)
-            if self.last_message_id
-            else None
-        )
 
 
 class SavedMessageChannel(abc.Messageable):
     def __init__(self, data: ChannelPayload, state: ConnectionState):
+        self.id = data.get("_id")
+        self._state: ConnectionState = state
         super().__init__(data, state)
+
+    async def _get_channel(self) -> SavedMessageChannel:
+        return self
 
 
 class DMChannel(abc.Messageable):
-    def __init__(self, data: ChannelPayload, state: ConnectionState):
+    def __init__(self, data: DMChannelPayload, state: ConnectionState):
         self._state = state
         self.id = data.get("_id")
         self.active = data.get("active")
-        if "last_message" in data:
-            self.last_message = state.get_message(data.get("last_message").get("_id"))
-        else:
-            self.last_message = None
+        # if "last_message" in data:
+        #     self.last_message = state.get_message(data.get("last_message").get("_id"))
+        # else:
+        #     self.last_message = None
         self._recipients = data.get("recipients")
 
+    async def _get_channel(self) -> DMChannel:
+        return self
+
     @property
-    def recipients(self) -> List[User]:
+    def recipients(self) -> list[User]:
         return [self._state.get_user(user) for user in self._recipients]
 
+    def __str__(self) -> str:
+        if self.recipient:
+            return f"Direct Message with {self.recipient}"
+        return "Direct Message with Unknown User"
 
-class GroupDMChannel(abc.Messageable):
+    def __repr__(self) -> str:
+        return f"<DMChannel id={self.id} recipient={self.recipient!r}>"
+
+
+class GroupChannel(abc.Messageable):
     def __init__(self, data: ChannelPayload, state: ConnectionState):
         super().__init__(data, state)
-        {
-            "channel_type": "DirectMessage",
-            "_id": "01FE7TWZ797ECQF87FNCQKR3XH",
-            "active": True,
-            "recipients": ["01FE542RP7Z81GMC9DCAWZZVC4", "01FE7T9AZNTDCYW0FNRN2XS1NY"],
-            "last_message": {
-                "_id": "01FE7W6S5P3TBFX0R9XRZXAMEF",
-                "author": "01FE542RP7Z81GMC9DCAWZZVC4",
-                "short": "the voice here on the web client is broken currently",
-            },
-        }
+        self.id = data.get("_id")
+        self.name = data.get("name")
+        self.active = data.get("active")
+        self._recipients = data.get("recipients")
+        self._state: ConnectionState = state
+
+    def _update(self, data: ChannelPayload) -> None:
+        self.name = data.get("name", self.name)
+        self.active = data.get("active", self.active)
+        self._recipients = data.get("recipients", self._recipients)
+        # self.last_message = Message(self._state, data.get("last_message"))
+
+    async def _get_channel(self) -> GroupChannel:
+        return self
+
+    @property
+    def recipients(self) -> list[User]:
+        return [self._state.get_user(user) for user in self._recipients]
 
 
 class VoiceChannel(abc.Messageable):
@@ -180,33 +137,39 @@ class VoiceChannel(abc.Messageable):
         self._state: ConnectionState = state
         self.id: str = data["_id"]
         self._type: str = data["channel_type"]
-        self._update(server, data)
-
-    def _update(self, server, data) -> None:
         self.server = server
         self.name: str = data["name"]
-        self.topic: Optional[str] = data.get("topic")
-        # self.position: int = data["position"]
-        # Does this need coercion into `int`? No idea yet.
-        # self._type: int = data.get("type", self._type)
-        # self.last_message_id: Optional[int] = utils._get_as_snowflake(
-        #     data, "last_message_id"
-        # )
-        # self._fill_overwrites(data)
+        self.description: Optional[str] = data.get("description")
+        self.overrides: list[Role] = []
+        for role_id, perm in data.get("role_permissions", {}).items():
+            self.overrides.append({role_id: ChannelPermission(perm)})
+
+    def _update(self, data) -> None:
+        self.name: str = data.get("name", self.name)
+        self.description: Optional[str] = data.get("description", self.description)
+        if "role_permissions" in data:
+            for role_id, perm in data.get("role_permissions").items():
+                if role_id not in self.overrides:
+                    self.overrides.append({role_id: ChannelPermission(perm)})
+                else:
+                    self.overrides[role_id] = ChannelPermission(perm)
+
+    async def _get_channel(self) -> VoiceChannel:
+        return self
 
 
-MessageableChannel = Union[TextChannel, DMChannel, GroupDMChannel, SavedMessageChannel]
+MessageableChannel = Union[TextChannel, DMChannel, GroupChannel, SavedMessageChannel]
 
 
 def channel_factory(data: ChannelPayload) -> type[abc.Messageable]:
-    # Literal["SavedMessage", "DirectMessage", "Group", "TextChannel", "VoiceChannel"]
+    # Literal["SavedMessages", "DirectMessage", "Group", "TextChannel", "VoiceChannel"]
     channel_type = data["channel_type"]
-    if channel_type == "SavedMessage":
+    if channel_type == "SavedMessages":
         return SavedMessageChannel
     elif channel_type == "DirectMessage":
         return DMChannel
     elif channel_type == "Group":
-        return GroupDMChannel
+        return GroupChannel
     elif channel_type == "TextChannel":
         return TextChannel
     elif channel_type == "VoiceChannel":

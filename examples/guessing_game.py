@@ -1,6 +1,7 @@
-import defectio
-import random
 import asyncio
+import random
+
+import defectio
 
 
 class MyClient(defectio.Client):

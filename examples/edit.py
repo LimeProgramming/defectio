@@ -1,5 +1,6 @@
-import defectio
 import asyncio
+
+import defectio
 
 
 class MyClient(defectio.Client):

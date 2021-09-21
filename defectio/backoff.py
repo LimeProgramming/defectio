@@ -5,7 +5,6 @@ import time
 from typing import Callable
 from typing import Generic
 from typing import Literal
-from typing import overload
 from typing import TypeVar
 from typing import Union
 
@@ -23,6 +22,7 @@ class ExponentialBackoff(Generic[T]):
     delay increases exponentially with each retry up to a maximum of
     2^10 * base, and is reset if no more attempts are needed in a period
     of 2^11 * base seconds.
+
     Parameters
     ----------
     base: :class:`int`
@@ -41,23 +41,12 @@ class ExponentialBackoff(Generic[T]):
         self._reset_time: int = base * 2 ** 11
         self._last_invocation: float = time.monotonic()
 
-        # Use our own random instance to avoid messing with global one
         rand = random.Random()
         rand.seed()
 
-        self._randfunc: Callable[..., Union[int, float]] = rand.randrange if integral else rand.uniform  # type: ignore
-
-    @overload
-    def delay(self: ExponentialBackoff[Literal[False]]) -> float:
-        ...
-
-    @overload
-    def delay(self: ExponentialBackoff[Literal[True]]) -> int:
-        ...
-
-    @overload
-    def delay(self: ExponentialBackoff[bool]) -> Union[int, float]:
-        ...
+        self._randfunc: Callable[..., Union[int, float]] = (
+            rand.randrange if integral else rand.uniform
+        )
 
     def delay(self) -> Union[int, float]:
         """Compute the next delay

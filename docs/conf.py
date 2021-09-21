@@ -55,6 +55,8 @@ extensions = [
     "sphinx_copybutton",
     "sphinxext.opengraph",
     "attributetable",
+    "exception_hierachy",
+    "sphinx.ext.viewcode"
 ]
 
 autodoc_member_order = "bysource"
@@ -80,6 +82,9 @@ rst_prolog = """
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "friendly"
+
+# stop issues
+autodoc_mock_imports = ["aiohttp", "orjson", "ulid"]
 
 resource_links = {
     "revolt": "https://app.revolt.chat/invite/FfbwgFDk",

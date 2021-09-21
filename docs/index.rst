@@ -1,8 +1,3 @@
-.. defectio documentation master file, created by
-   sphinx-quickstart on Sun Aug 29 00:47:42 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to defectio
 =====================================
 
@@ -33,13 +28,48 @@ If you're having trouble with something, these resources might help.
 - Report bugs in the :resource:`issue tracker <issues>`.
 - Ask in our :resource:`GitHub discussions page <discussions>`.
 
+Extensions
+------------
+
+These extensions help you during development when it comes to common tasks.
+
+:doc:`ext/tasks/index`
+
 Manuals
 ---------
 
 These pages go into great detail about everything the API can do.
 
-.. toctree::
-  :maxdepth: 1
+:doc:`api/index`
 
-  api
+:doc:`ext/tasks/index`
+
+Meta
+------
+
+If you're looking for something related to the project itself, it's here.
+
+:doc:`whats_new`
+
+:doc:`version_guarantees`
+
+:doc:`migrating_discord`
+
+
+.. toctree::
+  :hidden:
+
+  intro
+  quickstart
+  logging
+  faq
+  api/index
   defectio.ext.tasks API Reference <ext/tasks/index.rst>
+
+.. toctree::
+  :hidden:
+  :caption: Meta
+
+  whats_new
+  version_guarantees
+  migrating_discord

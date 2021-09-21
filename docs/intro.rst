@@ -1,9 +1,3 @@
-:orphan:
-
-.. currentmodule:: defectio
-
-.. _intro:
-
 Introduction
 ==============
 

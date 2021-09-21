@@ -1,4 +1,3 @@
-from typing import List
 from typing import Literal
 from typing import Optional
 from typing import TypedDict
@@ -34,9 +33,9 @@ class Pong(TypedDict):
 
 class Ready(TypedDict):
     type: Literal["Ready"]
-    users: List[UserPayload]
-    servers: List[ServerPayload]
-    channels: List[ChannelPayload]
+    users: list[UserPayload]
+    servers: list[ServerPayload]
+    channels: list[ChannelPayload]
 
 
 class Message(MessagePayload):

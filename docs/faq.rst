@@ -1,16 +1,8 @@
-:orphan:
-
-.. currentmodule:: defectio
-.. _faq:
-
 Frequently Asked Questions
 ===========================
 
 This is a list of Frequently Asked Questions regarding using ``defectio`` and its extension modules. Feel free to suggest a
 new question or submit one via pull requests.
-
-.. contents:: Questions
-    :local:
 
 Coroutines
 ------------
@@ -42,7 +34,7 @@ not stopped the function's execution at that point to do other things.
 
 If logging is enabled, this library will attempt to warn you that blocking is occurring with the message:
 ``Heartbeat blocked for more than N seconds.``
-See :ref:`logging_setup` for details on enabling logging.
+See :doc:`logging` for details on enabling logging.
 
 A common source of blocking for too long is something like :func:`time.sleep`. Don't do that. Use :func:`asyncio.sleep`
 instead. Similar to this example: ::
@@ -53,10 +45,7 @@ instead. Similar to this example: ::
     # good
     await asyncio.sleep(10)
 
-Another common source of blocking for too long is using HTTP requests with the famous module :doc:`req:index`.
-While :doc:`req:index` is an amazing module for non-asynchronous programming, it is not a good choice for
-:mod:`asyncio` because certain requests can block the event loop too long. Instead, use the :doc:`aiohttp <aio:index>` library which
-is installed on the side with this library.
+Use, use the :doc:`aiohttp <aio:index>` library which is installed on the side with this library. To make http requests.
 
 Consider the following example: ::
 

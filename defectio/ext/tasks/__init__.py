@@ -1,3 +1,13 @@
+"""
+defectio.ext.tasks
+~~~~~~~~~~~~~~~~~~~~~
+
+An extension module to facilitate management of asyncio tasks.
+
+:copyright: (c) 2015-2021 Rapptz
+:copyright: (c) 2021-present Darkflame72
+:license: MIT, see LICENSE for more details.
+"""
 from __future__ import annotations
 
 import asyncio
@@ -10,7 +20,6 @@ from typing import Any
 from typing import Awaitable
 from typing import Callable
 from typing import Generic
-from typing import List
 from typing import Optional
 from typing import Type
 from typing import TypeVar
@@ -19,7 +28,6 @@ from typing import Union
 import aiohttp
 import defectio
 from defectio.backoff import ExponentialBackoff
-from defectio.utils import MISSING
 
 __all__ = ("loop",)
 
@@ -79,8 +87,8 @@ class Loop(Generic[LF]):
         self.loop: asyncio.AbstractEventLoop = loop
         self.count: Optional[int] = count
         self._current_loop = 0
-        self._handle: SleepHandle = MISSING
-        self._task: asyncio.Task[None] = MISSING
+        self._handle: SleepHandle = None
+        self._task: asyncio.Task[None] = None
         self._injected = None
         self._valid_exception = (
             OSError,
@@ -99,7 +107,7 @@ class Loop(Generic[LF]):
 
         self.change_interval(seconds=seconds, minutes=minutes, hours=hours, time=time)
         self._last_iteration_failed = False
-        self._last_iteration: datetime.datetime = MISSING
+        self._last_iteration: datetime.datetime = None
         self._next_iteration = None
 
         if not inspect.iscoroutinefunction(self.coro):
@@ -125,7 +133,7 @@ class Loop(Generic[LF]):
         backoff = ExponentialBackoff()
         await self._call_loop_function("before_loop")
         self._last_iteration_failed = False
-        if self._time is not MISSING:
+        if self._time is not None:
             # the time index should be prepared every time the internal loop is started
             self._prepare_time_index()
             self._next_iteration = self._get_next_sleep_time()
@@ -154,7 +162,7 @@ class Loop(Generic[LF]):
                     now = datetime.datetime.now(datetime.timezone.utc)
                     if now > self._next_iteration:
                         self._next_iteration = now
-                        if self._time is not MISSING:
+                        if self._time is not None:
                             self._prepare_time_index(now)
 
                     self._current_loop += 1
@@ -202,7 +210,7 @@ class Loop(Generic[LF]):
         """Optional[:class:`float`]: Read-only value for the number of seconds
         between each iteration. ``None`` if an explicit ``time`` value was passed instead.
         """
-        if self._seconds is not MISSING:
+        if self._seconds is not None:
             return self._seconds
 
     @property
@@ -210,7 +218,7 @@ class Loop(Generic[LF]):
         """Optional[:class:`float`]: Read-only value for the number of minutes
         between each iteration. ``None`` if an explicit ``time`` value was passed instead.
         """
-        if self._minutes is not MISSING:
+        if self._minutes is not None:
             return self._minutes
 
     @property
@@ -218,15 +226,15 @@ class Loop(Generic[LF]):
         """Optional[:class:`float`]: Read-only value for the number of hours
         between each iteration. ``None`` if an explicit ``time`` value was passed instead.
         """
-        if self._hours is not MISSING:
+        if self._hours is not None:
             return self._hours
 
     @property
-    def time(self) -> Optional[List[datetime.time]]:
-        """Optional[List[:class:`datetime.time`]]: Read-only list for the exact times this loop runs at.
+    def time(self) -> Optional[list[datetime.time]]:
+        """Optional[list[:class:`datetime.time`]]: Read-only list for the exact times this loop runs at.
         ``None`` if relative times were passed instead.
         """
-        if self._time is not MISSING:
+        if self._time is not None:
             return self._time.copy()
 
     @property
@@ -237,7 +245,7 @@ class Loop(Generic[LF]):
     @property
     def next_iteration(self) -> Optional[datetime.datetime]:
         """Optional[:class:`datetime.datetime`]: When the next iteration of the loop will occur."""
-        if self._task is MISSING:
+        if self._task is None:
             return None
         elif self._task and self._task.done() or self._stop_next_iteration:
             return None
@@ -281,13 +289,13 @@ class Loop(Generic[LF]):
             The task that has been created.
         """
 
-        if self._task is not MISSING and not self._task.done():
+        if self._task is not None and not self._task.done():
             raise RuntimeError("Task is already launched and is not completed.")
 
         if self._injected is not None:
             args = (self._injected, *args)
 
-        if self.loop is MISSING:
+        if self.loop is None:
             self.loop = asyncio.get_event_loop()
 
         self._task = self.loop.create_task(self._loop(*args, **kwargs))
@@ -308,7 +316,7 @@ class Loop(Generic[LF]):
             before stopping via :meth:`clear_exception_types` or
             use :meth:`cancel` instead.
         """
-        if self._task is not MISSING and not self._task.done():
+        if self._task is not None and not self._task.done():
             self._stop_next_iteration = True
 
     def _can_be_cancelled(self) -> bool:
@@ -403,7 +411,7 @@ class Loop(Generic[LF]):
 
     def get_task(self) -> Optional[asyncio.Task[None]]:
         """Optional[:class:`asyncio.Task`]: Fetches the internal task or ``None`` if there isn't one running."""
-        return self._task if self._task is not MISSING else None
+        return self._task if self._task is not None else None
 
     def is_being_cancelled(self) -> bool:
         """Whether the task is being cancelled."""
@@ -415,7 +423,7 @@ class Loop(Generic[LF]):
 
     def is_running(self) -> bool:
         """:class:`bool`: Check if the task is currently running."""
-        return not bool(self._task.done()) if self._task is not MISSING else False
+        return not bool(self._task.done()) if self._task is not None else False
 
     async def _error(self, *args: Any) -> None:
         exception: Exception = args[-1]
@@ -432,6 +440,7 @@ class Loop(Generic[LF]):
 
         This is useful if you want to wait for some bot state before the loop starts,
         such as :meth:`defectio.Client.wait_until_ready`.
+
         The coroutine must take no arguments (except ``self`` in a class context).
 
         Parameters
@@ -457,7 +466,9 @@ class Loop(Generic[LF]):
         """A decorator that register a coroutine to be called after the loop finished running.
 
         The coroutine must take no arguments (except ``self`` in a class context).
+
         .. note::
+
             This coroutine is called even during cancellation. If it is desirable
             to tell apart whether something was cancelled or not, check to see
             whether :meth:`is_being_cancelled` is ``True`` or not.
@@ -504,7 +515,7 @@ class Loop(Generic[LF]):
         return coro
 
     def _get_next_sleep_time(self) -> datetime.datetime:
-        if self._sleep is not MISSING:
+        if self._sleep is not None:
             return self._last_iteration + datetime.timedelta(seconds=self._sleep)
 
         if self._time_index >= len(self._time):
@@ -533,14 +544,14 @@ class Loop(Generic[LF]):
         self._time_index += 1
         return datetime.datetime.combine(next_date, next_time)
 
-    def _prepare_time_index(self, now: datetime.datetime = MISSING) -> None:
+    def _prepare_time_index(self, now: datetime.datetime = None) -> None:
         # now kwarg should be a datetime.datetime representing the time "now"
         # to calculate the next time index from
 
         # pre-condition: self._time is set
         time_now = (
             now
-            if now is not MISSING
+            if now is not None
             else datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
         ).timetz()
         for idx, time in enumerate(self._time):
@@ -556,7 +567,7 @@ class Loop(Generic[LF]):
         *,
         dt: Type[datetime.time] = datetime.time,
         utc: datetime.timezone = datetime.timezone.utc,
-    ) -> List[datetime.time]:
+    ) -> list[datetime.time]:
         if isinstance(time, dt):
             inner = time if time.tzinfo is not None else time.replace(tzinfo=utc)
             return [inner]
@@ -567,7 +578,7 @@ class Loop(Generic[LF]):
         if not time:
             raise ValueError("time parameter must not be an empty sequence.")
 
-        ret: List[datetime.time] = []
+        ret: list[datetime.time] = []
         for index, t in enumerate(time):
             if not isinstance(t, dt):
                 raise TypeError(
@@ -584,7 +595,7 @@ class Loop(Generic[LF]):
         seconds: float = 0,
         minutes: float = 0,
         hours: float = 0,
-        time: Union[datetime.time, Sequence[datetime.time]] = MISSING,
+        time: Union[datetime.time, Sequence[datetime.time]] = None,
     ) -> None:
         """Changes the interval for the sleep time.
 
@@ -600,7 +611,9 @@ class Loop(Generic[LF]):
             The exact times to run this loop at. Either a non-empty list or a single
             value of :class:`datetime.time` should be passed.
             This cannot be used in conjunction with the relative time parameters.
+
             .. note::
+
                 Duplicate times will be ignored, and only run once.
 
         Raises
@@ -612,7 +625,7 @@ class Loop(Generic[LF]):
             ``time`` parameter was passed in conjunction with relative time parameters.
         """
 
-        if time is MISSING:
+        if time is None:
             seconds = seconds or 0
             minutes = minutes or 0
             hours = hours or 0
@@ -624,15 +637,15 @@ class Loop(Generic[LF]):
             self._seconds = float(seconds)
             self._hours = float(hours)
             self._minutes = float(minutes)
-            self._time: List[datetime.time] = MISSING
+            self._time: list[datetime.time] = None
         else:
             if any((seconds, minutes, hours)):
                 raise TypeError("Cannot mix explicit time with relative time")
             self._time = self._get_time_parameter(time)
-            self._sleep = self._seconds = self._minutes = self._hours = MISSING
+            self._sleep = self._seconds = self._minutes = self._hours = None
 
         if self.is_running():
-            if self._time is not MISSING:
+            if self._time is not None:
                 # prepare the next time index starting from after the last iteration
                 self._prepare_time_index(now=self._last_iteration)
 
@@ -644,13 +657,13 @@ class Loop(Generic[LF]):
 
 def loop(
     *,
-    seconds: float = MISSING,
-    minutes: float = MISSING,
-    hours: float = MISSING,
-    time: Union[datetime.time, Sequence[datetime.time]] = MISSING,
+    seconds: float = None,
+    minutes: float = None,
+    hours: float = None,
+    time: Union[datetime.time, Sequence[datetime.time]] = None,
     count: Optional[int] = None,
     reconnect: bool = True,
-    loop: asyncio.AbstractEventLoop = MISSING,
+    loop: asyncio.AbstractEventLoop = None,
 ) -> Callable[[LF], Loop[LF]]:
     """A decorator that schedules a task in the background for you with
     optional reconnect logic. The decorator returns a :class:`Loop`.
@@ -668,7 +681,9 @@ def loop(
         value of :class:`datetime.time` should be passed. Timezones are supported.
         If no timezone is given for the times, it is assumed to represent UTC time.
         This cannot be used in conjunction with the relative time parameters.
+
         .. note::
+
             Duplicate times will be ignored, and only run once.
     count: Optional[:class:`int`]
         The number of loops to do, ``None`` if it should be an

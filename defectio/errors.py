@@ -1,17 +1,12 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
-from defectio.types.websocket import Error
 
 if TYPE_CHECKING:
-    from aiohttp import ClientResponse, ClientWebSocketResponse
-    from types.websocket import Error
+    from aiohttp import ClientResponse
 
     try:
         from requests import Response
@@ -45,14 +40,14 @@ class GatewayNotFound(DefectioException):
     pass
 
 
-def _flatten_error_dict(d: Dict[str, Any], key: str = "") -> Dict[str, str]:
-    items: List[Tuple[str, str]] = []
+def _flatten_error_dict(d: dict[str, Any], key: str = "") -> dict[str, str]:
+    items: list[tuple[str, str]] = []
     for k, v in d.items():
         new_key = key + "." + k if key else k
 
         if isinstance(v, dict):
             try:
-                _errors: List[Dict[str, Any]] = v["_errors"]
+                _errors: list[dict[str, Any]] = v["_errors"]
             except KeyError:
                 items.extend(_flatten_error_dict(v, new_key).items())
             else:
@@ -82,7 +77,7 @@ class HTTPException(DefectioException):
     """
 
     def __init__(
-        self, response: _ResponseType, message: Optional[Union[str, Dict[str, Any]]]
+        self, response: _ResponseType, message: Optional[Union[str, dict[str, Any]]]
     ):
         self.response: _ResponseType = response
         self.status: int = response.status  # type: ignore
@@ -107,6 +102,14 @@ class HTTPException(DefectioException):
             fmt += ": {2}"
 
         super().__init__(fmt.format(self.response, self.code, self.text))
+
+
+class NotFound(HTTPException):
+    """Exception that's raised for when status code 404 occurs.
+    Subclass of :exc:`HTTPException`
+    """
+
+    pass
 
 
 class Forbidden(HTTPException):
