@@ -1,32 +1,25 @@
 from __future__ import annotations
 
-import sys
-import ulid
-import aiohttp
 import logging
+from typing import Any
+from typing import Literal
+from typing import Optional
+from typing import TYPE_CHECKING
+from typing import Union
 
-from typing import (
-    Any, 
-    Coroutine,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    TYPE_CHECKING,
-    Union
-    )
-
+import aiohttp
+import orjson as json
+import ulid
+from defectio.errors import HTTPException, NotFound, Forbidden
 from defectio.errors import LoginFailure
 from defectio.errors import RevoltServerError
-from .models import Auth
+from defectio.models.apiinfo import ApiInfo
 
 from . import __version__
-
-import orjson as json
+from .models import Auth
 
 if TYPE_CHECKING:
     import aiohttp
-    from .models import File
     from .types.payloads import (
         AccountPayload,
         ApiInfoPayload,
@@ -58,8 +51,8 @@ if TYPE_CHECKING:
         ServerMembersPayload,
         SettingsPayload,
         UnreadsPayload,
-        AutumnPayload,
     )
+    from .models import File
 
 logger = logging.getLogger("defectio")
 
@@ -68,18 +61,24 @@ class DefectioHTTP:
     def __init__(
         self,
         session: aiohttp.ClientSession,
-        api_urls: dict,
+        api_url: str,
         user_agent: str,
+        *,
+        api_info: Optional[ApiInfo] = None,
     ):
         self._session = session if session is not None else aiohttp.ClientSession()
         self.auth: Optional[Auth] = None
-        self.api_urls = api_urls
+        self.api_url = api_url
         self.user_agent = user_agent
+        self.api_info = api_info
+
+    def set_api_info(self, api_info: ApiInfo) -> None:
+        self.api_info = api_info
 
     async def request(
         self, method: str, path: str, *, auth_needed=True, **kwargs: Any
-    ) -> Any:
-        url = f"{self.api_urls['api']}/{path}"
+    ) -> dict[str, Any]:
+        url = f"{self.api_url}/{path}"
         headers = kwargs.get("headers", {})
         headers["User-Agent"] = self.user_agent
         if auth_needed:
@@ -91,31 +90,23 @@ class DefectioHTTP:
         kwargs["headers"] = headers
 
         response: Optional[aiohttp.ClientResponse] = None
-        data: Optional[Union[Dict[str, Any], str]] = None
-
-        # Generate nonce for post messages
-        if method == "POST":
-            kwargs["json"] = kwargs.get("json", {})
-            kwargs["json"]["nonce"] = ulid.new().str
-
+        data: Optional[Union[dict[str, Any], str]] = None
         async with self._session.request(method, url, **kwargs) as response:
             data = await response.text()
-            if data != "":
-                data = json.loads(data)
             if 300 > response.status >= 200:
+                if data != "":
+                    data = json.loads(data)
                 logger.debug("%s %s has received %s", method, url, data)
                 return data
 
             if 500 > response.status >= 400:
-                raise
-                # raise RevoltServerError(response, data)
+                raise HTTPException(response, data)
 
             if response.status >= 500:
                 raise RevoltServerError(response, data)
 
-    async def uploadrequest(self, method: str, tag: str, **kwargs: Any) -> Any:
-
-        url = f"{self.api_urls['aut']}/{tag}"
+    async def upload_request(self, method: str, tag: str, **kwargs: Any) -> Any:
+        url = f"{self.api_info.features.autumn.url}/{tag}"
         headers = kwargs.get("headers", {})
         headers["User-Agent"] = self.user_agent
 
@@ -125,27 +116,37 @@ class DefectioHTTP:
         kwargs["headers"] = {**headers, **self.auth.headers}
 
         response: Optional[aiohttp.ClientResponse] = None
-        data: Optional[Union[Dict[str, Any], str]] = None
+        data: Optional[Union[dict[str, Any], str]] = None
 
         async with self._session.request(method, url, **kwargs) as response:
             data = await response.text()
-            if data != "":
-                data = json.loads(data)
             if 300 > response.status >= 200:
+                if data != "":
+                    data = json.loads(data)
                 logger.debug("%s %s has received %s", method, url, data)
                 return data
 
             if 500 > response.status >= 400:
-                raise
-                # raise RevoltServerError(response, data)
+                raise RevoltServerError(response, data)
 
             if response.status >= 500:
                 raise RevoltServerError(response, data)
 
+    async def get_from_url(self, url: str) -> bytes:
+        async with self._session.get(url) as resp:
+            if resp.status == 200:
+                return await resp.read()
+            elif resp.status == 404:
+                # raise NotFound(resp, "asset not found")
+                return None
+            elif resp.status == 403:
+                raise Forbidden(resp, "cannot retrieve asset")
+            else:
+                raise HTTPException(resp, "failed to get asset")
 
-    def bot_login(self, token: str) -> Auth:
-        self.auth = Auth(token)
-        self.is_bot = True
+    def start(self, token: str, bot: bool = True) -> Auth:
+        self.auth = Auth(token, bot=bot)
+        self.is_bot = bot
         return self.auth
 
     async def user_login(self, email: str, password: str) -> Auth:
@@ -154,11 +155,6 @@ class DefectioHTTP:
         self.is_bot = False
         return self.auth
 
-    def session_login(self, session_token: str, user_id: str) -> Auth:
-        auth = Auth({"session_token": session_token, "user_id": user_id})
-        self.auth = auth
-        return auth
-
     async def close(self) -> None:
         if self._session:
             await self._session.close()
@@ -166,6 +162,12 @@ class DefectioHTTP:
     async def node_info(self) -> ApiInfoPayload:
         path = ""
         return await self.request("GET", path, auth_needed=False)
+
+    async def send_file(self, *, file: File, tag: str):
+        form = aiohttp.FormData()
+        form.add_field("file", file.fp, filename=file.filename)
+
+        return await self.upload_request("POST", tag, data=form)
 
     ################
     ## Onboarding ##
@@ -238,7 +240,7 @@ class DefectioHTTP:
         path = f"auth/sessions/{session_id}"
         return await self.request("POST", path)
 
-    async def get_sessions(self) -> List[SessionPayload]:
+    async def get_sessions(self) -> list[SessionPayload]:
         path = "auth/sessions"
         return await self.request("GET", path)
 
@@ -252,9 +254,9 @@ class DefectioHTTP:
 
     ## Self
 
-    async def edit_self(self, **kwargs):
+    async def edit_self(self, json):
         path = "users/@me"
-        return await self.request("PATCH", path, json=kwargs)
+        return await self.request("PATCH", path, json=json)
 
     async def change_username(self, username: str, password: str):
         path = "users/@me/username"
@@ -284,19 +286,19 @@ class DefectioHTTP:
     ## Direct Messaging ##
     ######################
 
-    async def get_dms(self) -> List[DMChannelPayload]:
+    async def get_dms(self) -> list[DMChannelPayload]:
         path = "users/dms"
         return await self.request("GET", path)
 
     async def open_dm(self, user_id: str) -> DMChannelPayload:
         path = f"users/{user_id}/dm"
-        return await self.request("POST", path)
+        return await self.request("GET", path)
 
     ###################
     ## Relationships ##
     ###################
 
-    async def get_relationships(self) -> List[RelationshipPayload]:
+    async def get_relationships(self) -> list[RelationshipPayload]:
         path = "users/relationships"
         return await self.request("GET", path)
 
@@ -367,30 +369,20 @@ class DefectioHTTP:
     async def send_message(
         self,
         channel_id: str,
-        content: str,
         *,
-        attachments: Optional[List[Any]] = None,
+        content: Optional[str] = None,
+        attachments: Optional[list[str]] = None,
         replies: Optional[Any] = None,
     ) -> MessagePayload:
         path = f"channels/{channel_id}/messages"
-        json = {"content": content}
-        if attachments:
+        json = {"nonce": ulid.new().str}
+        if content is not None:
+            json["content"] = content
+        if attachments is not None and len(attachments) > 0:
             json["attachments"] = attachments
-        if replies:
+        if replies is not None:
             json["replies"] = replies
         return await self.request("POST", path, json=json)
-    
-    async def send_file(
-        self,
-        *,
-        file: File,
-        tag: str
-    ) -> AutumnPayload:
-
-        form = aiohttp.FormData()
-        form.add_field("file", file.fp, filename=file.filename)
-        
-        return await self.uploadrequest("POST", tag, data=form)
 
     async def get_messages(
         self,
@@ -400,9 +392,9 @@ class DefectioHTTP:
         before: Optional[str] = None,
         after: Optional[str] = None,
         sort: Literal["Latest", "Oldest"] = "Latest",
-        nearby: Optional[List[str]] = None,
+        nearby: Optional[list[str]] = None,
         include_users: bool = True,
-    ) -> List[FetchMessagePayload]:
+    ) -> list[FetchMessagePayload]:
         path = f"channels/{channel_id}/messages"
         json = {"sort": sort}
         if limit:
@@ -435,7 +427,7 @@ class DefectioHTTP:
         return await self.request("DELETE", path)
 
     async def poll_message_changes(
-        self, channel_id: str, message_ids: List[str]
+        self, channel_id: str, message_ids: list[str]
     ) -> MessagePayload:
         path = f"channels/{channel_id}/messages/stale"
         return await self.request("GET", path, json=message_ids)
@@ -474,17 +466,17 @@ class DefectioHTTP:
         name: str,
         *,
         description: Optional[str] = None,
-        users: Optional[List[str]] = None,
+        users: Optional[list[str]] = None,
     ) -> GroupPayload:
         path = "channels/create"
-        json = {"name": name}
+        json = {"name": name, "nonce": ulid.new().str}
         if description:
             json["description"] = description
         if users:
             json["users"] = users
         return await self.request("POST", path, json=json)
 
-    async def get_group_members(self, group_id: str) -> List[UserPayload]:
+    async def get_group_members(self, group_id: str) -> list[UserPayload]:
         path = f"channels/{group_id}/members"
         return await self.request("GET", path)
 
@@ -516,7 +508,7 @@ class DefectioHTTP:
         description: Optional[str] = None,
         icon: Optional[str] = None,
         banner: Optional[str] = None,
-        categories: Optional[List[Any]] = None,
+        categories: Optional[list[Any]] = None,
         system_messages: Optional[Any] = None,
         remove: Optional[Literal["Banner", "Description", "Icon"]] = None,
     ):
@@ -546,7 +538,7 @@ class DefectioHTTP:
         self, name: str, *, description: Optional[str] = None
     ) -> ServerPayload:
         path = "servers/create"
-        json = {"name": name}
+        json = {"name": name, "nonce": ulid.new().str}
         if description:
             json["description"] = description
         return await self.request("POST", path, json=json)
@@ -560,7 +552,7 @@ class DefectioHTTP:
         description: Optional[str] = None,
     ) -> ChannelPayload:
         path = f"servers/{server_id}/channels"
-        json = {"name": name, "type": type}
+        json = {"name": name, "type": type, "nonce": ulid.new().str}
         if description:
             json["description"] = description
         return await self.request("POST", path, json=json)
@@ -586,8 +578,8 @@ class DefectioHTTP:
         server_id: str,
         member_id: str,
         *,
-        nickname: Optional[List[str]] = None,
-        roles: Optional[List[str]] = None,
+        nickname: Optional[list[str]] = None,
+        roles: Optional[list[str]] = None,
         avatar: Optional[str] = None,
         remove: Optional[Literal["Avatar", "Nickname"]] = None,
     ):
@@ -683,7 +675,7 @@ class DefectioHTTP:
         json = {"name": name}
         return await self.request("POST", path, json=json)
 
-    async def get_owned_bots(self) -> List[BotPayload]:
+    async def get_owned_bots(self) -> list[BotPayload]:
         path = "bots/@me"
         return await self.request("GET", path)
 
@@ -757,12 +749,12 @@ class DefectioHTTP:
     ## Sync ##
     ##########
 
-    async def get_settings(self, keys: List[str]) -> SettingsPayload:
+    async def get_settings(self, keys: list[str]) -> SettingsPayload:
         path = "sync/settings/fetch"
         json = {"keys": keys}
         return await self.request("POST", path, json=json)
 
-    async def set_settings(self, settings: Dict[str, Any]):
+    async def set_settings(self, settings: dict[str, Any]):
         path = "sync/settings/set"
         return await self.request("POST", path, json=settings)
 
